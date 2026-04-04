@@ -1,0 +1,24 @@
+# Скомпилированные файлы
+build/
+*.o
+*.exe
+*.dll
+*.so
+
+# SIS файлы для Symbian
+*.sis
+*.sisx
+*.pkg
+
+# QML кэши
+qmlcache/
+
+# IDE файлы
+.idea/
+.vscode/
+*.pro.user
+*.user
+
+# Системные файлы
+.DS_Store
+Thumbs.db
