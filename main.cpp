@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
          proxy.setType(QNetworkProxy::HttpProxy);
          proxy.setHostName("192.168.1.183");
          proxy.setPort(8890);
-         QNetworkProxy::setApplicationProxy(proxy);
+      //   QNetworkProxy::setApplicationProxy(proxy);
 
 
     QmlApplicationViewer view;

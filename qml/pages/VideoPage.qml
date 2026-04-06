@@ -21,18 +21,14 @@ Rectangle {
                                         "video_id": videoDetails.video_id, "title": videoDetails.title,
                                         "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
         });
-            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http");
-            videoPlayer.source = directUrl;
-            videoPlayer.play();
+            videoPlayer.stop();
+            videoPlayer.source = "";
+
+            // Запускаем таймер вместо прямого videoPlayer.play()
+            delayedPlayTimer.start();
         }
 
-        onAuthImageReady: {
-                channelIcon.visible = true;
-                // Трюк для обновления
-                var temp = channelIcon.source;
-                channelIcon.source = "";
-                channelIcon.source = "image://qr/auth";
-            }
+
     }
 
     function loadVideo(videoId) {
@@ -61,7 +57,7 @@ Rectangle {
         }
         return url;
     }
-	
+
     // Функция для однократного декодирования части ссылки
     function getSingleEncodedUrl(fullUrl) {
         if (!fullUrl) return "";
@@ -86,12 +82,12 @@ Rectangle {
         return baseUrl + fixedPart;
     }
 
-        function getEncodedIconUrl(rawUrl) {
-    if (!rawUrl) return "";
-    // 1. Декодируем всё, чтобы получить чистый URL (http://...)
-    // 2. Кодируем один раз (все : / ? будут заменены на %3A %2F и т.д.)
-    return encodeURIComponent(decodeURIComponent(rawUrl));
-        }
+    function getEncodedIconUrl(rawUrl) {
+        if (!rawUrl) return "";
+        // 1. Декодируем всё, чтобы получить чистый URL (http://...)
+        // 2. Кодируем один раз (все : / ? будут заменены на %3A %2F и т.д.)
+        return encodeURIComponent(decodeURIComponent(rawUrl));
+    }
 
     Rectangle {
         id: playerContainer
@@ -102,6 +98,14 @@ Rectangle {
             id: videoPlayer
             anchors.fill: parent; fillMode: Video.Stretch
             onStarted: isPlaying = true; onResumed: isPlaying = true; onPaused: isPlaying = false; onStopped: isPlaying = false
+            onStatusChanged: {
+                if (status === Video.Loaded) {
+                    // Трюк для переинициализации поверхности
+                    videoPlayer.visible = false;
+                    videoPlayer.visible = true;
+                    videoPlayer.play();
+                }
+            }
             MouseArea { anchors.fill: parent; onClicked: { if (isPlaying) videoPlayer.pause(); else videoPlayer.play(); } }
         }
 
@@ -125,6 +129,23 @@ Rectangle {
                 anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; anchors.margins: 10
                 color: "white"; font.pixelSize: 12
                 text: Math.floor(videoPlayer.position / 1000) + " / " + (videoPlayer.duration > 0 ? Math.floor(videoPlayer.duration / 1000) : "-1") + " сек"
+            }
+        }
+    }
+
+    Timer {
+        id: delayedPlayTimer
+        interval: 1000 // Задержка 400 мс (этого хватит Symbian)
+        repeat: false
+        onTriggered: {
+            if (videoDetails && videoDetails.video_id) {
+
+                var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http");
+
+                // Тоже меняем https на http, если вдруг Config отдает https
+                directUrl = directUrl.replace("https://", "http://");
+                videoPlayer.source = directUrl;
+
             }
         }
     }
@@ -168,14 +189,33 @@ Rectangle {
                 Row {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     
-                    Rectangle {
-                        width: 40; height: 40; radius: 20; color: "#333"; clip: true
+                    Item {
+                        width: 40
+                        height: 40
+
+                        // Сама аватарка (квадратная)
                         Image {
                             id: channelIcon
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
+                            visible: false // Скрыта до загрузки
+
                             source: videoDetails ? (videoDetails["channel_thumbnail"] || "") : ""
-                            visible: false
+
+                            onStatusChanged: {
+                                if (status === Image.Ready) {
+                                    channelIcon.visible = true;
+                                }
+                            }
+                        }
+
+                        // Оверлей, который перекрывает углы аватарки фоновым цветом
+                        Image {
+                            anchors.fill: parent
+                            // Путь к вашей картинке-маске.
+                            // Убедитесь, что её углы имеют цвет фона (#000000 или #0f0f0f)
+                            source: "../Assets/rounding.png"
+                            visible: channelIcon.visible
                         }
                     }
                     Text { 
@@ -224,52 +264,52 @@ Rectangle {
         MouseArea { anchors.fill: parent; onClicked: descriptionSheet.state = "hidden" }
 
         Rectangle {
-                    id: descriptionPanel
-                    width: parent.width; height: root.height * 0.75
-                    anchors.bottom: parent.bottom; color: "#282828"
+            id: descriptionPanel
+            width: parent.width; height: root.height * 0.75
+            anchors.bottom: parent.bottom; color: "#282828"
 
-                    // Item служит контейнером с отступами (вместо padding)
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 16
+            // Item служит контейнером с отступами (вместо padding)
+            Item {
+                anchors.fill: parent
+                anchors.margins: 16
 
-                        Column {
-                            anchors.fill: parent
-                            spacing: 10
+                Column {
+                    anchors.fill: parent
+                    spacing: 10
 
-                            // Ручка для перетаскивания
-                            Rectangle {
-                                width: 40; height: 5; radius: 2.5; color: "gray"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
+                    // Ручка для перетаскивания
+                    Rectangle {
+                        width: 40; height: 5; radius: 2.5; color: "gray"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
 
-                            // Заголовок
-                            Text {
-                                text: "Описание"
-                                color: "white"
-                                font.pixelSize: 18
-                                font.bold: true
-                            }
+                    // Заголовок
+                    Text {
+                        text: "Описание"
+                        color: "white"
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
 
-                            // Область описания
-                            Flickable {
-                                width: parent.width
-                                // Вычисляем высоту: вся высота колонки минус высота заголовка и ручки (прим. 60px)
-                                height: parent.height - 60
-                                contentWidth: width
-                                contentHeight: descriptionText.height
-                                clip: true
+                    // Область описания
+                    Flickable {
+                        width: parent.width
+                        // Вычисляем высоту: вся высота колонки минус высота заголовка и ручки (прим. 60px)
+                        height: parent.height - 60
+                        contentWidth: width
+                        contentHeight: descriptionText.height
+                        clip: true
 
-                                Text {
-                                    id: descriptionText
-                                    width: parent.width
-                                    text: videoDetails ? (videoDetails["description"] || "") : ""
-                                    color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap
-                                    font.family: "Nokia Pure Text"
-                                }
-                            }
+                        Text {
+                            id: descriptionText
+                            width: parent.width
+                            text: videoDetails ? (videoDetails["description"] || "") : ""
+                            color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap
+                            font.family: "Nokia Pure Text"
                         }
                     }
                 }
+            }
+        }
     }
 }
