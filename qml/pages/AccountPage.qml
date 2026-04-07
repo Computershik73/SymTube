@@ -7,7 +7,7 @@ Rectangle {
 
     property bool isAuthenticated: Config.userToken !== ""
     property variant accountData: null
-
+    property int qrVersion: 0
 
     Connections {
         target: ApiManager
@@ -25,6 +25,7 @@ Rectangle {
 
         // Обработка новой картинки (сигнал, который мы добавили в C++)
         onAuthImageReady: {
+            qrVersion++;
             // Трюк для принудительного обновления картинки в кэше QML
             var temp = qrImage.source;
             qrImage.source = "";
@@ -41,7 +42,7 @@ Rectangle {
 
     Timer {
         id: pollingTimer
-        interval: 2000
+        interval: 10000
         repeat: true
         running: !isAuthenticated
         onTriggered: {
@@ -55,6 +56,7 @@ Rectangle {
         if (isAuthenticated) {
             loadAccountInfo();
         } else {
+            qrVersion++;
             pollingTimer.start();
             ApiManager.checkAuthContent();
         }
@@ -89,7 +91,7 @@ Rectangle {
                 id: qrImage
                 anchors.fill: parent
                 anchors.margins: 10
-                source: "image://qr/auth"
+                source: "image://qr/auth?" + qrVersion
                 fillMode: Image.PreserveAspectFit
                 visible: false // Скрыто, пока не сработает onAuthImageReady
                 //cache: false   // Отключаем кэширование, чтобы QR-код всегда обновлялся

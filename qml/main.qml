@@ -2,6 +2,7 @@ import QtQuick 1.0
 import QtMultimediaKit 1.1
 import "components"
 
+
 Rectangle {
     id: root
     width: 360
@@ -10,7 +11,12 @@ Rectangle {
 
     property string currentTab: "Home"
 
-    // --- СИСТЕМА ИНИЦИАЛИЗАЦИИ QTMULTIMEDIAKIT ПРИ ЗАПУСКЕ ---
+    // --- ПРИВЯЗКИ ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА ---
+    property bool isLandscape: width > height
+    property bool isVideoPageOpen: contentLoader.source.toString().indexOf("VideoPage.qml") !== -1
+    property bool isFullscreen: isLandscape && isVideoPageOpen
+
+    // Кикстарт (теперь без dummy файла, просто дергаем компонент)
     Loader {
         id: kickstartLoader
         anchors.fill: parent
@@ -29,7 +35,7 @@ Rectangle {
                 source: "../qml/Assets/dummy.mp4" // Путь к пустышке
                 fillMode: Video.Stretch
 
-                volume: 1.0 // Без звука, чтобы не пугать пользователя
+                volume: 0.1 // Без звука, чтобы не пугать пользователя
 
                 onStarted: {
                     console.log("success.");
@@ -57,12 +63,14 @@ Rectangle {
             }
         }
     }
-    // ---------------------------------------------------------
 
     Navbar {
         id: navbar
         anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-        height: 56; z: 10
+        // Скрываем навбар в полноэкранном режиме
+        height: isFullscreen ? 0 : 56
+        visible: !isFullscreen
+        z: 10
 
         onSearchRequested: {
             contentLoader.source = "pages/SearchPage.qml";
@@ -77,9 +85,12 @@ Rectangle {
         }
     }
 
+
     Loader {
         id: contentLoader
-        anchors.top: navbar.bottom; anchors.bottom: tabbar.top
+        // Занимаем весь экран, если включен Fullscreen
+        anchors.top: isFullscreen ? parent.top : navbar.bottom
+        anchors.bottom: isFullscreen ? parent.bottom : tabbar.top
         anchors.left: parent.left; anchors.right: parent.right
         source: "pages/HomePage.qml"
 
@@ -91,7 +102,10 @@ Rectangle {
     Tabbar {
         id: tabbar
         anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
-        height: 50; z: 10
+        // Скрываем таббар в полноэкранном режиме
+        height: isFullscreen ? 0 : 50
+        visible: !isFullscreen
+        z: 10
 
         onTabClicked: {
             root.currentTab = tabName;
@@ -103,10 +117,8 @@ Rectangle {
         }
     }
 
-    // Глобальная функция навигации
     function navigateToVideo(videoId) {
         navbar.showBackButton = true;
-        // Грузим чистую страницу видео
         contentLoader.source = "pages/VideoPage.qml";
         if (contentLoader.item && typeof contentLoader.item.loadVideo !== "undefined") {
             contentLoader.item.loadVideo(videoId);

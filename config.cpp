@@ -4,7 +4,7 @@ Config::Config(QObject *parent) : QObject(parent)
 {
     m_settings = new QSettings("YouTubeClient", "Settings", this);
 
-    m_apiBaseUrl = m_settings->value("ApiBaseUrl", "https://yt.swlbst.ru/").toString();
+    m_apiBaseUrl = m_settings->value("ApiBaseUrl", "https://yt.modyleprojects.ru/").toString();
     if (!m_apiBaseUrl.endsWith("/")) {
         m_apiBaseUrl += "/";
     }

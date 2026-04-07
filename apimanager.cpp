@@ -8,7 +8,7 @@
 #include <QImage>
 
 ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent)
-    : QObject(parent), m_config(config), m_qrProvider(qrProvider)
+    : QObject(parent), m_config(config), m_qrProvider(qrProvider) // Снова принимаем провайдер здесь
 {
     m_networkManager = new QNetworkAccessManager(this);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
@@ -16,6 +16,11 @@ ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *par
 
 ApiManager::~ApiManager()
 {
+}
+
+void ApiManager::setImageProvider(QrImageProvider *provider)
+{
+    m_qrProvider = provider;
 }
 
 void ApiManager::sendRequest(const QString &url, const QString &requestType)
@@ -40,11 +45,11 @@ void ApiManager::getHomeVideos(const QString &pageToken)
         sendRequest(url, "HomeVideos");
     } else {
         QString apiKey = m_config->apiKey();
-        if (apiKey.isEmpty()) {
+        /*if (apiKey.isEmpty()) {
             emit requestFailed("HomeVideos", "API key is missing");
             return;
-        }
-        url = m_config->apiBaseUrl() + "get_top_videos.php?apikey=" + apiKey;
+        }*/
+        url = m_config->apiBaseUrl() + "get_top_videos.php";
         if (!pageToken.isEmpty()) url += "&pageToken=" + pageToken;
         sendRequest(url, "HomeVideos");
     }
@@ -226,28 +231,28 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         }
     }
     else if (requestType == "VideoInfo" || requestType == "ChannelVideos") {
-            if (parseSuccess && parsedJson.type() == QVariant::Map) {
+        if (parseSuccess && parsedJson.type() == QVariant::Map) {
 
-                QVariantMap map = parsedJson.toMap();
+            QVariantMap map = parsedJson.toMap();
 
-                // --- УНИВЕРСАЛЬНЫЙ ДЕКОДЕР ---
-               /* if (map.contains("channel_thumbnail")) {
+            // --- УНИВЕРСАЛЬНЫЙ ДЕКОДЕР ---
+             if (map.contains("channel_thumbnail")) {
                     QString url = map.value("channel_thumbnail").toString();
 
                     // Просто заменяем %25 на % на случай, если сервер прислал двойную кодировку.
                     // Это превратит "https%253A" в "https%3A", не ломая саму ссылку "http://..."
-                   `````````````````````````````````1 url = url.replace("%25", "%").replace("%25", "%").replace("%25", "%").replace("%25", "%").replace("%25", "%").replace("%25", "%");
+                   url = url.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
 
                     map.insert("channel_thumbnail", url);
-                }*/
-                // -----------------------------
+                }
+            // -----------------------------
 
-                if (requestType == "VideoInfo") emit videoInfoReady(map);
-                else emit channelVideosReady(map);
-            } else {
-                emit requestFailed(requestType, "JSON parse error");
-            }
+            if (requestType == "VideoInfo") emit videoInfoReady(map);
+            else emit channelVideosReady(map);
+        } else {
+            emit requestFailed(requestType, "JSON parse error");
         }
+    }
     else if (requestType == "CheckRating") {
         if (parseSuccess && parsedJson.type() == QVariant::Map) {
             QVariantMap map = parsedJson.toMap();
@@ -291,22 +296,41 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     }
     else if (requestType == "AuthContent") {
         QString content = extractContentFromYtreq(responseString);
+
         if (content.startsWith("Token:", Qt::CaseInsensitive)) {
             emit authContentReady(content.mid(6).trimmed(), "Token");
-        } else if (content.contains("base64,") || (content.length() > 100 && !content.contains(" "))) {
+        }
+        // Если длина больше 100 символов, то это точно наш Base64 QR-код (токены короче)
+        else if (content.length() > 100) {
             QString base64Data = content;
+
+            // Если сервер прислал префикс, убираем его
             int b64Index = base64Data.indexOf("base64,");
             if (b64Index != -1) {
                 base64Data = base64Data.mid(b64Index + 7);
             }
 
+            // ЖЕСТКАЯ ОЧИСТКА: удаляем все пробелы и переносы строк,
+            // которые могут сломать декодер Base64
+            base64Data = base64Data.remove('\n').remove('\r').remove(' ');
+
+            // Декодируем и загружаем
             QByteArray imgData = QByteArray::fromBase64(base64Data.toAscii());
             QImage img;
-            img.loadFromData(imgData);
+            bool success = img.loadFromData(imgData);
 
-            if (!img.isNull() && m_qrProvider) {
+            qDebug() << "[Auth] Размер Base64:" << base64Data.length();
+            qDebug() << "[Auth] Декодирование картинки успешно:" << success;
+
+            if (success && m_qrProvider) {
+                // ВАЖНО: Если вы меняли провайдер на поддержку ID (как мы делали для иконок),
+                // то вызов должен быть: m_qrProvider->setImage("auth", img);
+                // Если оставили старый QrImageProvider, то просто:
                 m_qrProvider->setImage(img);
+
                 emit authImageReady();
+            } else {
+                qDebug() << "[Auth] ОШИБКА: QImage не смог прочитать данные!";
             }
         } else {
             emit authContentReady(content, "Unknown");

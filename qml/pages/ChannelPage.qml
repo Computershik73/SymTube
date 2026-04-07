@@ -91,7 +91,7 @@ Rectangle {
                     width: 80; height: 80; radius: 40; color: "#333"; clip: true
                     Image {
                         anchors.fill: parent
-                        source: channelData && channelData.channel_info ? decodeURIComponent(channelData.channel_info["thumbnail"] || "") : ""
+                        source: channelData && channelData.channel_info ? decodeURIComponent(channelData.channel_info["thumbnail"].replace("yt.modyleprojects.ru", "yt.swlbst.ru") || "") : ""
                         fillMode: Image.PreserveAspectCrop
                     }
                 }

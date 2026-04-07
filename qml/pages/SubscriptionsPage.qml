@@ -96,7 +96,7 @@ Rectangle {
                         
                         Image {
                             anchors.fill: parent
-                            source: model.modelData.local_thumbnail ? model.modelData.local_thumbnail : ""
+                            source: model.modelData.local_thumbnail ? model.modelData.local_thumbnail.replace("yt.modyleprojects.ru", "yt.swlbst.ru") : ""
                             fillMode: Image.PreserveAspectCrop
                         }
                     }

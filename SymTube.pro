@@ -1,6 +1,6 @@
 # Add more folders to ship with the application, here
 folder_01.source = qml
-folder_01.target = qml
+folder_01.target = .
 DEPLOYMENTFOLDERS = folder_01
 QT += core quick gui qml multimedia multimedia-private network declarative widgets
 CONFIG += mobility
@@ -12,6 +12,22 @@ QML_IMPORT_PATH =
 symbian:TARGET.UID3 = 0xE748633B
 
 TARGET.EPOCHEAPSIZE = 0x20000 0x2000000 # Увеличение хипа для парсинга JSON и картинок
+PKG_VERSION = "0,1,0"
+
+vendor_info = \
+        " " \
+        "; Localised Vendor name" \
+        "%{\"Computershik\"}" \
+        " " \
+        "; Unique Vendor name" \
+        ":\"Computershik\"" \
+        " "
+    package.pkg_prerules += vendor_info
+
+    header = "$${LITERAL_HASH}{\"SymTube\"},(0xE748633B),$$PKG_VERSION,TYPE=SA,RU"
+    package.pkg_prerules += header
+
+    DEPLOYMENT += package
 
 # Smart Installer package's UID
 # This UID is from the protected range and therefore the package will
@@ -30,6 +46,8 @@ symbian:TARGET.CAPABILITY += NetworkServices
 MOC_DIR = moc
 OBJECTS_DIR = obj
 UI_DIR = ui
+
+
 
 
 HEADERS += \

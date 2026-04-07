@@ -18,6 +18,7 @@ class ApiManager : public QObject
 
 public:
     explicit ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent = 0);
+    void setImageProvider(QrImageProvider *provider);
     ~ApiManager();
 
     // Home API

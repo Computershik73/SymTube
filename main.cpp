@@ -1,61 +1,88 @@
 #include <QtGui/QApplication>
-#include <QtDeclarative/QDeclarativeView>
-#include <QtDeclarative/QDeclarativeContext>
-#include <QtDeclarative/qdeclarative.h>
 #include "qmlapplicationviewer.h"
-#include "qrimageprovider.h"
-#include <QDeclarativeEngine>
+#include <QtDeclarative/QDeclarativeContext>
+#include <QtDeclarative/QDeclarativeEngine>
+#include <QtDeclarative/qdeclarative.h>
+
+// Ваши сетевые заголовки
 #include <QNetworkConfigurationManager>
 #include <QNetworkConfiguration>
 #include <QNetworkSession>
 #include <QNetworkProxy>
+#include <QTextCodec>
+#include <dlfcn.h>
 
-
+// Наши классы
 #include "config.h"
 #include "apimanager.h"
 #include "historymanager.h"
+#include "qrimageprovider.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    // Инициализация менеджеров
-    Config config;
-    QrImageProvider *qrProvider = new QrImageProvider();
-    ApiManager apiManager(&config, qrProvider);
-    HistoryManager historyManager;
+    QApplication::setAttribute(Qt::AA_S60DisablePartialScreenInputMode, false);
 
+    // Динамическая загрузка фикса для частичной клавиатуры (Qt 4.8+ specific hack)
+    void* library = dlopen("QtGui", 0);
+    if (library != 0) {
+        // Символ для qt_s60_setPartialScreenAutomaticTranslation(bool)
+        void* func = dlsym(library, "12199");
+        if (func != 0) {
+            ((void(*)(bool)) func)(false);
+        }
+        dlclose(library);
+    }
+
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+    QTextCodec::setCodecForTr(codec);
+    QTextCodec::setCodecForCStrings(codec);
+    QTextCodec::setCodecForLocale(codec);
+
+    // 1. Настройка сети (как у вас)
     QNetworkConfigurationManager manager;
     if (manager.capabilities() & QNetworkConfigurationManager::NetworkSessionRequired) {
+        // На Symbian это обязательно для установления соединения
         QNetworkConfiguration config = manager.defaultConfiguration();
-        QNetworkSession *networkSession = new QNetworkSession(config);
+        QNetworkSession *networkSession = new QNetworkSession(config, &app); // Привязываем к жизни приложения
         networkSession->open();
     }
 
     QNetworkProxy proxy;
-         proxy.setType(QNetworkProxy::HttpProxy);
-         proxy.setHostName("192.168.1.183");
-         proxy.setPort(8890);
-      //   QNetworkProxy::setApplicationProxy(proxy);
+    proxy.setType(QNetworkProxy::HttpProxy);
+    proxy.setHostName("192.168.1.183");
+    proxy.setPort(8890);
+    //QNetworkProxy::setApplicationProxy(proxy);
 
+    // 2. Инициализация менеджеров
+    Config config;
+    // Создаем провайдер ПЕРЕД ApiManager
+    QrImageProvider *qrProvider = new QrImageProvider();
+    // Передаем указатель на провайдер в конструктор
+    ApiManager apiManager(&config, qrProvider);
+    HistoryManager historyManager;
 
+    // 3. Используем чистый QDeclarativeView
     QmlApplicationViewer view;
 
+    // 4. Добавляем Image Provider в движок QML
     view.engine()->addImageProvider(QLatin1String("qr"), qrProvider);
 
     // Оптимизации для Symbian
-    view.setAttribute(Qt::WA_OpaquePaintEvent);
-    view.setAttribute(Qt::WA_NoSystemBackground);
-    view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    //view.setAttribute(Qt::WA_OpaquePaintEvent);
+    //view.setAttribute(Qt::WA_NoSystemBackground);
+    //view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
+    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
-    // Пробрасываем C++ объекты в QML
+    // 5. Пробрасываем C++ объекты в QML
     QDeclarativeContext *context = view.rootContext();
     context->setContextProperty("Config", &config);
     context->setContextProperty("ApiManager", &apiManager);
     context->setContextProperty("HistoryManager", &historyManager);
 
-    view.setSource(QUrl::fromLocalFile("qml/qml/main.qml"));
+    // 6. Загружаем QML
+    view.setSource(QUrl::fromLocalFile("qml/main.qml"));
 
 #if defined(Q_OS_SYMBIAN)
     view.showFullScreen();

@@ -64,7 +64,7 @@ Item {
                 
                 Image {
                     anchors.fill: parent
-                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail : "../Assets/placeholder.png"
+                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail.replace("yt.modyleprojects.ru", "yt.swlbst.ru") : "../Assets/placeholder.png"
                     fillMode: Image.PreserveAspectCrop
                 }
             }
@@ -80,7 +80,7 @@ Item {
                     width: parent.width
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
-					font.family: "Nokia Pure Text"
+                                        //font.family: "Nokia Pure Text"
                     // Вместо maximumLineCount в QtQuick 1.0 используем фиксированную высоту
                     // 16px шрифт + межстрочный интервал = примерно 38-40 пикселей для двух строк
                     height: 38
@@ -93,7 +93,7 @@ Item {
                     font.pixelSize: 14
                     width: parent.width
                     elide: Text.ElideRight
-					font.family: "Nokia Pure Text"
+                                        //font.family: "Nokia Pure Text"
                 }
 
                 Row {
