@@ -30,7 +30,7 @@ Rectangle {
                                         "author": videoDetails.author,
                                         "thumbnail": videoDetails.thumbnail
         });
-            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http");
+            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
             videoPlayer.source = directUrl;
             videoPlayer.play();
         }
@@ -173,42 +173,63 @@ Rectangle {
                     anchors.rightMargin: 10
                     height: 30
 
-                    // Серая полоска (фон)
+                    // 1. Темно-серая полоска (Фон / вся длина)
                     Rectangle {
                         anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        height: 4; color: "#666666"; radius: 2
+                        height: 4; color: "#444444"; radius: 2
                     }
 
-                    // Красная полоска (прогресс)
+                    // 2. Светло-серая полоска (Буфер загрузки)
+                    Rectangle {
+                        anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                        height: 4; color: "#888888"; radius: 2
+                        // Ширина зависит от свойства bufferProgress (0.0 ... 1.0)
+                        width: (videoPlayer.bufferProgress !== undefined ? videoPlayer.bufferProgress : 0) * parent.width
+                    }
+
+                    // 3. Красная полоска (Текущий прогресс воспроизведения)
                     Rectangle {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                         height: 4; color: "red"; radius: 2
                         width: videoPlayer.duration > 0 ? (videoPlayer.position / videoPlayer.duration) * parent.width : 0
                     }
 
-                    // Ползунок (кружок)
+                    // 4. Ползунок (кружок)
                     Rectangle {
                         width: 16; height: 16; radius: 8; color: "red"
                         anchors.verticalCenter: parent.verticalCenter
                         x: (videoPlayer.duration > 0 ? (videoPlayer.position / videoPlayer.duration) * parent.width : 0) - 8
                     }
 
-                    // Обработка перемотки
+                    // Обработка ручной перемотки ползунком
                     MouseArea {
                         anchors.fill: parent
                         anchors.topMargin: -10
                         anchors.bottomMargin: -10
 
-                        function seekToMouse(mouseX, areaWidth) {
+                        function safeSeekToMouse(mouseX, areaWidth) {
                             if (videoPlayer.duration <= 0) return;
+
                             var ratio = mouseX / areaWidth;
                             if (ratio < 0) ratio = 0;
                             if (ratio > 1) ratio = 1;
-                            videoPlayer.position = ratio * videoPlayer.duration;
+
+                            var targetPos = ratio * videoPlayer.duration;
+
+                            // ВЫЧИСЛЯЕМ МАКСИМАЛЬНО ДОПУСТИМУЮ ПОЗИЦИЮ (Буфер минус 2 секунды запаса)
+                            var maxPos = (videoPlayer.duration * (videoPlayer.bufferProgress || 0)) - 2000;
+                            if (maxPos < 0) maxPos = 0;
+
+                            // Блокируем перемотку в непрогруженную зону
+                            if (targetPos > maxPos) {
+                                targetPos = maxPos;
+                            }
+
+                            videoPlayer.position = targetPos;
                         }
 
-                        onClicked: { seekToMouse(mouse.x, width); controlsTimer.restart(); }
-                        onPositionChanged: { seekToMouse(mouse.x, width); controlsTimer.restart(); }
+                        onClicked: { safeSeekToMouse(mouse.x, width); controlsTimer.restart(); }
+                        onPositionChanged: { safeSeekToMouse(mouse.x, width); controlsTimer.restart(); }
                     }
                 }
             }
