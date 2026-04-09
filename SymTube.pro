@@ -55,7 +55,8 @@ HEADERS += \
     config.h \
     apimanager.h \
     historymanager.h \
-    qrimageprovider.h
+    qrimageprovider.h \
+    roundedimageprovider.h
 
 SOURCES += \
     main.cpp \
@@ -63,7 +64,8 @@ SOURCES += \
     config.cpp \
     apimanager.cpp \
     historymanager.cpp \
-    qrimageprovider.cpp
+    qrimageprovider.cpp \
+    roundedimageprovider.cpp
 
 OTHER_FILES += \
     qml/*.qml \

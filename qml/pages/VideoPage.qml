@@ -1,5 +1,6 @@
 import QtQuick 1.0
 import QtMultimediaKit 1.1
+import "../components"
 
 Rectangle {
     id: videoPage
@@ -10,6 +11,7 @@ Rectangle {
     property string currentVideoId: ""
     property variant videoDetails: null
     property bool isPlaying: false
+    property variant relatedVideos:[]
 
     // Перехватываем альбомную ориентацию
     property bool isLandscape: width > height
@@ -32,20 +34,25 @@ Rectangle {
                                         "author": videoDetails.author,
                                         "thumbnail": videoDetails.thumbnail
         });
-            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http");
-            //.replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
             videoPlayer.source = directUrl;
             videoPlayer.play();
+        }
+        onRelatedVideosReady: {
+            if (!videoPage.visible) return;
+            relatedVideos = videos;
         }
     }
 
     function loadVideo(videoId) {
         currentVideoId = videoId;
         videoDetails = null;
+        relatedVideos =[];
         videoPlayer.stop();
         videoPlayer.source = "";
         isPlaying = false;
         ApiManager.getVideoInfo(videoId);
+        ApiManager.getRelatedVideos(videoId, 0);
     }
 
     // --- БЛОК ПЛЕЕРА ---
@@ -64,6 +71,23 @@ Rectangle {
         property bool isUserDraggingSlider: false
         property real sliderDragRatio: 0.0
 
+        property int recoveryPosition: -1
+        property string savedSource: ""
+        property int recoveryAttempts: 0
+        property int lastIntendedPosition: -1
+
+        Timer {
+            id: recoveryTimer
+            interval: 200 // Ждем 200 мс, чтобы Symbian "успокоился"
+            repeat: false
+            onTriggered: {
+                console.log("Выполняем безопасный сброс источника...");
+                videoPlayer.source = "";
+                videoPlayer.source = playerContainer.savedSource;
+                // Плеер начнет грузить видео. onStatusChanged поймает Loaded и перемотает.
+            }
+        }
+
         Video {
             id: videoPlayer
             anchors.fill: parent
@@ -74,11 +98,13 @@ Rectangle {
                 videoPage.isSeeking = false;
                 isPlaying = true;
                 controlsTimer.restart();
+                playerContainer.recoveryAttempts = 0;
             }
             onResumed: {
                 videoPage.isSeeking = false;
                 isPlaying = true;
                 controlsTimer.restart();
+                playerContainer.recoveryAttempts = 0;
             }
             onPaused: {
                 isPlaying = false;
@@ -94,38 +120,79 @@ Rectangle {
 
             // Отслеживание буферизации
             onStatusChanged: {
-                if (status === Video.EndOfMedia || status === Video.InvalidMedia) {
-                    videoPage.isSeeking = false;
-                    isPlaying = false;
+                if (status === Video.Loaded) {
+                    // Если мы восстанавливаемся после ошибки
+                    if (playerContainer.recoveryPosition !== -1) {
+                        console.log("Восстановление: прыжок на " + playerContainer.recoveryPosition);
+                        // Вызываем safeSeek напрямую, чтобы сохранить цепочку
+                        var target = playerContainer.recoveryPosition;
+                        playerContainer.recoveryPosition = -1;
+                        playerContainer.performSafeSeek(target);
+                    }
+                }
+
+                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+                    // Если это не наша контролируемая ошибка
+                    if (playerContainer.recoveryPosition === -1) {
+                        videoPage.isSeeking = false;
+                        isPlaying = false;
+
+                    }
                 }
             }
 
             // Логгирование реальных ошибок Symbian
             onError: {
                 console.log("Video Error [" + error + "]: " + errorString);
-                videoPage.isSeeking = false;
-                isPlaying = false;
+
+                // Если это ошибка перемотки и мы не в процессе восстановления
+                if (errorString.indexOf("-36") !== -1 && playerContainer.recoveryAttempts < 3) {
+                    console.log("Зафиксирован краш декодера. Подготовка к восстановлению...");
+
+                    playerContainer.recoveryAttempts++;
+
+                    if (playerContainer.lastIntendedPosition !== -1) {
+                        playerContainer.recoveryPosition = playerContainer.lastIntendedPosition;
+                    } else {
+                        playerContainer.recoveryPosition = videoPlayer.position;
+                    }
+
+                    // Сохраняем ссылку как строку, чтобы не потерять
+                    playerContainer.savedSource = videoPlayer.source.toString();
+
+                    videoPlayer.stop();
+
+                    // Запускаем таймер и ВЫХОДИМ ИЗ СИГНАЛА! Это спасет от краха 0x0.
+                    recoveryTimer.start();
+
+                } else {
+                    // Если это другая ошибка - просто останавливаем
+                    videoPage.isSeeking = false;
+                    isPlaying = false;
+                    playerContainer.recoveryPosition = -1;
+                }
             }
         }
 
         // --- БЕЗОПАСНАЯ ПЕРЕМОТКА ---
-        function performSafeSeek(newPos) {
+        function  performSafeSeek(newPos) {
             if (!videoPlayer.seekable || videoPlayer.duration <= 0) return;
 
             if (newPos > videoPlayer.duration) newPos = videoPlayer.duration;
             if (newPos < 0) newPos = 0;
 
+            // СОХРАНЯЕМ позицию на случай краха -36
+            playerContainer.lastIntendedPosition = newPos;
+
             videoPage.isSeeking = true;
             var wasPlaying = isPlaying;
 
-            // На Symbian лучше сделать паузу перед seek, чтобы сбросить сетевой буфер
             if (wasPlaying) videoPlayer.pause();
 
             videoPlayer.position = newPos;
 
-            // Если видео играло, play() вызовет onResumed, который снимет флаг isSeeking
-            if (wasPlaying) videoPlayer.play();
-            else videoPage.isSeeking = false; // Если было на паузе, снимаем блокировку сразу
+            videoPlayer.play();
+            if (!wasPlaying) videoPage.isSeeking = false;
         }
 
         // Таймер для накопления тапов (+10/-10)
@@ -147,12 +214,14 @@ Rectangle {
             anchors.fill: parent
 
             onClicked: {
+                if (spinner.visible) return;
                 controlsOverlay.visible = !controlsOverlay.visible;
                 if (controlsOverlay.visible && isPlaying) controlsTimer.restart();
                 else controlsTimer.stop();
             }
 
             onDoubleClicked: {
+                if (spinner.visible) return;
                 if (videoPage.isSeeking) return;
 
                 var zone = mouse.x / width;
@@ -310,62 +379,102 @@ Rectangle {
     Flickable {
         anchors.top: playerContainer.bottom; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
         contentWidth: parent.width; contentHeight: contentColumn.height + 40; clip: true
-
-        // Скрываем ленту под видео, если телефон повернут (полноэкранный режим)
         visible: !isLandscape
 
         Column {
             id: contentColumn
             width: parent.width; spacing: 0
 
+            // Название
             Item { width: parent.width; height: titleText.height + 32
                 Text {
                     id: titleText; x: 16; y: 16; width: parent.width - 32
                     text: videoDetails ? (videoDetails["title"] || "Загрузка...") : ""
                     color: "white"; font.pixelSize: 18; font.bold: true
-                    wrapMode: Text.WordWrap
-                    //font.family: "Nokia Pure Text"
+                    wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
                 }
             }
 
+            // Просмотры
             Text { x: 16; text: videoDetails ? ((videoDetails["views"] || "0") + " просмотров") : ""; color: "gray"; font.pixelSize: 14 }
 
+            // --- КЛИКАБЕЛЬНЫЙ БЛОК АВТОРА ---
             Item {
                 width: parent.width; height: 60
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        // Переходим на канал по custom_url или имени автора
+                        var channelId = videoDetails["channel_custom_url"] || videoDetails["author"];
+                        if (channelId) {
+                            root.navigateToChannel(channelId);
+                        }
+                    }
+                }
+
                 Row {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        Image { anchors.fill: parent; source: videoDetails ? (videoDetails["channel_thumbnail"].replace("yt.modyleprojects.ru", "yt.swlbst.ru") || "") : ""; fillMode: Image.PreserveAspectCrop }
+                        Image { anchors.fill: parent; source: videoDetails ? (videoDetails["channel_thumbnail"] || "") : ""; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 100
+                        // ИСПРАВЛЕНИЕ: Явная ширина относительно ширины страницы минус отступы
+                        width: videoPage.width - 100
                         Text {
-                            text: videoDetails ? (videoDetails["author"]) : ""; color: "white"; font.pixelSize: 16; font.bold: true
-                            //font.family: "Nokia Pure Text";
-                            width: parent.width; elide: Text.ElideRight
+                            text: videoDetails ? (videoDetails["author"] || "Неизвестно") : ""; color: "white"; font.pixelSize: 16; font.bold: true
+                            font.family: "Nokia Pure Text"; width: parent.width; elide: Text.ElideRight
                         }
                         Text { text: videoDetails ? (videoDetails["subscriberCount"] || "") + " подписчиков" : ""; color: "gray"; font.pixelSize: 12 }
                     }
                 }
             }
 
+            // Краткое описание
             Rectangle {
                 x: 16; width: parent.width - 32; height: 80
                 color: "#272727"; radius: 12; clip: true
                 Text {
                     x: 12; y: 12; width: parent.width - 24; height: 56
                     text: videoDetails ? (videoDetails["description"] || "Нет описания") : ""
-                    color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; elide: Text.ElideRight
-                    //font.family: "Nokia Pure Text"
+                    color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; elide: Text.ElideRight; font.family: "Nokia Pure Text"
                 }
                 MouseArea { anchors.fill: parent; onClicked: descriptionSheet.state = "visible" }
+            }
+
+            // --- СВЯЗАННЫЕ ВИДЕО (РЕКОМЕНДАЦИИ) ---
+            Item { width: parent.width; height: 20 } // Отступ
+
+            Text {
+                x: 16; text: "Похожие видео"
+                color: "white"; font.pixelSize: 18; font.bold: true
+                font.family: "Nokia Pure Text"
+                visible: relatedVideos.length > 0
+            }
+
+            Item { width: parent.width; height: 12 } // Отступ
+
+            Column {
+                width: parent.width
+                spacing: 12
+                // В QML 1.0 Repeater используется для создания списка внутри Column, чтобы он прокручивался вместе со страницей
+                Repeater {
+                    model: relatedVideos
+                    delegate: VideoCard {
+                        // QVariantList передает элементы через model.modelData
+                        modelData: model.modelData
+                        onClicked: {
+                            root.navigateToVideo(videoId)
+                        }
+                    }
+                }
             }
         }
     }
 
-    // Шторка с описанием (без изменений)
+    // --- Шторка описания (без изменений) ---
     Rectangle {
         id: descriptionSheet
         anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
@@ -393,8 +502,7 @@ Rectangle {
                         Text {
                             id: descriptionText; width: parent.width
                             text: videoDetails ? (videoDetails["description"] || "") : ""
-                            color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap
-                            //; font.family: "Nokia Pure Text"
+                            color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
                         }
                     }
                 }

@@ -7,30 +7,32 @@ Rectangle {
     color: "black"
 
     property variant subsModel: []
-    property variant videosModel:[]
+    property variant videosModel: []
 
     Connections {
         target: ApiManager
-        
+
         onSubscriptionsReady: {
             loadingIndicator.visible = false
             subsModel = subscriptions
-            
+
             // Если есть подписки, сразу грузим видео первого канала
             if (subscriptions.length > 0) {
-                var firstAuthorUrl = subscriptions[0].profile_url
-                var author = firstAuthorUrl.split("author=")[1]
-                if (author) {
+                // Используем нашу новую функцию для надежности
+                var author = extractChannelId(subscriptions[0].profile_url || "")
+                if (author !== "") {
                     loadingIndicator.visible = true
                     ApiManager.getChannelVideos(author)
                 }
             }
         }
-        
+
         onChannelVideosReady: {
             loadingIndicator.visible = false
             if (channelData && channelData.videos) {
                 videosModel = channelData.videos
+            } else {
+                videosModel = []
             }
         }
     }
@@ -41,12 +43,25 @@ Rectangle {
             errorText.visible = true
             return
         }
-        
+
         if (subsModel.length === 0) {
             loadingIndicator.visible = true
             errorText.visible = false
             ApiManager.getSubscriptions()
         }
+    }
+
+    function extractChannelId(url) {
+        if (!url) return "";
+        if (url.indexOf("author=") !== -1) {
+            return url.split("author=")[1].split("&")[0];
+        }
+        var parts = url.split("/");
+        var lastPart = parts[parts.length - 1];
+        if (lastPart.indexOf("?") !== -1) {
+            lastPart = lastPart.split("?")[0];
+        }
+        return lastPart;
     }
 
     Text {
@@ -56,7 +71,7 @@ Rectangle {
         font.pixelSize: 18
         anchors.centerIn: parent
         visible: false
-        z: 5
+        z: 10
     }
 
     Text {
@@ -68,39 +83,66 @@ Rectangle {
         visible: false
     }
 
-    Column {
+    // --- ИСПРАВЛЕНИЕ: Заменили Column на Item, чтобы разрешить anchors у вложенных списков ---
+    Item {
         anchors.fill: parent
         visible: !errorText.visible
 
         // Горизонтальный список подписок
         ListView {
             id: channelsList
+            anchors.top: parent.top
             width: parent.width
             height: 120
             orientation: ListView.Horizontal
             model: subsModel
             spacing: 16
-            
+
             delegate: Item {
                 width: 80
                 height: 120
-                
+
                 Column {
                     anchors.centerIn: parent
                     spacing: 8
-                    
-                    Rectangle {
-                        width: 70; height: 70; radius: 35
-                        color: "#333333"; clip: true
+
+                    Item {
+                        width: 70; height: 70
                         anchors.horizontalCenter: parent.horizontalCenter
-                        
+
                         Image {
+                            id: channelAvatar
                             anchors.fill: parent
-                            source: model.modelData.local_thumbnail ? model.modelData.local_thumbnail.replace("yt.modyleprojects.ru", "yt.swlbst.ru") : ""
-                            fillMode: Image.PreserveAspectCrop
+
+                            // ФОРМИРУЕМ URL ДЛЯ C++ ПРОВАЙДЕРА
+                            source: {
+                                var rawUrl = model.modelData.local_thumbnail;
+                                if (!rawUrl) return "";
+
+                                // Исправляем домен (если нужно) и кодируем URL целиком
+                                //var fixedUrl = rawUrl.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
+                                return "image://rounded/" + encodeURIComponent(rawUrl);
+                            }
+
+                            // Важные настройки для Symbian:
+                            asynchronous: true    // Грузим в фоне
+                            smooth: true          // Сглаживание при масштабировании
+                            fillMode: Image.PreserveAspectFit
+
+                            // Оптимизация: просим C++ вернуть картинку в нужном размере
+                            sourceSize.width: 70
+                            sourceSize.height: 70
+
+                            // Пока картинка грузится, показываем серый круг
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 35
+                                color: "#333333"
+                                visible: channelAvatar.status !== Image.Ready
+                            }
                         }
                     }
-                    
+
                     Text {
                         text: model.modelData.title ? model.modelData.title : ""
                         color: "white"
@@ -110,15 +152,16 @@ Rectangle {
                         elide: Text.ElideRight
                     }
                 }
-                
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        var authorUrl = model.modelData.profile_url
-                        var author = authorUrl.split("author=")[1]
-                        if (author) {
-                            videosModel = [] // Очищаем список перед загрузкой нового
-                            ApiManager.getChannelVideos(author)
+                        var rawUrl = model.modelData.profile_url || "";
+                        var authorId = extractChannelId(rawUrl);
+                        if (authorId !== "") {
+                            videosModel = []
+                            loadingIndicator.visible = true
+                            ApiManager.getChannelVideos(authorId);
                         }
                     }
                 }
@@ -128,11 +171,21 @@ Rectangle {
         // Список видео текущего выбранного канала
         ListView {
             id: channelVideosList
-            width: parent.width
-            height: parent.height - 130
+            // Привязываем к низу верхнего списка
+            anchors.top: channelsList.bottom
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: 10
+
             model: videosModel
-            spacing: 10
-            
+
+            // --- ИСПРАВЛЕНИЕ: Увеличили spacing, чтобы текст не лез на следующую карточку ---
+            spacing: 25
+
+            // Оптимизация скролла для Symbian
+            cacheBuffer: 1000
+
             delegate: VideoCard {
                 modelData: model.modelData
                 onClicked: {

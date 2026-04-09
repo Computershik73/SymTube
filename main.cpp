@@ -17,6 +17,7 @@
 #include "apimanager.h"
 #include "historymanager.h"
 #include "qrimageprovider.h"
+#include "roundedimageprovider.h"
 
 int main(int argc, char *argv[])
 {
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 
     // 4. Добавляем Image Provider в движок QML
     view.engine()->addImageProvider(QLatin1String("qr"), qrProvider);
+    view.engine()->addImageProvider(QLatin1String("rounded"), new RoundedImageProvider());
 
     // Оптимизации для Symbian
     //view.setAttribute(Qt::WA_OpaquePaintEvent);
