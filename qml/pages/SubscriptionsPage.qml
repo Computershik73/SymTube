@@ -119,13 +119,19 @@ Rectangle {
                                 var rawUrl = model.modelData.local_thumbnail;
                                 if (!rawUrl) return "";
 
-                                // Исправляем домен (если нужно) и кодируем URL целиком
-                                //var fixedUrl = rawUrl.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
-                                return "image://rounded/" + encodeURIComponent(rawUrl);
+                                // 1. Очищаем ссылку от домена и https, оставляя только хвост
+                                // Нам нужно передать в C++ только финальную прямую ссылку на картинку
+                                var cleanUrl = rawUrl.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
+
+                                // 2. Теперь кодируем только этот чистый хвост (https%3A%2F%2F...)
+                                // и добавляем префикс провайдера
+                                return "image://rounded/" + encodeURIComponent(decodeURIComponent(cleanUrl));
                             }
 
+
+
                             // Важные настройки для Symbian:
-                            asynchronous: true    // Грузим в фоне
+                            //asynchronous: true    // Грузим в фоне
                             smooth: true          // Сглаживание при масштабировании
                             fillMode: Image.PreserveAspectFit
 

@@ -52,6 +52,8 @@ public:
 
     void downloadChannelIcon(const QString &url);
 
+    void sanitizeVideoList(QVariantList &list);
+
 signals:
     // Сигналы для QML об успешном получении данных
     void homeVideosReady(QVariantList videos);

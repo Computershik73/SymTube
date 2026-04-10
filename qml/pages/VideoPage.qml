@@ -406,7 +406,7 @@ Rectangle {
                     anchors.fill: parent
                     onClicked: {
                         // Переходим на канал по custom_url или имени автора
-                        var channelId = videoDetails["channel_custom_url"] || videoDetails["author"];
+                        var channelId = videoDetails["channel_custom_url"];
                         if (channelId) {
                             root.navigateToChannel(channelId);
                         }
@@ -417,7 +417,7 @@ Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        Image { anchors.fill: parent; source: videoDetails ? (videoDetails["channel_thumbnail"] || "") : ""; fillMode: Image.PreserveAspectCrop }
+                        Image { anchors.fill: parent; source: videoDetails ? ("http://yt.modyleprojects.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter

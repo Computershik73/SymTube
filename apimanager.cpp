@@ -18,6 +18,28 @@ ApiManager::~ApiManager()
 {
 }
 
+void ApiManager::sanitizeVideoList(QVariantList &list) {
+    for (int i = 0; i < list.size(); ++i) {
+        QVariantMap map = list[i].toMap();
+
+        // Исправляем превью видео
+        if (map.contains("thumbnail")) {
+            QString url = map["thumbnail"].toString();
+            url.replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            map["thumbnail"] = url;
+        }
+
+        // Исправляем аватарку канала
+        if (map.contains("channel_thumbnail")) {
+            QString url = map["channel_thumbnail"].toString();
+            url.replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            map["channel_thumbnail"] = url;
+        }
+
+        list[i] = map;
+    }
+}
+
 void ApiManager::setImageProvider(QrImageProvider *provider)
 {
     m_qrProvider = provider;
@@ -207,6 +229,8 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 
     if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos") {
         if (parseSuccess && parsedJson.type() == QVariant::List) {
+            QVariantList list = parsedJson.toList();
+            sanitizeVideoList(list);
             if (requestType == "HomeVideos") emit homeVideosReady(parsedJson.toList());
             else if (requestType == "SearchVideos") emit searchResultsReady(parsedJson.toList());
             else emit relatedVideosReady(parsedJson.toList());
@@ -235,16 +259,22 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 
             QVariantMap map = parsedJson.toMap();
 
+            if (map.contains("videos")) {
+                QVariantList vList = map["videos"].toList();
+                sanitizeVideoList(vList); // <--- ДОБАВИТЬ ЗДЕСЬ
+                map["videos"] = vList;
+            }
+
             // --- УНИВЕРСАЛЬНЫЙ ДЕКОДЕР ---
-             if (map.contains("channel_thumbnail")) {
-                    QString url = map.value("channel_thumbnail").toString();
+            if (map.contains("channel_thumbnail")) {
+                QString url = map.value("channel_thumbnail").toString();
 
-                    // Просто заменяем %25 на % на случай, если сервер прислал двойную кодировку.
-                    // Это превратит "https%253A" в "https%3A", не ломая саму ссылку "http://..."
-                   url = url.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
+                // Просто заменяем %25 на % на случай, если сервер прислал двойную кодировку.
+                // Это превратит "https%253A" в "https%3A", не ломая саму ссылку "http://..."
+                url = url.replace("yt.swlbst.ru", "yt.modyleprojects.ru");
 
-                    map.insert("channel_thumbnail", url);
-                }
+                map.insert("channel_thumbnail", url);
+            }
             // -----------------------------
 
             if (requestType == "VideoInfo") emit videoInfoReady(map);

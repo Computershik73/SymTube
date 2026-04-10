@@ -1,9 +1,10 @@
 import QtQuick 1.0
 
-Item {
+Rectangle {
     id: cardRoot
     width: parent.width
     height: 280 // Примерная высота
+    color: "black"
 
     property variant modelData // Данные из модели (QVariantMap)
 
@@ -22,9 +23,10 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: modelData && modelData.thumbnail ? modelData.thumbnail : ""
+                source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru").replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
+                //asynchronous: true
             }
 
             // Длительность (если есть)
@@ -64,8 +66,9 @@ Item {
                 
                 Image {
                     anchors.fill: parent
-                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail.replace("yt.modyleprojects.ru", "yt.swlbst.ru") : "../Assets/placeholder.png"
+                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru") : "../Assets/placeholder.png"
                     fillMode: Image.PreserveAspectCrop
+                    //asynchronous: true
                 }
             }
 
