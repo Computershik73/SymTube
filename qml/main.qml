@@ -114,10 +114,24 @@ Rectangle {
             if (tabName === "Home") contentLoader.source = "pages/HomePage.qml";
             else if (tabName === "Subscriptions") contentLoader.source = "pages/SubscriptionsPage.qml";
             else if (tabName === "Account") contentLoader.source = "pages/AccountPage.qml";
+            else if (tabName === "Shorts") {
+                // Если страница Shorts еще не загружена
+                if (contentLoader.source.toString().indexOf("ShortsPage.qml") === -1) {
+                    contentLoader.source = "pages/ShortsPage.qml";
+                }
+
+                // ВАЖНО: Вызываем функцию для старта, даже если страница уже была загружена
+                if (contentLoader.item && typeof contentLoader.item.startPlaying !== "undefined") {
+                    contentLoader.item.startPlaying();
+                }
+
+            }
+
         }
     }
 
     function navigateToVideo(videoId) {
+        contentLoader.source = "";
         navbar.showBackButton = true;
         contentLoader.source = "pages/VideoPage.qml";
         if (contentLoader.item && typeof contentLoader.item.loadVideo !== "undefined") {

@@ -17,7 +17,7 @@ RoundedImageProvider::RoundedImageProvider()
     : QDeclarativeImageProvider(QDeclarativeImageProvider::Image)
 {
     // Выделяем 10 МБ памяти под кэш изображений
-    m_cache.setMaxCost(10 * 1024 * 1024);
+    m_cache.setMaxCost(4 * 1024 * 1024);
 }
 
 QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
@@ -45,6 +45,7 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
 
         // Создаем менеджер на стеке. Он будет безопасно уничтожен в конце блока.
         QNetworkAccessManager manager;
+        manager.setParent(0);
         QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(decodedId)));
         reply->ignoreSslErrors();
 

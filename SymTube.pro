@@ -11,7 +11,8 @@ QML_IMPORT_PATH =
 
 symbian:TARGET.UID3 = 0xE748633B
 
-TARGET.EPOCHEAPSIZE = 0x20000 0x2000000 # Увеличение хипа для парсинга JSON и картинок
+TARGET.STACKSIZE = 0x8000
+TARGET.EPOCHEAPSIZE = 0x20000 0x4000000  # Увеличение хипа для парсинга JSON и картинок
 PKG_VERSION = "0,1,0"
 
 vendor_info = \
@@ -68,9 +69,9 @@ SOURCES += \
     roundedimageprovider.cpp
 
 OTHER_FILES += \
-    qml/*.qml \
-    qml/components/*.qml \
-    qml/pages/*.qml \
+#    qml/*.qml \
+#    qml/components/*.qml \
+#    qml/pages/*.qml \
     Assets/*.png \
     Assets/player/*.png \
     Assets/tabbar/*.png

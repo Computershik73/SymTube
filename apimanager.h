@@ -23,7 +23,7 @@ public:
 
     // Home API
     Q_INVOKABLE void getHomeVideos(const QString &pageToken = QString());
-
+    Q_INVOKABLE void getShorts(const QString &sequenceToken = QString());
     // Search API
     Q_INVOKABLE void searchVideos(const QString &query);
     Q_INVOKABLE void getSearchSuggestions(const QString &query);
@@ -50,6 +50,8 @@ public:
 
     Q_INVOKABLE void checkAuthContent();
 
+
+
     void downloadChannelIcon(const QString &url);
 
     void sanitizeVideoList(QVariantList &list);
@@ -61,7 +63,7 @@ signals:
     void searchSuggestionsReady(QVariantList suggestions);
     void videoInfoReady(QVariantMap videoDetailsMap);
     void relatedVideosReady(QVariantList videos);
-    void channelVideosReady(QVariantMap channelData);
+    void channelVideosReady(QVariantMap channelDataMap);
     void subscriptionsReady(QVariantList subscriptions);
     void accountInfoReady(QVariantMap accountInfo);
     void authContentReady(QString content, QString type);
@@ -72,6 +74,7 @@ signals:
 
     void requestFailed(QString endpoint, QString errorMessage);
     void authImageReady();
+    void shortsReady(QVariantList shortsList, QString seqToken);
 private slots:
     void onReplyFinished(QNetworkReply *reply);
 

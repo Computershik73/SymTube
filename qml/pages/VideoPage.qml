@@ -254,7 +254,7 @@ Rectangle {
 
             Rectangle { anchors.fill: parent; color: "#66000000" }
 
-            Image {
+            SafeImage {
                 anchors.centerIn: parent
                 width: 64; height: 64
                 source: isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
@@ -351,7 +351,7 @@ Rectangle {
         }
 
         // --- СПИННЕР ЗАГРУЗКИ ---
-        Image {
+        SafeImage {
             id: spinner
             anchors.centerIn: parent
             z: 100
@@ -417,7 +417,7 @@ Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        Image { anchors.fill: parent; source: videoDetails ? ("http://yt.modyleprojects.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
+                        SafeImage { anchors.fill: parent; source: videoDetails ? ("http://yt.modyleprojects.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
@@ -456,11 +456,11 @@ Rectangle {
 
             Item { width: parent.width; height: 12 } // Отступ
 
-            Column {
+            ListView {
                 width: parent.width
                 spacing: 12
                 // В QML 1.0 Repeater используется для создания списка внутри Column, чтобы он прокручивался вместе со страницей
-                Repeater {
+                height: 600
                     model: relatedVideos
                     delegate: VideoCard {
                         // QVariantList передает элементы через model.modelData
@@ -469,7 +469,7 @@ Rectangle {
                             root.navigateToVideo(videoId)
                         }
                     }
-                }
+
             }
         }
     }

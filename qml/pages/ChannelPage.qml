@@ -72,7 +72,7 @@ Rectangle {
             spacing: 16
             
             // Баннер канала
-            Image {
+            SafeImage {
                 width: parent.width
                 height: 120
                 source: channelData && channelData.channel_info ? (channelData.channel_info["banner"] || "") : ""
@@ -89,7 +89,7 @@ Rectangle {
                 
                 Rectangle {
                     width: 80; height: 80; radius: 40; color: "#333"; clip: true
-                    Image {
+                    SafeImage {
                         anchors.fill: parent
                         source: channelData && channelData.channel_info ? decodeURIComponent(channelData.channel_info["thumbnail"].replace("yt.modyleprojects.ru", "yt.swlbst.ru") || "") : ""
                         fillMode: Image.PreserveAspectCrop

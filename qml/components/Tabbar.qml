@@ -53,22 +53,30 @@ Rectangle {
         Item {
             width: parent.width / 4
             height: parent.height
-            opacity: 0.5 // Отключено
+
             
             Column {
                 anchors.centerIn: parent
                 spacing: 2
                 Image {
-                    source: "../Assets/tabbar/shorts-icon.png"
-                    width: 24
-                    height: 24
+                    source: activeTab === "Shorts" ? "../Assets/tabbar/shorts-icon-active.png" : "../Assets/tabbar/shorts-icon.png"
+                    width: 24; height: 24
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
                     text: "Shorts"
-                    color: "gray"
+                    color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            // ВЕРНУТЬ MouseArea
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    activeTab = "Shorts";
+                    tabbarRoot.tabClicked("Shorts");
                 }
             }
         }

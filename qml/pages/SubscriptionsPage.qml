@@ -29,8 +29,8 @@ Rectangle {
 
         onChannelVideosReady: {
             loadingIndicator.visible = false
-            if (channelData && channelData.videos) {
-                videosModel = channelData.videos
+            if (channelDataMap && channelDataMap.videos) {
+                videosModel = channelDataMap.videos
             } else {
                 videosModel = []
             }
@@ -125,7 +125,7 @@ Rectangle {
 
                                 // 2. Теперь кодируем только этот чистый хвост (https%3A%2F%2F...)
                                 // и добавляем префикс провайдера
-                                return "image://rounded/" + encodeURIComponent(decodeURIComponent(cleanUrl));
+                                return "image://rounded/" + encodeURIComponent(cleanUrl);
                             }
 
 
@@ -187,7 +187,7 @@ Rectangle {
             model: videosModel
 
             // --- ИСПРАВЛЕНИЕ: Увеличили spacing, чтобы текст не лез на следующую карточку ---
-            spacing: 25
+            spacing: 1
 
             // Оптимизация скролла для Symbian
             cacheBuffer: 1000

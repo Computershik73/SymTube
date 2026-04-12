@@ -100,7 +100,8 @@ Rectangle {
         anchors.fill: parent
         model: videosModel
         visible: !isLoading && !errorPanel.visible
-        spacing: 10
+        spacing: 1
+        //cacheBuffer: 1000
         
         delegate: VideoCard {
             modelData: model.modelData // В QtQuick 1.0 так передается объект из QVariantList

@@ -1,9 +1,10 @@
 import QtQuick 1.0
+import "../components"
 
 Rectangle {
     id: cardRoot
     width: parent.width
-    height: 280 // Примерная высота
+    height: 300 // Примерная высота
     color: "black"
 
     property variant modelData // Данные из модели (QVariantMap)
@@ -21,7 +22,7 @@ Rectangle {
             height: 202
             color: "#1A1A1A"
 
-            Image {
+            SafeImage {
                 anchors.fill: parent
                 source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru").replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
@@ -64,7 +65,7 @@ Rectangle {
                 clip: true
                 visible: Config.enableChannelThumbnails && modelData && modelData.channel_thumbnail !== undefined && modelData.channel_thumbnail !== ""
                 
-                Image {
+                SafeImage {
                     anchors.fill: parent
                     source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru") : "../Assets/placeholder.png"
                     fillMode: Image.PreserveAspectCrop

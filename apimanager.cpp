@@ -157,7 +157,7 @@ void ApiManager::unsubscribeFromChannel(const QString &channelIdentifier)
 void ApiManager::getChannelVideos(const QString &author)
 {
     QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get_author_videos.php?author=" + QUrl::toPercentEncoding(author);
+    QString url = m_config->apiBaseUrl() + "get_author_videos.php?author=" + author;
     sendRequest(url, "ChannelVideos");
 }
 
@@ -177,6 +177,15 @@ void ApiManager::getAccountInfo()
     QString token = m_config->userToken();
     QString url = m_config->apiBaseUrl() + "account_info?token=" + token;
     sendRequest(url, "AccountInfo");
+}
+
+void ApiManager::getShorts(const QString &sequenceToken)
+{
+    QString url = m_config->apiBaseUrl() + "get_shorts.php";
+    if (!sequenceToken.isEmpty()) {
+        url += "?sequence=" + sequenceToken;
+    }
+    sendRequest(url, "Shorts");
 }
 
 void ApiManager::checkAuthContent()
@@ -210,11 +219,35 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 {
     QString requestType = reply->property("RequestType").toString();
 
+
+    // Проверяем, есть ли ошибка
     if (reply->error() != QNetworkReply::NoError) {
+        int retryCount = reply->property("RetryCount").toInt();
+        // Если попытки остались - повторяем
+        if (retryCount < 3) {
+            qDebug() << "[ApiManager] Ошибка" << requestType << ". Попытка" << retryCount + 1 << "из" << "3";
+
+            QNetworkRequest request = reply->request();
+            QNetworkReply *newReply = m_networkManager->get(request); // Повторяем GET-запрос
+            newReply->setProperty("RequestType", requestType);
+            newReply->setProperty("RetryCount", retryCount + 1);
+
+            reply->deleteLater();
+            return;
+        }
+
+        // Если все попытки исчерпаны
         emit requestFailed(requestType, reply->errorString());
         reply->deleteLater();
         return;
     }
+
+
+    /* if (reply->error() != QNetworkReply::NoError) {
+        emit requestFailed(requestType, reply->errorString());
+        reply->deleteLater();
+        return;
+    }*/
 
     QByteArray responseData = reply->readAll();
     QString responseString = QString::fromUtf8(responseData);
@@ -324,6 +357,21 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             emit authImageReady(); // Используем тот же сигнал для обновления
         }
     }
+    else if (requestType == "Shorts") {
+        if (parseSuccess && parsedJson.type() == QVariant::Map) {
+            QVariantMap map = parsedJson.toMap();
+            if (map.contains("shorts")) {
+                QVariantList shortsList = map["shorts"].toList();
+                QString seqToken = map.value("sequence_token").toString();
+
+                sanitizeVideoList(shortsList);
+                emit shortsReady(shortsList, seqToken);
+            }
+        } else {
+            emit requestFailed(requestType, "JSON parse error");
+        }
+    }
+
     else if (requestType == "AuthContent") {
         QString content = extractContentFromYtreq(responseString);
 
