@@ -25,6 +25,46 @@ Rectangle {
     }
 
     Connections {
+        target: SymbianApp // Слушаем события нашего кастомного QApplication
+
+        // Когда приложение сворачивается (уходит в фон)
+        onInBackground: {
+            // Если видео играло в момент сворачивания
+            if (isPlaying) {
+                console.log("Приложение свернуто. Сохраняем состояние плеера.");
+
+                // 1. Сохраняем текущую позицию
+                playerContainer.recoveryPosition = videoPlayer.position;
+
+                // 2. Сохраняем текущую ссылку
+                playerContainer.savedSource = videoPlayer.source.toString();
+
+                // 3. ПОЛНОСТЬЮ ОСТАНАВЛИВАЕМ И СБРАСЫВАЕМ ПЛЕЕР
+                // Это единственный способ избежать ошибки KErrNotReady
+                videoPlayer.stop();
+                videoPlayer.source = "";
+            }
+        }
+
+        // Когда приложение разворачивается (возвращается из фона)
+        onInFocus: {
+            // Если мы сохранили состояние плеера перед уходом в фон
+            if (playerContainer.savedSource !== "") {
+                console.log("Приложение развернуто. Восстанавливаем плеер.");
+
+                // Запускаем процесс восстановления, который мы уже написали для ошибки -36
+                // Это самый надежный способ!
+                var sourceToRestore = playerContainer.savedSource;
+                playerContainer.savedSource = ""; // Сбрасываем, чтобы не зациклиться
+
+                videoPage.isSeeking = true; // Показываем спиннер
+                videoPlayer.source = sourceToRestore;
+                // onStatusChanged сам подхватит перемотку и запустит play()
+            }
+        }
+    }
+
+    Connections {
         target: ApiManager
         onVideoInfoReady: {
             videoDetails = videoDetailsMap;
@@ -92,7 +132,7 @@ Rectangle {
             id: videoPlayer
             anchors.fill: parent
             fillMode: Video.PreserveAspectFit
-            volume: 1.0
+            volume: VolumeKeys.volume / 100.0
 
             // --- НАТИВНЫЕ СИГНАЛЫ СОГЛАСНО ДОКУМЕНТАЦИИ ---
             onStarted: {
@@ -171,6 +211,58 @@ Rectangle {
                     videoPage.isSeeking = false;
                     isPlaying = false;
                     playerContainer.recoveryPosition = -1;
+                }
+            }
+        }
+
+        Rectangle {
+            id: volumeOsd
+            anchors.centerIn: parent
+            width: 150; height: 50
+            color: "#CC000000"
+            radius: 8
+            z: 150 // Выше всех оверлеев
+            opacity: 0
+
+            // Таймер для скрытия
+            Timer {
+                id: volumeOsdTimer
+                interval: 2000 // Исчезает через 2 секунды
+                onTriggered: volumeFadeOut.start()
+            }
+
+            // Реакция на изменение громкости
+            Connections {
+                target: VolumeKeys
+                onVolumeChanged: {
+                    volumeOsd.opacity = 1.0;
+                    volumeFadeOut.stop();
+                    volumeOsdTimer.restart();
+                }
+            }
+
+            // Анимация исчезновения
+            SequentialAnimation {
+                id: volumeFadeOut
+                running: false
+                NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
+            }
+
+            Row {
+                anchors.centerIn: parent
+                spacing: 10
+
+                Image {
+                    source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
+                    width: 24; height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: VolumeKeys.volume + "%"
+                    color: "white"
+                    font.pixelSize: 18
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
@@ -377,12 +469,25 @@ Rectangle {
     }
 
     // --- ОСНОВНОЙ КОНТЕНТ (Скрывается в полноэкранном режиме) ---
-    Flickable {
+    /*Flickable {
         anchors.top: playerContainer.bottom; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
         contentWidth: parent.width; contentHeight: contentColumn.height + 40; clip: true
-        visible: !isLandscape
+        visible: !isLandscape*/
 
-        Column {
+
+    // }
+
+    ListView {
+        id: mainList
+        snapMode: ListView.NoSnap
+        highlightMoveDuration: 0
+        anchors.top: playerContainer.bottom; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
+        //width: parent.width
+        visible: !isLandscape
+        onModelChanged: {
+            mainList.contentY = 0;
+        }
+        header: Column {
             id: contentColumn
             width: parent.width; spacing: 0
 
@@ -449,6 +554,7 @@ Rectangle {
             Item { width: parent.width; height: 20 } // Отступ
 
             Text {
+                id: relvidtext
                 x: 16; text: "Похожие видео"
                 color: "white"; font.pixelSize: 18; font.bold: true
                 font.family: "Nokia Pure Text"
@@ -457,22 +563,23 @@ Rectangle {
 
             Item { width: parent.width; height: 12 } // Отступ
 
-            ListView {
-                width: parent.width
-                spacing: 12
-                // В QML 1.0 Repeater используется для создания списка внутри Column, чтобы он прокручивался вместе со страницей
-                height: 600
-                    model: relatedVideos
-                    delegate: VideoCard {
-                        // QVariantList передает элементы через model.modelData
-                        modelData: model.modelData
-                        onClicked: {
-                            root.navigateToVideo(videoId)
-                        }
-                    }
 
+        }
+
+        interactive: true
+        height: 400
+        clip: true
+        // В QML 1.0 Repeater используется для создания списка внутри Column, чтобы он прокручивался вместе со страницей
+        //height: parent.height - 20 - relvidtext.height - 12 - 80 - 60
+        model: relatedVideos
+        delegate: VideoCard {
+            // QVariantList передает элементы через model.modelData
+            modelData: model.modelData
+            onClicked: {
+                root.navigateToVideo(videoId)
             }
         }
+
     }
 
     // --- Шторка описания (без изменений) ---

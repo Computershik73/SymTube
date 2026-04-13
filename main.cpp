@@ -1,4 +1,4 @@
-#include <QtGui/QApplication>
+#include "qsymbianapplication.h"
 #include "qmlapplicationviewer.h"
 #include <QtDeclarative/QDeclarativeContext>
 #include <QtDeclarative/QDeclarativeEngine>
@@ -18,10 +18,11 @@
 #include "historymanager.h"
 #include "qrimageprovider.h"
 #include "roundedimageprovider.h"
+#include "volumekeysobserver.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QSymbianApplication app(argc, argv);
 
     QApplication::setAttribute(Qt::AA_S60DisablePartialScreenInputMode, false);
 
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
     proxy.setType(QNetworkProxy::HttpProxy);
     proxy.setHostName("192.168.1.183");
     proxy.setPort(8890);
-    QNetworkProxy::setApplicationProxy(proxy);
+    //QNetworkProxy::setApplicationProxy(proxy);
 
     // 2. Инициализация менеджеров
     Config config;
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
     // Передаем указатель на провайдер в конструктор
     ApiManager apiManager(&config, qrProvider);
     HistoryManager historyManager;
+    VolumeKeysObserver volumeKeys;
 
     // 3. Используем чистый QDeclarativeView
     QmlApplicationViewer view;
@@ -82,6 +84,8 @@ int main(int argc, char *argv[])
     context->setContextProperty("Config", &config);
     context->setContextProperty("ApiManager", &apiManager);
     context->setContextProperty("HistoryManager", &historyManager);
+    context->setContextProperty("VolumeKeys", &volumeKeys);
+    context->setContextProperty("SymbianApp", &app);
 
     // 6. Загружаем QML
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));

@@ -8,7 +8,7 @@ MOBILITY += multimedia
 
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
-
+LIBS += -lremconcoreapi -lremconinterfacebase -leikcore -lcone
 symbian:TARGET.UID3 = 0xE748633B
 
 TARGET.STACKSIZE = 0x8000
@@ -57,7 +57,9 @@ HEADERS += \
     apimanager.h \
     historymanager.h \
     qrimageprovider.h \
-    roundedimageprovider.h
+    roundedimageprovider.h \
+    volumekeysobserver.h \
+    qsymbianapplication.h
 
 SOURCES += \
     main.cpp \
@@ -66,7 +68,9 @@ SOURCES += \
     apimanager.cpp \
     historymanager.cpp \
     qrimageprovider.cpp \
-    roundedimageprovider.cpp
+    roundedimageprovider.cpp \
+    volumekeysobserver.cpp \
+    qsymbianapplication.cpp
 
 OTHER_FILES += \
 #    qml/*.qml \
