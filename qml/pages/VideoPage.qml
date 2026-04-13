@@ -92,6 +92,7 @@ Rectangle {
             id: videoPlayer
             anchors.fill: parent
             fillMode: Video.PreserveAspectFit
+            volume: 1.0
 
             // --- НАТИВНЫЕ СИГНАЛЫ СОГЛАСНО ДОКУМЕНТАЦИИ ---
             onStarted: {
