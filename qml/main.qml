@@ -131,7 +131,7 @@ Rectangle {
     }
 
     function navigateToVideo(videoId) {
-        contentLoader.source = "";
+        //contentLoader.source = "";
         navbar.showBackButton = true;
         contentLoader.source = "pages/VideoPage.qml";
         if (contentLoader.item && typeof contentLoader.item.loadVideo !== "undefined") {

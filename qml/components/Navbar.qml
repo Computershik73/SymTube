@@ -78,33 +78,35 @@ Rectangle {
             color: "#222222"
             radius: 4
 
-            TextInput {
-                id: searchInput
-                anchors.left: parent.left
+            // --- КНОПКА ПОИСКА (НАДЕЖНЫЙ ТРИГГЕР) ---
+            Rectangle {
+                id: searchBtn
                 anchors.right: closeSearchBtn.left
+                anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.margins: 10
-                color: "white"
-                font.pixelSize: 16
-                
-                // В QtQuick 1.0 placeholder реализуется костылём
-                Text {
-                    text: "Поиск"
-                    color: "gray"
-                    font.pixelSize: 16
-                    visible: parent.text.length === 0 && !parent.activeFocus
+                width: 40; height: 40
+                color: "transparent"
+
+                Image {
+                    anchors.centerIn: parent
+                    source: "../Assets/search.png" // Или ваш путь к иконке
+                    width: 24; height: 24
                 }
 
-                Keys.onReturnPressed: {
-                    if (text.length > 0) {
-                        navbarRoot.searchRequested(text);
-                        isSearchMode = false;
-                        text = "";
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (searchInput.text.length > 0) {
+                            navbarRoot.searchRequested(searchInput.text);
+                            isSearchMode = false;
+                            searchInput.text = "";
+                            searchInput.focus = false; // Скрываем клавиатуру
+                        }
                     }
                 }
             }
 
-            // Кнопка закрытия поиска / отмены
+            // Кнопка закрытия (X)
             Text {
                 id: closeSearchBtn
                 text: "X"
@@ -114,14 +116,33 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 12
-                
+
                 MouseArea {
                     anchors.fill: parent
                     anchors.margins: -10
                     onClicked: {
                         isSearchMode = false;
                         searchInput.text = "";
+                        searchInput.focus = false;
                     }
+                }
+            }
+
+            // Поле ввода
+            TextInput {
+                id: searchInput
+                anchors.left: parent.left
+                anchors.right: searchBtn.left // Теперь ограничиваемся кнопкой поиска
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.margins: 10
+                color: "white"
+                font.pixelSize: 16
+
+                Text {
+                    text: "Поиск"
+                    color: "gray"
+                    font.pixelSize: 16
+                    visible: parent.text.length === 0 && !parent.activeFocus
                 }
             }
         }

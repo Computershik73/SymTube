@@ -43,9 +43,9 @@ Rectangle {
         onInFocus: {
             if (videoLoader.item && isPlaying) {
                 console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
-                videoPage.recoveryPosition = videoLoader.item.position;
-                videoLoader.sourceComponent = undefined;
-                recreateTimer.start();
+                //videoPage.recoveryPosition = videoLoader.item.position;
+                //videoLoader.sourceComponent = undefined;
+                //recreateTimer.start();
             }
         }
     }
@@ -64,9 +64,9 @@ Rectangle {
         onVideoInfoReady: {
             videoDetails = videoDetailsMap;
             HistoryManager.addToHistory({
-                "video_id": videoDetails.video_id, "title": videoDetails.title,
-                "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
-            });
+                                        "video_id": videoDetails.video_id, "title": videoDetails.title,
+                                        "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
+        });
             videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
@@ -304,6 +304,59 @@ Rectangle {
                     }
                 }
             }
+
+            Rectangle {
+                id: volumeOsd
+                anchors.centerIn: parent
+                width: 150; height: 50
+                color: "#CC000000"
+                radius: 8
+                z: 150 // Выше всех оверлеев
+                opacity: 0
+
+                // Таймер для скрытия
+                Timer {
+                    id: volumeOsdTimer
+                    interval: 2000 // Исчезает через 2 секунды
+                    onTriggered: volumeFadeOut.start()
+                }
+
+                // Реакция на изменение громкости
+                Connections {
+                    target: VolumeKeys
+                    onVolumeChanged: {
+                        volumeOsd.opacity = 1.0;
+                        volumeFadeOut.stop();
+                        volumeOsdTimer.restart();
+                    }
+                }
+
+                // Анимация исчезновения
+                SequentialAnimation {
+                    id: volumeFadeOut
+                    running: false
+                    NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
+                }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 10
+
+                    Image {
+                        source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
+                        width: 24; height: 24
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        text: VolumeKeys.volume + "%"
+                        color: "white"
+                        font.pixelSize: 18
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+
         }
 
         // ИСПРАВЛЕНИЕ: Безопасные проверки для спиннера
