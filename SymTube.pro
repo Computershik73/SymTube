@@ -8,6 +8,7 @@ MOBILITY += multimedia
 
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
+QMAKE_LIBDIR += $$EPOCROOT/epoc32/release/armv5/lib
 LIBS += -lremconcoreapi -lremconinterfacebase -leikcore -lcone
 symbian:TARGET.UID3 = 0xE748633B
 

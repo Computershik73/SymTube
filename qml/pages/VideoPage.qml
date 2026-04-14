@@ -8,96 +8,148 @@ Rectangle {
 
     property bool isSeeking: false
 
-    property string currentVideoId: ""
-    property variant videoDetails: null
-    property bool isPlaying: false
-    property variant relatedVideos:[]
+    // --- ПЕРЕМЕННЫЕ ДЛЯ ФОНОВОЙ МАГИИ И ПЕРЕМОТКИ ---
+    property string currentVideoUrl: ""
+    property int recoveryPosition: -1
+    property int pendingSeekSeconds: 0
+    property bool isUserDraggingSlider: false
+    property real sliderDragRatio: 0.0
+    property int recoveryAttempts: 0
 
-    // Перехватываем альбомную ориентацию
-    property bool isLandscape: width > height
-
-    function formatTime(ms) {
-        if (ms <= 0) return "0:00";
-        var totalSeconds = Math.floor(ms / 1000);
-        var m = Math.floor(totalSeconds / 60);
-        var s = totalSeconds % 60;
-        return m + ":" + (s < 10 ? "0" : "") + s;
-    }
-
+    // --- ОБРАБОТКА ФОНОВОГО И АКТИВНОГО РЕЖИМА ---
     Connections {
-        target: SymbianApp // Слушаем события нашего кастомного QApplication
+        target: SymbianApp
 
-        // Когда приложение сворачивается (уходит в фон)
         onInBackground: {
-            // Если видео играло в момент сворачивания
-            if (isPlaying) {
-                console.log("Приложение свернуто. Сохраняем состояние плеера.");
+            if (videoLoader.item && isPlaying) {
+                console.log("УХОД В ФОН: Уничтожаем плеер...");
+                // 1. Запоминаем, где остановились
+                videoPage.recoveryPosition = videoLoader.item.position;
 
-                // 1. Сохраняем текущую позицию
-                playerContainer.recoveryPosition = videoPlayer.position;
+                // 2. ФИЗИЧЕСКИ УНИЧТОЖАЕМ ПЛЕЕР (освобождаем видео-оверлей)
+                videoLoader.sourceComponent = undefined;
 
-                // 2. Сохраняем текущую ссылку
-                playerContainer.savedSource = videoPlayer.source.toString();
-
-                // 3. ПОЛНОСТЬЮ ОСТАНАВЛИВАЕМ И СБРАСЫВАЕМ ПЛЕЕР
-                // Это единственный способ избежать ошибки KErrNotReady
-                videoPlayer.stop();
-                videoPlayer.source = "";
+                // 3. Запускаем таймер для пересоздания плеера в фоне (только с аудио)
+                recreateTimer.start();
             }
         }
 
-        // Когда приложение разворачивается (возвращается из фона)
         onInFocus: {
-            // Если мы сохранили состояние плеера перед уходом в фон
-            if (playerContainer.savedSource !== "") {
-                console.log("Приложение развернуто. Восстанавливаем плеер.");
+            if (videoLoader.item && isPlaying) {
+                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер для возврата картинки...");
+                // 1. Фоновый плеер играл только звук. Запоминаем текущую фоновую позицию.
+                videoPage.recoveryPosition = videoLoader.item.position;
 
-                // Запускаем процесс восстановления, который мы уже написали для ошибки -36
-                // Это самый надежный способ!
-                var sourceToRestore = playerContainer.savedSource;
-                playerContainer.savedSource = ""; // Сбрасываем, чтобы не зациклиться
+                // 2. Уничтожаем фоновый плеер
+                videoLoader.sourceComponent = undefined;
 
-                videoPage.isSeeking = true; // Показываем спиннер
-                videoPlayer.source = sourceToRestore;
-                // onStatusChanged сам подхватит перемотку и запустит play()
+                // 3. Запускаем таймер для пересоздания полноценного плеера с картинкой
+                recreateTimer.start();
             }
         }
     }
 
+    // Таймер для безопасного пересоздания компонента
+    Timer {
+        id: recreateTimer
+        interval: 150 // Ждем 150 мс, чтобы Symbian успел очистить память от старого плеера
+        repeat: false
+        onTriggered: {
+            console.log("ПЕРЕСОЗДАНИЕ: Загружаем компонент заново...");
+            videoLoader.sourceComponent = videoComponent;
+        }
+    }
+
+    // Обработчик загрузки видео из сети
     Connections {
         target: ApiManager
         onVideoInfoReady: {
             videoDetails = videoDetailsMap;
             HistoryManager.addToHistory({
-                                        "video_id": videoDetails.video_id,
-                                        "title": videoDetails.title,
-                                        "author": videoDetails.author,
-                                        "thumbnail": videoDetails.thumbnail
+                                        "video_id": videoDetails.video_id, "title": videoDetails.title,
+                                        "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
         });
-            var directUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https", "http").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
-            videoPlayer.source = directUrl;
-            videoPlayer.play();
-        }
-        onRelatedVideosReady: {
-            if (!videoPage.visible) return;
-            relatedVideos = videos;
+
+            // Сохраняем ссылку в свойство страницы, чтобы она пережила уничтожение плеера
+            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+
+            // Сбрасываем попытки и создаем новый плеер
+            videoPage.recoveryAttempts = 0;
+            videoLoader.sourceComponent = undefined;
+            recreateTimer.start();
         }
     }
 
     function loadVideo(videoId) {
         currentVideoId = videoId;
         videoDetails = null;
-        relatedVideos =[];
-        videoPlayer.stop();
-        videoPlayer.source = "";
+        videoPage.currentVideoUrl = "";
+        videoLoader.sourceComponent = undefined; // Уничтожаем старый плеер
         isPlaying = false;
         ApiManager.getVideoInfo(videoId);
-        ApiManager.getRelatedVideos(videoId, 0);
     }
 
-    // --- БЛОК ПЛЕЕРА ---
-    // --- БЛОК ПЛЕЕРА ---
-    // --- БЛОК ПЛЕЕРА ---
+    // --- ШАБЛОН ПЛЕЕРА (Создается и уничтожается на лету) ---
+    Component {
+        id: videoComponent
+        Video {
+            anchors.fill: parent
+            fillMode: Video.PreserveAspectFit
+
+            // Берем ссылку из свойства страницы
+            source: videoPage.currentVideoUrl
+
+            // Привязываем громкость к аппаратным кнопкам Symbian (от 0.0 до 1.0)
+            // Добавлена проверка на наличие VolumeKeys
+            volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
+
+            onStarted: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); }
+            onResumed: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); }
+            onPaused: { videoPage.isPlaying = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+            onStopped: { videoPage.isPlaying = false; videoPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+
+            onStatusChanged: {
+                if (status === Video.Loaded) {
+                    // ЕСЛИ МЫ ВОССТАНАВЛИВАЕМСЯ (Из фона или после краша)
+                    if (videoPage.recoveryPosition !== -1) {
+                        console.log("Плеер загружен. Перематываем на: " + videoPage.recoveryPosition);
+                        var target = videoPage.recoveryPosition;
+                        videoPage.recoveryPosition = -1; // Сбрасываем флаг
+
+                        // Меняем позицию и запускаем
+                        position = target;
+                        play();
+                    } else {
+                        // Обычный запуск нового видео
+                        play();
+                    }
+                }
+
+                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+                    if (videoPage.recoveryPosition === -1) {
+                        videoPage.isSeeking = false;
+                    }
+                }
+            }
+
+            onError: {
+                console.log("Video Error [" + error + "]: " + errorString);
+
+                // Если краш декодера -36, делаем "горячее" пересоздание
+                if (errorString.indexOf("-36") !== -1 && videoPage.recoveryAttempts < 3) {
+                    videoPage.recoveryAttempts++;
+                    videoPage.recoveryPosition = position;
+                    videoLoader.sourceComponent = undefined; // Уничтожаем себя!
+                    recreateTimer.start(); // Возрождаемся через 150 мс
+                } else {
+                    videoPage.isSeeking = false;
+                    videoPage.isPlaying = false;
+                }
+            }
+        }
+    }
+
+    // --- БЛОК КОНТЕЙНЕРА ---
     Rectangle {
         id: playerContainer
         width: parent.width
@@ -106,235 +158,61 @@ Rectangle {
         color: "black"
         z: 5
 
-        // Переменные для перемотки
-        property int pendingSeekSeconds: 0
-        property bool isUserDraggingSlider: false
-        property real sliderDragRatio: 0.0
-
-        property int recoveryPosition: -1
-        property string savedSource: ""
-        property int recoveryAttempts: 0
-        property int lastIntendedPosition: -1
-
-        Timer {
-            id: recoveryTimer
-            interval: 200 // Ждем 200 мс, чтобы Symbian "успокоился"
-            repeat: false
-            onTriggered: {
-                console.log("Выполняем безопасный сброс источника...");
-                videoPlayer.source = "";
-                videoPlayer.source = playerContainer.savedSource;
-                // Плеер начнет грузить видео. onStatusChanged поймает Loaded и перемотает.
-            }
-        }
-
-        Video {
-            id: videoPlayer
+        // ЗАГРУЗЧИК (Здесь физически появляется Video)
+        Loader {
+            id: videoLoader
             anchors.fill: parent
-            fillMode: Video.PreserveAspectFit
-            volume: VolumeKeys.volume / 100.0
-
-            // --- НАТИВНЫЕ СИГНАЛЫ СОГЛАСНО ДОКУМЕНТАЦИИ ---
-            onStarted: {
-                videoPage.isSeeking = false;
-                isPlaying = true;
-                controlsTimer.restart();
-                playerContainer.recoveryAttempts = 0;
-            }
-            onResumed: {
-                videoPage.isSeeking = false;
-                isPlaying = true;
-                controlsTimer.restart();
-                playerContainer.recoveryAttempts = 0;
-            }
-            onPaused: {
-                isPlaying = false;
-                controlsTimer.stop();
-                controlsOverlay.visible = true;
-            }
-            onStopped: {
-                isPlaying = false;
-                videoPage.isSeeking = false;
-                controlsTimer.stop();
-                controlsOverlay.visible = true;
-            }
-
-            // Отслеживание буферизации
-            onStatusChanged: {
-                if (status === Video.Loaded) {
-                    // Если мы восстанавливаемся после ошибки
-                    if (playerContainer.recoveryPosition !== -1) {
-                        console.log("Восстановление: прыжок на " + playerContainer.recoveryPosition);
-                        // Вызываем safeSeek напрямую, чтобы сохранить цепочку
-                        var target = playerContainer.recoveryPosition;
-                        playerContainer.recoveryPosition = -1;
-                        playerContainer.performSafeSeek(target);
-                    }
-                }
-
-                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
-                    // Если это не наша контролируемая ошибка
-                    if (playerContainer.recoveryPosition === -1) {
-                        videoPage.isSeeking = false;
-                        isPlaying = false;
-
-                    }
-                }
-            }
-
-            // Логгирование реальных ошибок Symbian
-            onError: {
-                console.log("Video Error [" + error + "]: " + errorString);
-
-                // Если это ошибка перемотки и мы не в процессе восстановления
-                if (errorString.indexOf("-36") !== -1 && playerContainer.recoveryAttempts < 3) {
-                    console.log("Зафиксирован краш декодера. Подготовка к восстановлению...");
-
-                    playerContainer.recoveryAttempts++;
-
-                    if (playerContainer.lastIntendedPosition !== -1) {
-                        playerContainer.recoveryPosition = playerContainer.lastIntendedPosition;
-                    } else {
-                        playerContainer.recoveryPosition = videoPlayer.position;
-                    }
-
-                    // Сохраняем ссылку как строку, чтобы не потерять
-                    playerContainer.savedSource = videoPlayer.source.toString();
-
-                    videoPlayer.stop();
-
-                    // Запускаем таймер и ВЫХОДИМ ИЗ СИГНАЛА! Это спасет от краха 0x0.
-                    recoveryTimer.start();
-
-                } else {
-                    // Если это другая ошибка - просто останавливаем
-                    videoPage.isSeeking = false;
-                    isPlaying = false;
-                    playerContainer.recoveryPosition = -1;
-                }
-            }
         }
 
+        // Индикатор ошибки (Смотрит на статус внутри Loader)
         Rectangle {
-            id: volumeOsd
-            anchors.centerIn: parent
-            width: 150; height: 50
-            color: "#CC000000"
-            radius: 8
-            z: 150 // Выше всех оверлеев
-            opacity: 0
-
-            // Таймер для скрытия
-            Timer {
-                id: volumeOsdTimer
-                interval: 2000 // Исчезает через 2 секунды
-                onTriggered: volumeFadeOut.start()
-            }
-
-            // Реакция на изменение громкости
-            Connections {
-                target: VolumeKeys
-                onVolumeChanged: {
-                    volumeOsd.opacity = 1.0;
-                    volumeFadeOut.stop();
-                    volumeOsdTimer.restart();
-                }
-            }
-
-            // Анимация исчезновения
-            SequentialAnimation {
-                id: volumeFadeOut
-                running: false
-                NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
-            }
-
-            Row {
-                anchors.centerIn: parent
-                spacing: 10
-
-                Image {
-                    source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
-                    width: 24; height: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Text {
-                    text: VolumeKeys.volume + "%"
-                    color: "white"
-                    font.pixelSize: 18
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-        }
-
-        // --- БЕЗОПАСНАЯ ПЕРЕМОТКА ---
-        function  performSafeSeek(newPos) {
-            if (!videoPlayer.seekable || videoPlayer.duration <= 0) return;
-
-            if (newPos > videoPlayer.duration) newPos = videoPlayer.duration;
-            if (newPos < 0) newPos = 0;
-
-            // СОХРАНЯЕМ позицию на случай краха -36
-            playerContainer.lastIntendedPosition = newPos;
-
-            videoPage.isSeeking = true;
-            var wasPlaying = isPlaying;
-
-            if (wasPlaying) videoPlayer.pause();
-
-            videoPlayer.position = newPos;
-
-            videoPlayer.play();
-            if (!wasPlaying) videoPage.isSeeking = false;
-        }
-
-        // Таймер для накопления тапов (+10/-10)
-        Timer {
-            id: seekAccumulatorTimer
-            interval: 500
-            repeat: false
-            onTriggered: {
-                if (playerContainer.pendingSeekSeconds !== 0) {
-                    var targetPos = videoPlayer.position + (playerContainer.pendingSeekSeconds * 1000);
-                    playerContainer.performSafeSeek(targetPos);
-                    playerContainer.pendingSeekSeconds = 0;
-                }
-            }
+            anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
+            width: errorText.width + 40; height: errorText.height + 20
+            visible: videoLoader.item && (videoLoader.item.status === Video.InvalidMedia) && !videoPage.isSeeking
+            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: "Ошибка воспроизведения" }
         }
 
         // Глобальная зона клика
         MouseArea {
             anchors.fill: parent
-
             onClicked: {
                 if (spinner.visible) return;
                 controlsOverlay.visible = !controlsOverlay.visible;
-                if (controlsOverlay.visible && isPlaying) controlsTimer.restart();
+                if (controlsOverlay.visible && videoPage.isPlaying) controlsTimer.restart();
                 else controlsTimer.stop();
             }
-
             onDoubleClicked: {
-                if (spinner.visible) return;
-                if (videoPage.isSeeking) return;
-
+                if (spinner.visible || videoPage.isSeeking) return;
                 var zone = mouse.x / width;
-                if (zone < 0.35) {
-                    playerContainer.pendingSeekSeconds -= 10;
-                    seekAccumulatorTimer.restart();
-                } else if (zone > 0.65) {
-                    playerContainer.pendingSeekSeconds += 10;
-                    seekAccumulatorTimer.restart();
-                }
+                if (zone < 0.35) { videoPage.pendingSeekSeconds -= 10; seekAccumulatorTimer.restart(); }
+                else if (zone > 0.65) { videoPage.pendingSeekSeconds += 10; seekAccumulatorTimer.restart(); }
             }
         }
 
-        // Текст индикатора накопленных секунд (+10 / -20)
         Text {
-            anchors.centerIn: parent; z: 10
-            color: "white"; font.pixelSize: 36; font.bold: true
-            style: Text.Outline; styleColor: "black"
-            text: playerContainer.pendingSeekSeconds !== 0 ? (playerContainer.pendingSeekSeconds > 0 ? "+" + playerContainer.pendingSeekSeconds : playerContainer.pendingSeekSeconds) : ""
-            visible: playerContainer.pendingSeekSeconds !== 0
+            anchors.centerIn: parent; z: 10; color: "white"; font.pixelSize: 36; font.bold: true; style: Text.Outline; styleColor: "black"
+            text: videoPage.pendingSeekSeconds !== 0 ? (videoPage.pendingSeekSeconds > 0 ? "+" + videoPage.pendingSeekSeconds : videoPage.pendingSeekSeconds) : ""
+            visible: videoPage.pendingSeekSeconds !== 0
+        }
+
+        // Таймер для безопасной перемотки (ручной)
+        Timer {
+            id: seekAccumulatorTimer
+            interval: 500
+            repeat: false
+            onTriggered: {
+                if (videoPage.pendingSeekSeconds !== 0 && videoLoader.item) {
+                    var targetPos = videoLoader.item.position + (videoPage.pendingSeekSeconds * 1000);
+
+                    if (targetPos > videoLoader.item.duration) targetPos = videoLoader.item.duration;
+                    if (targetPos < 0) targetPos = 0;
+
+                    videoPage.isSeeking = true;
+                    videoLoader.item.position = targetPos;
+
+                    videoPage.pendingSeekSeconds = 0;
+                }
+            }
         }
 
         // --- УПРАВЛЕНИЕ ПЛЕЕРОМ (ОВЕРЛЕЙ) ---
@@ -350,13 +228,14 @@ Rectangle {
             SafeImage {
                 anchors.centerIn: parent
                 width: 64; height: 64
-                source: isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
-                visible: playerContainer.pendingSeekSeconds === 0 && !videoPage.isSeeking && videoPlayer.status !== Video.Loading
+                source: videoPage.isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
+                visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (!videoLoader.item || videoLoader.item.status !== Video.Loading)
 
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        if (isPlaying) videoPlayer.pause(); else videoPlayer.play();
+                        if (!videoLoader.item) return;
+                        if (videoPage.isPlaying) videoLoader.item.pause(); else videoLoader.item.play();
                         controlsTimer.restart();
                     }
                 }
@@ -364,7 +243,7 @@ Rectangle {
 
             Rectangle {
                 anchors.bottom: parent.bottom; width: parent.width; height: 40; color: "#B3000000"
-                visible: playerContainer.pendingSeekSeconds === 0 && !videoPage.isSeeking && videoPlayer.status !== Video.Loading
+                visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (!videoLoader.item || videoLoader.item.status !== Video.Loading)
 
                 MouseArea { anchors.fill: parent; onClicked: controlsTimer.restart() }
 
@@ -372,14 +251,14 @@ Rectangle {
                     id: currentTimeText
                     anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; anchors.leftMargin: 10
                     color: "white"; font.pixelSize: 14
-                    text: formatTime(videoPlayer.position)
+                    text: videoLoader.item ? formatTime(videoLoader.item.position) : "0:00"
                 }
 
                 Text {
                     id: totalTimeText
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 10
                     color: "white"; font.pixelSize: 14
-                    text: videoPlayer.duration > 0 ? formatTime(videoPlayer.duration) : "0:00"
+                    text: (videoLoader.item && videoLoader.item.duration > 0) ? formatTime(videoLoader.item.duration) : "0:00"
                 }
 
                 Item {
@@ -389,53 +268,45 @@ Rectangle {
 
                     Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; height: 4; color: "#444444"; radius: 2 }
 
-                    // Буфер (теперь, когда сервер на Rust отдает Content-Length, эта полоска будет работать честно!)
                     Rectangle {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                         height: 4; color: "#888888"; radius: 2
-                        width: (videoPlayer.bufferProgress !== undefined ? videoPlayer.bufferProgress : 0) * parent.width
+                        width: (videoLoader.item && videoLoader.item.bufferProgress !== undefined) ? videoLoader.item.bufferProgress * parent.width : 0
                     }
 
                     Rectangle {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                         height: 4; color: "red"; radius: 2
-                        width: videoPlayer.duration > 0 ? (playerContainer.isUserDraggingSlider ? playerContainer.sliderDragRatio : (videoPlayer.position / videoPlayer.duration)) * parent.width : 0
+                        width: (videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoLoader.item.position / videoLoader.item.duration)) * parent.width : 0
                     }
 
                     Rectangle {
                         width: 16; height: 16; radius: 8; color: "red"
                         anchors.verticalCenter: parent.verticalCenter
-                        x: (videoPlayer.duration > 0 ? (playerContainer.isUserDraggingSlider ? playerContainer.sliderDragRatio : (videoPlayer.position / videoPlayer.duration)) * parent.width : 0) - 8
+                        x: ((videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoLoader.item.position / videoLoader.item.duration)) * parent.width : 0) - 8
                     }
 
                     MouseArea {
-                        anchors.fill: parent
-                        anchors.topMargin: -15; anchors.bottomMargin: -15
-
+                        anchors.fill: parent; anchors.topMargin: -15; anchors.bottomMargin: -15
                         onPressed: {
-                            if (videoPage.isSeeking || videoPlayer.duration <= 0) return;
-                            playerContainer.isUserDraggingSlider = true;
+                            if (videoPage.isSeeking || !videoLoader.item || videoLoader.item.duration <= 0) return;
+                            videoPage.isUserDraggingSlider = true;
                             controlsTimer.stop();
-
                             var ratio = mouse.x / width;
                             if (ratio < 0) ratio = 0; if (ratio > 1) ratio = 1;
-                            playerContainer.sliderDragRatio = ratio;
+                            videoPage.sliderDragRatio = ratio;
                         }
-
                         onPositionChanged: {
-                            if (!playerContainer.isUserDraggingSlider) return;
+                            if (!videoPage.isUserDraggingSlider) return;
                             var ratio = mouse.x / width;
                             if (ratio < 0) ratio = 0; if (ratio > 1) ratio = 1;
-                            playerContainer.sliderDragRatio = ratio;
+                            videoPage.sliderDragRatio = ratio;
                         }
-
                         onReleased: {
-                            if (!playerContainer.isUserDraggingSlider) return;
-                            playerContainer.isUserDraggingSlider = false;
-
-                            var targetPos = playerContainer.sliderDragRatio * videoPlayer.duration;
-                            playerContainer.performSafeSeek(targetPos);
-
+                            if (!videoPage.isUserDraggingSlider) return;
+                            videoPage.isUserDraggingSlider = false;
+                            videoPage.isSeeking = true;
+                            videoLoader.item.position = videoPage.sliderDragRatio * videoLoader.item.duration;
                             controlsTimer.restart();
                         }
                     }
@@ -443,31 +314,17 @@ Rectangle {
             }
         }
 
-        // --- СПИННЕР ЗАГРУЗКИ ---
+        // --- СПИННЕР ---
         SafeImage {
             id: spinner
-            anchors.centerIn: parent
-            z: 100
+            anchors.centerIn: parent; z: 100
             source: "../Assets/player/reload.png"
             width: 48; height: 48
-            // Согласно документации, отображаем спиннер при Loading, Buffering и Stalled.
-            // Плюс добавляем наш флаг isSeeking.
-            visible: videoPage.isSeeking || videoPlayer.status === Video.Loading || videoPlayer.status === Video.Buffering || videoPlayer.status === Video.Stalled
-
-            NumberAnimation on rotation {
-                from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible
-            }
-        }
-
-        // --- СООБЩЕНИЕ ОБ ОШИБКЕ ---
-        Rectangle {
-            anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 100
-            width: errorText.width + 40; height: errorText.height + 20
-            visible: !videoPage.isSeeking && (videoPlayer.status === Video.InvalidMedia)
-            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: "Ошибка воспроизведения" }
+            // Видно, если грузим, ищем или плеер вообще еще не создан лоадером
+            visible: videoPage.isSeeking || !videoLoader.item || videoLoader.item.status === Video.Loading || videoLoader.item.status === Video.Buffering || videoLoader.item.status === Video.Stalled
+            NumberAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible }
         }
     }
-
     // --- ОСНОВНОЙ КОНТЕНТ (Скрывается в полноэкранном режиме) ---
     /*Flickable {
         anchors.top: playerContainer.bottom; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
