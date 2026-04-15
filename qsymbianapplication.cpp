@@ -26,6 +26,7 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
         // fire when press red key
         case KAknUidValueEndKeyCloseEvent: {
             emit redPressed();
+            this->quit();
             return true;
 
         }

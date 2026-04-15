@@ -146,4 +146,10 @@ Rectangle {
             contentLoader.item.loadChannel(author);
         }
     }
+
+    function navigateToSettings() {
+        navbar.showBackButton = true;
+        contentLoader.source = "pages/SettingsPage.qml";
+
+    }
 }

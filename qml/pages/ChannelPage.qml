@@ -7,7 +7,7 @@ Rectangle {
     color: "black"
 
     property variant channelData: null
-    property variant videosModel: []
+    property variant videosModel:[]
 
     Connections {
         target: ApiManager
@@ -28,18 +28,11 @@ Rectangle {
 
     function loadChannel(author) {
         channelData = null
-        videosModel = []
+        videosModel =[]
         loadingIndicator.visible = true
         errorText.visible = false
         ApiManager.getChannelVideos(author)
     }
-	
-	function getEncodedIconUrl(rawUrl) {
-    if (!rawUrl) return "";
-    // 1. Декодируем всё, чтобы получить чистый URL (http://...)
-    // 2. Кодируем один раз (все : / ? будут заменены на %3A %2F и т.д.)
-    return encodeURIComponent(decodeURIComponent(rawUrl));
-	}
 
     Text {
         id: loadingIndicator
@@ -60,72 +53,92 @@ Rectangle {
         visible: false
     }
 
-    Flickable {
+    // --- ГЛАВНЫЙ СПИСОК ---
+    ListView {
+        id: mainList
         anchors.fill: parent
-        contentWidth: parent.width
-        contentHeight: channelContent.height
-        clip: true
+        model: videosModel
+        visible: !loadingIndicator.visible && !errorText.visible
 
-        Column {
-            id: channelContent
-            width: parent.width
+        // Оптимизация для Symbian
+        cacheBuffer: 1000
+
+        // Сбрасываем скролл при загрузке нового канала
+        onModelChanged: {
+            mainList.contentY = 0;
+        }
+
+        // --- ВЕРХНЯЯ ЧАСТЬ КАНАЛА (скроллится вместе со списком) ---
+        header: Column {
+            width: mainList.width
             spacing: 16
-            
+
             // Баннер канала
-            SafeImage {
+            Image {
                 width: parent.width
                 height: 120
                 source: channelData && channelData.channel_info ? (channelData.channel_info["banner"] || "") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
+                asynchronous: true
             }
 
-            // Информация о канале
-            Row {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 16
-                spacing: 16
-                
-                Rectangle {
-                    width: 80; height: 80; radius: 40; color: "#333"; clip: true
-                    SafeImage {
-                        anchors.fill: parent
-                        source: channelData && channelData.channel_info ? decodeURIComponent(channelData.channel_info["thumbnail"].replace("yt.modyleprojects.ru", "yt.swlbst.ru") || "") : ""
-                        fillMode: Image.PreserveAspectCrop
+            // Инфо (Аватар + Название + Подписчики)
+            Item {
+                width: parent.width
+                height: 80
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 16
+                    spacing: 16
+
+                    // Аватар
+                    Rectangle {
+                        width: 80; height: 80; radius: 40; color: "#333"; clip: true
+                        Image {
+                            anchors.fill: parent
+                            source: channelData && channelData.channel_info ? (channelData.channel_info["thumbnail"] || "") : ""
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                        }
                     }
-                }
-                
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
-                    Text {
-                        text: channelData && channelData.channel_info ? (channelData.channel_info["title"] || "") : ""
-                        color: "white"
-                        font.pixelSize: 20
-                        font.bold: true
-                    }
-                    Text {
-                        text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0") + " подписчиков") : ""
-                        color: "gray"
-                        font.pixelSize: 14
+
+                    // Текст
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        width: parent.width - 112 // Ширина родителя минус ширина аватара и отступов
+
+                        Text {
+                            text: channelData && channelData.channel_info ? (channelData.channel_info["title"] || "") : ""
+                            color: "white"
+                            font.pixelSize: 20
+                            font.bold: true
+                            width: parent.width
+                            elide: Text.ElideRight
+                            font.family: "Nokia Pure Text"
+                        }
+                        Text {
+                            text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0") + " подписчиков") : ""
+                            color: "gray"
+                            font.pixelSize: 14
+                            font.family: "Nokia Pure Text"
+                        }
                     }
                 }
             }
-            
-            // Список видео
-            ListView {
-                width: parent.width
-                height: 500 // Даем начальную высоту, Flickable ее растянет
-                model: videosModel
-                interactive: false // Прокруткой управляет родительский Flickable
-                
-                delegate: VideoCard {
-                    modelData: model.modelData
-                    onClicked: {
-                        root.navigateToVideo(videoId)
-                    }
-                }
+
+            // Отступ перед началом видео
+            Item { width: parent.width; height: 8 }
+        }
+
+        // --- КАРТОЧКИ ВИДЕО ---
+        delegate: VideoCard {
+            modelData: model.modelData
+            onClicked: {
+                root.navigateToVideo(videoId)
             }
         }
     }

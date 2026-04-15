@@ -105,6 +105,18 @@ Rectangle {
                 visible: !qrImage.visible
             }
         }
+
+        Rectangle {
+            width: 200; height: 40
+            color: "#333333"
+            radius: 5
+            anchors.horizontalCenter: parent.horizontalCenter
+            Text { text: "Настройки"; color: "white"; anchors.centerIn: parent; font.bold: true }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.navigateToSettings() // Вызов глобальной функции из main.qml
+            }
+        }
     }
 
 
@@ -172,5 +184,19 @@ Rectangle {
                 }
             }
         }
+
+        Rectangle {
+            width: parent.width; height: 40
+            color: "#1F1F1F"
+            border.color: "#333333"
+            border.width: 1
+            radius: 5
+            Text { text: "Настройки"; color: "white"; anchors.centerIn: parent; font.bold: true }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.navigateToSettings()
+            }
+        }
+
     }
 }
