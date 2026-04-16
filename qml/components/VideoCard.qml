@@ -24,7 +24,7 @@ Rectangle {
 
             SafeImage {
                 anchors.fill: parent
-                source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru").replace("https", "http") : ""
+                source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
                 //asynchronous: true
@@ -67,7 +67,7 @@ Rectangle {
                 
                 SafeImage {
                     anchors.fill: parent
-                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail.replace("yt.swlbst.ru", "yt.modyleprojects.ru") : "../Assets/placeholder.png"
+                    source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail : "../Assets/placeholder.png"
                     fillMode: Image.PreserveAspectCrop
                     //asynchronous: true
                 }

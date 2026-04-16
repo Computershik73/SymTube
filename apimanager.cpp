@@ -25,14 +25,14 @@ void ApiManager::sanitizeVideoList(QVariantList &list) {
         // Исправляем превью видео
         if (map.contains("thumbnail")) {
             QString url = map["thumbnail"].toString();
-            url.replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            url.replace("https://", "http://");
             map["thumbnail"] = url;
         }
 
         // Исправляем аватарку канала
         if (map.contains("channel_thumbnail")) {
             QString url = map["channel_thumbnail"].toString();
-            url.replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            url.replace("https://", "http://");
             map["channel_thumbnail"] = url;
         }
 
@@ -96,7 +96,7 @@ void ApiManager::getVideoInfo(const QString &videoId)
 {
     QString apiKey = m_config->apiKey();
     QString url = m_config->apiBaseUrl() + "get-ytvideo-info.php?video_id=" + videoId;
-    qDebug() << "[ApiManager] Запрос информации о видео по URL:" << url; // <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+    qDebug() << "[ApiManager] Запрос информации о видео по URL:" << url; // <-- ДОБАВЬТЕ ЭТУ СТ� ОКУ
     sendRequest(url, "VideoInfo");
 }
 
@@ -252,10 +252,10 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QByteArray responseData = reply->readAll();
     QString responseString = QString::fromUtf8(responseData);
 
-    // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+    // --- НАЧАЛО ИСП� АВЛЕНИЯ ---
     // Этот костыль заменяет некорректное значение на валидное (пустая строка)
     responseString.replace("\"embed_url\": ,", "\"embed_url\": \"\",");
-    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+    // --- КОНЕЦ ИСП� АВЛЕНИЯ ---
 
     bool parseSuccess = false;
     QVariant parsedJson = QtJson::parse(responseString, parseSuccess);
@@ -298,13 +298,13 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 map["videos"] = vList;
             }
 
-            // --- УНИВЕРСАЛЬНЫЙ ДЕКОДЕР ---
+            // --- УНИВЕ� САЛЬНЫЙ ДЕКОДЕ�  ---
             if (map.contains("channel_thumbnail")) {
                 QString url = map.value("channel_thumbnail").toString();
 
                 // Просто заменяем %25 на % на случай, если сервер прислал двойную кодировку.
                 // Это превратит "https%253A" в "https%3A", не ломая саму ссылку "http://..."
-                url = url.replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+                url = url;
 
                 map.insert("channel_thumbnail", url);
             }
@@ -397,7 +397,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             QImage img;
             bool success = img.loadFromData(imgData);
 
-            qDebug() << "[Auth] Размер Base64:" << base64Data.length();
+            qDebug() << "[Auth] � азмер Base64:" << base64Data.length();
             qDebug() << "[Auth] Декодирование картинки успешно:" << success;
 
             if (success && m_qrProvider) {

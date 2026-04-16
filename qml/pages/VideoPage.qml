@@ -42,7 +42,7 @@ Rectangle {
         }
         onInFocus: {
             if (videoLoader.item && isPlaying) {
-                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
+                console.log("ВОЗВ� АТ ИЗ ФОНА: Пересоздаем плеер...");
                 //videoPage.recoveryPosition = videoLoader.item.position;
                 //videoLoader.sourceComponent = undefined;
                 //recreateTimer.start();
@@ -67,7 +67,7 @@ Rectangle {
                                         "video_id": videoDetails.video_id, "title": videoDetails.title,
                                         "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
         });
-            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https://", "http://");
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
             recreateTimer.start();
@@ -92,7 +92,7 @@ Rectangle {
         ApiManager.getRelatedVideos(videoId, 0);
     }
 
-    // --- ШАБЛОН ПЛЕЕРА ---
+    // --- ШАБЛОН ПЛЕЕ� А ---
     Component {
         id: videoComponent
         Video {
@@ -169,7 +169,7 @@ Rectangle {
         }
     }
 
-    // --- БЛОК КОНТЕЙНЕРА (ВЕРХНЯЯ ЧАСТЬ ЭКРАНА) ---
+    // --- БЛОК КОНТЕЙНЕ� А (ВЕ� ХНЯЯ ЧАСТЬ ЭК� АНА) ---
     Rectangle {
         id: playerContainer
         width: parent.width
@@ -183,7 +183,7 @@ Rectangle {
             anchors.fill: parent
         }
 
-        // ИСПРАВЛЕНИЕ: Безопасные проверки на null для visible
+        // ИСП� АВЛЕНИЕ: Безопасные проверки на null для visible
         Rectangle {
             anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
             width: errorText.width + 40; height: errorText.height + 20
@@ -321,7 +321,7 @@ Rectangle {
                     onTriggered: volumeFadeOut.start()
                 }
 
-                // Реакция на изменение громкости
+                // � еакция на изменение громкости
                 Connections {
                     target: VolumeKeys
                     onVolumeChanged: {
@@ -359,7 +359,7 @@ Rectangle {
 
         }
 
-        // ИСПРАВЛЕНИЕ: Безопасные проверки для спиннера
+        // ИСП� АВЛЕНИЕ: Безопасные проверки для спиннера
         SafeImage {
             id: spinner
             anchors.centerIn: parent; z: 100
@@ -388,7 +388,7 @@ Rectangle {
         highlightMoveDuration: 0
         cacheBuffer: 1000
 
-        // --- ИСПРАВЛЕНИЕ: Четкая структура Header'а, чтобы ListView не путался ---
+        // --- ИСП� АВЛЕНИЕ: Четкая структура Header'а, чтобы ListView не путался ---
         header: Column {
             id: contentColumn
             width: mainList.width
