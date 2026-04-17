@@ -58,7 +58,7 @@ public:
 
 signals:
     // Сигналы для QML об успешном получении данных
-    void homeVideosReady(QVariantList videos);
+    void homeVideosReady(QVariantList videos, QString token);
     void searchResultsReady(QVariantList videos);
     void searchSuggestionsReady(QVariantList suggestions);
     void videoInfoReady(QVariantMap videoDetailsMap);
