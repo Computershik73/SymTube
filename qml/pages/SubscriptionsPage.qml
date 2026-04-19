@@ -97,6 +97,7 @@ Rectangle {
             orientation: ListView.Horizontal
             model: subsModel
             spacing: 16
+            cacheBuffer: 800
 
             delegate: Item {
                 width: 80
@@ -121,7 +122,7 @@ Rectangle {
 
                                 // 1. Очищаем ссылку от домена и https, оставляя только хвост
                                 // Нам нужно передать в C++ только финальную прямую ссылку на картинку
-                                var cleanUrl = rawUrl.replace("yt.modyleprojects.ru", "yt.swlbst.ru");
+                                var cleanUrl = rawUrl.replace("yt.modyleprojects.ru", "yt.swlbst.ru").replace("https", "http");
 
                                 // 2. Теперь кодируем только этот чистый хвост (https%3A%2F%2F...)
                                 // и добавляем префикс провайдера

@@ -260,32 +260,33 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QVariant parsedJson = QtJson::parse(responseString, parseSuccess);
 
     if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos") {
-        if (parseSuccess && parsedJson.type() == QVariant::List) {
+        if (requestType == "HomeVideos") {
+            if (parseSuccess && parsedJson.type() == QVariant::Map) {
+                // Новый формат: { "videos": [...], "next_page_token": "..." }
+                QVariantMap map = parsedJson.toMap();
+                QVariantList list = map.value("videos").toList();
+                QString token = map.value("next_page_token").toString();
+
+                sanitizeVideoList(list);
+                emit homeVideosReady(list, token);
+            } else if (parseSuccess && parsedJson.type() == QVariant::List) {
+                // Запасной план (если почему-то пришел старый формат)
+                QVariantList list = parsedJson.toList();
+                sanitizeVideoList(list);
+                emit homeVideosReady(list, "");
+            } else {
+                emit requestFailed(requestType, "JSON parse error");
+            }
+        }
+        // -------------------------------------------
+
+        else if (parseSuccess && parsedJson.type() == QVariant::List) {
+            // Для SearchVideos и RelatedVideos пока остается старый формат массива
             QVariantList list = parsedJson.toList();
             sanitizeVideoList(list);
-            if (requestType == "HomeVideos") {
-                if (parseSuccess && parsedJson.type() == QVariant::Map) {
-                    // Новый формат ответа от Rust: { "videos": [...], "next_page_token": "..." }
-                    QVariantMap map = parsedJson.toMap();
-                    QVariantList list = map.value("videos").toList();
-                    // ИСПРАВЛЕНИЕ: Берем "next_page_token"
-                    QString token = map.value("next_page_token").toString();
 
-                    sanitizeVideoList(list);
-                    // ИСПРАВЛЕНИЕ: Отправляем сигнал с двумя аргументами
-                    emit homeVideosReady(list, token);
-
-                } else if (parseSuccess && parsedJson.type() == QVariant::List) {
-                    // Обратная совместимость для старых роутов, которые отдают просто массив
-                    QVariantList list = parsedJson.toList();
-                    sanitizeVideoList(list);
-                    emit homeVideosReady(list, ""); // Отправляем пустой токен
-                } else {
-                    emit requestFailed(requestType, "JSON parse error");
-                }
-            }
-            else if (requestType == "SearchVideos") emit searchResultsReady(parsedJson.toList());
-            else emit relatedVideosReady(parsedJson.toList());
+            if (requestType == "SearchVideos") emit searchResultsReady(list);
+            else emit relatedVideosReady(list);
         } else {
             emit requestFailed(requestType, "JSON parse error");
         }

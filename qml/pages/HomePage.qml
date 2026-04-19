@@ -24,9 +24,11 @@ Rectangle {
             homePage.nextPageToken = token;
 
             if (homePage.isLoadingMore) {
+                var savedY = mainList.contentY;
                 var temp = homePage.videosModel;
                 for (var i = 0; i < videos.length; i++) temp.push(videos[i]);
                 homePage.videosModel = temp;
+                mainList.contentY = savedY;
                 homePage.isLoadingMore = false;
             } else {
                 homePage.videosModel = videos;
@@ -96,7 +98,9 @@ Rectangle {
         anchors.fill: parent
         model: videosModel
         visible: !isLoading && !errorPanel.visible
-        cacheBuffer: 1500
+        cacheBuffer: 1200
+
+
 
         delegate: VideoCard {
             modelData: model.modelData

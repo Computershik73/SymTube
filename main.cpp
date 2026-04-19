@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 
     QNetworkProxy proxy;
     proxy.setType(QNetworkProxy::HttpProxy);
-    proxy.setHostName("192.168.116.224");
-    proxy.setPort(8888);
+    proxy.setHostName("192.168.1.183");
+    proxy.setPort(8890);
     //QNetworkProxy::setApplicationProxy(proxy);
 
     // 2. Инициализация менеджеров
