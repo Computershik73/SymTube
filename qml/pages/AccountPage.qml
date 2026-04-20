@@ -153,14 +153,28 @@ Rectangle {
                         Image {
                             anchors.fill: parent
                             source: {
-                                if (!accountData || !accountData.google_account || !accountData.google_account.picture) return "";
-                                // 1. Декодируем дважды, чтобы получить чистую строку вида http://.../https://...
-                                var cleanUrl = decodeURIComponent(decodeURIComponent(accountData.google_account.picture));
-                                // 2. Исправляем протокол и домен прокси (https -> http)
-                                var finalUrl = cleanUrl.replace("https://", "http://").replace("yt.modyleprojects.ru", "yt.swlbst.ru");
-                                // 3. Отдаем провайдеру "как есть" - C++ получит чистый URL и сам правильно его отправит
-                                return "image://rounded/" + finalUrl;
-                            }
+                                    if (!accountData || !accountData.google_account || !accountData.google_account.picture) return "";
+
+                                    var originalUrl = accountData.google_account.picture;
+                                    var parts = originalUrl.split("channel_icon/");
+
+                                    if (parts.length < 2) return "";
+
+                                    // Базовая часть (меняем https на http для обхода ошибки SSL на Symbian)
+                                    var baseUrl = parts[0].replace("https://", "http://") + "channel_icon/";
+
+                                    // 1. Декодируем вторую часть ссылки (дважды, чтобы гарантированно снять все наслоения %25)
+                                    var cleanTail = decodeURIComponent(decodeURIComponent(parts[1]));
+
+                                    // 2. Энкодим её один раз
+                                    var encodedTail = encodeURIComponent(cleanTail);
+
+                                    // 3. Полученный результат передаем далее как строку
+                                    var fullString = baseUrl + encodedTail;
+
+                                    // 4. Энкодим ещё раз и передаем в провайдер
+                                    return "image://rounded/" + encodeURIComponent(fullString);
+                                }
                             fillMode: Image.PreserveAspectCrop
                         }
                     }

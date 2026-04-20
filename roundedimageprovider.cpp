@@ -46,7 +46,8 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
         // Создаем менеджер на стеке. Он будет безопасно уничтожен в конце блока.
         QNetworkAccessManager manager;
         manager.setParent(0);
-        QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(decodedId)));
+        QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
+        QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
         reply->ignoreSslErrors();
 
         // Ждем завершения скачивания именно этой картинки

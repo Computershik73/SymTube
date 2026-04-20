@@ -22,6 +22,7 @@ public:
     QSymbianApplication(int argc, char** argv);
 
     Q_INVOKABLE bool foreground();
+    Q_INVOKABLE void keepScreenOn();
 
 
 signals:

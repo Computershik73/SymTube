@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <Qfile>
 #include <QKeyEvent>
+#include <e32std.h>
+
 
 
 QSymbianApplication::QSymbianApplication(int argc, char** argv) :
@@ -12,6 +14,15 @@ QSymbianApplication::QSymbianApplication(int argc, char** argv) :
 }
 
 
+
+void QSymbianApplication::keepScreenOn()
+{
+#ifdef Q_OS_SYMBIAN
+    // Сбрасывает системный таймер бездействия.
+    // Экран не погаснет, пока мы вызываем эту функцию.
+    User::ResetInactivityTime();
+#endif
+}
 
 bool QSymbianApplication::foreground()
 {
@@ -37,7 +48,7 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
             emit foregroundChanged(iForeground);
             emit inFocus();
         }
-            break;
+        break;
 
 
         case EEventFocusLost: {
@@ -45,7 +56,7 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
             emit foregroundChanged(iForeground);
             emit inBackground();
         }
-            break;
+        break;
 
 
 
@@ -53,7 +64,7 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
     }
     else if (event->type() == QSymbianEvent::CommandEvent) {
         if (event->command() == EEikCmdExit) {
-                 emit redPressed();
+            emit redPressed();
             return true;
 
         }

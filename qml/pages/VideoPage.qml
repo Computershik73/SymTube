@@ -21,6 +21,7 @@ Rectangle {
     property bool isUserDraggingSlider: false
     property real sliderDragRatio: 0.0
     property int recoveryAttempts: 0
+    property bool isVideoEnded: false
 
     function formatTime(ms) {
         if (ms <= 0) return "0:00";
@@ -56,6 +57,17 @@ Rectangle {
         repeat: false
         onTriggered: {
             videoLoader.sourceComponent = videoComponent;
+        }
+    }
+
+    Timer {
+        interval: 5000 // Каждые 5 секунд
+        repeat: true
+        running: videoPage.isPlaying // Работает только пока видео реально играет
+        onTriggered: {
+            if (typeof SymbianApp !== "undefined") {
+                SymbianApp.keepScreenOn(); // Сбрасываем системный таймер гашения экрана
+            }
         }
     }
 
@@ -183,6 +195,8 @@ Rectangle {
             anchors.fill: parent
         }
 
+
+
         // ИСПРАВЛЕНИЕ: Безопасные проверки на null для visible
         Rectangle {
             anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
@@ -305,58 +319,61 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                id: volumeOsd
-                anchors.centerIn: parent
-                width: 150; height: 50
-                color: "#CC000000"
-                radius: 8
-                z: 150 // Выше всех оверлеев
-                opacity: 0
 
-                // Таймер для скрытия
-                Timer {
-                    id: volumeOsdTimer
-                    interval: 2000 // Исчезает через 2 секунды
-                    onTriggered: volumeFadeOut.start()
-                }
 
-                // Реакция на изменение громкости
-                Connections {
-                    target: VolumeKeys
-                    onVolumeChanged: {
-                        volumeOsd.opacity = 1.0;
-                        volumeFadeOut.stop();
-                        volumeOsdTimer.restart();
-                    }
-                }
+        }
 
-                // Анимация исчезновения
-                SequentialAnimation {
-                    id: volumeFadeOut
-                    running: false
-                    NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
-                }
 
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 10
+        Rectangle {
+            id: volumeOsd
+            anchors.centerIn: parent
+            width: 150; height: 50
+            color: "#CC000000"
+            radius: 8
+            z: 150 // Выше всех оверлеев
+            opacity: 0
 
-                    Image {
-                        source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
-                        width: 24; height: 24
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+            // Таймер для скрытия
+            Timer {
+                id: volumeOsdTimer
+                interval: 2000 // Исчезает через 2 секунды
+                onTriggered: volumeFadeOut.start()
+            }
 
-                    Text {
-                        text: VolumeKeys.volume + "%"
-                        color: "white"
-                        font.pixelSize: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+            // Реакция на изменение громкости
+            Connections {
+                target: VolumeKeys
+                onVolumeChanged: {
+                    volumeOsd.opacity = 1.0;
+                    volumeFadeOut.stop();
+                    volumeOsdTimer.restart();
                 }
             }
 
+            // Анимация исчезновения
+            SequentialAnimation {
+                id: volumeFadeOut
+                running: false
+                NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
+            }
+
+            Row {
+                anchors.centerIn: parent
+                spacing: 10
+
+                Image {
+                    source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
+                    width: 24; height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: VolumeKeys.volume + "%"
+                    color: "white"
+                    font.pixelSize: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
         }
 
         // ИСПРАВЛЕНИЕ: Безопасные проверки для спиннера
