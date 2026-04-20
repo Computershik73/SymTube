@@ -56,6 +56,9 @@ public:
 
     void sanitizeVideoList(QVariantList &list);
 
+    Q_INVOKABLE void getHistory();
+
+
 signals:
     // Сигналы для QML об успешном получении данных
     void homeVideosReady(QVariantList videos, QString token);
@@ -75,6 +78,7 @@ signals:
     void requestFailed(QString endpoint, QString errorMessage);
     void authImageReady();
     void shortsReady(QVariantList shortsList, QString seqToken);
+    void historyReady(QVariantList historyList);
 private slots:
     void onReplyFinished(QNetworkReply *reply);
 

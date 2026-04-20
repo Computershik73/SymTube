@@ -18,6 +18,14 @@ ApiManager::~ApiManager()
 {
 }
 
+void ApiManager::getHistory()
+{
+    QString token = m_config->userToken();
+    if (token.isEmpty()) return;
+    QString url = m_config->apiBaseUrl() + "get_history.php?token=" + token;
+    sendRequest(url, "History");
+}
+
 void ApiManager::sanitizeVideoList(QVariantList &list) {
     for (int i = 0; i < list.size(); ++i) {
         QVariantMap map = list[i].toMap();
@@ -433,7 +441,15 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         } else {
             emit authContentReady(content, "Unknown");
         }
-    }
+    } else if (requestType == "History") {
+            if (parseSuccess && parsedJson.type() == QVariant::List) {
+                QVariantList list = parsedJson.toList();
+                sanitizeVideoList(list); // Применяем ту же очистку ссылок
+                emit historyReady(list);
+            } else {
+                emit requestFailed(requestType, "JSON parse error");
+            }
+        }
 
     reply->deleteLater();
 }
