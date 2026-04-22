@@ -107,8 +107,8 @@ Rectangle {
             var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
 
             if (shortsPage.currentVideoUrl !== directUrl) {
-                videoPlayer.stop();
-                shortsPage.currentVideoUrl  = directUrl;
+                shortsPage.currentVideoUrl = directUrl;
+                shortsPage.recoveryAttempts = 0;
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
             } else {
@@ -137,7 +137,7 @@ Rectangle {
 
         // Сброс UI перед новым видео
         shortsPage.showPlayIcon = false;
-        playIconTimer.stop();
+        controlsTimer.stop();
 
         currentShortInfo = shortsList[currentIndex];
         currentVideoDetails = null;
@@ -165,6 +165,8 @@ Rectangle {
             onResumed: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; controlsTimer.restart(); shortsPage.recoveryAttempts = 0; }
             onPaused: { shortsPage.isPlaying = false; controlsTimer.stop(); controlsOverlay.visible = true; }
             onStopped: { shortsPage.isPlaying = false; shortsPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+
+
 
             onStatusChanged: {
                 if (status === Video.Loaded) {
@@ -217,8 +219,11 @@ Rectangle {
 
     // --- 2. ПРОЗРАЧНЫЙ КОНТЕЙНЕР ПОВЕРХ ПЛЕЕРА (ИНТЕРФЕЙС) ---
     Item {
-        id: uiOverlay
+        id: controlsOverlay
         anchors.fill: parent
+        visible: true
+
+        Timer { id: controlsTimer; interval: 3000; onTriggered: controlsOverlay.visible = false }
 
         Loader {
             id: videoLoader
@@ -281,12 +286,12 @@ Rectangle {
                         if (isPlaying) {
                             videoPlayer.pause();
                             shortsPage.showPlayIcon = true;
-                            playIconTimer.stop(); // Оставляем иконку висеть на экране
+                            controlsTimer.stop(); // Оставляем иконку висеть на экране
                         } else {
-                            if (videoPlayer.status === Video.Loaded || videoPlayer.status === Video.Paused || videoPlayer.status === Video.EndOfMedia) {
-                                videoPlayer.play();
+                            if (videoLoader.item.status === Video.Loaded || videoLoader.item.status === Video.Paused || videoLoader.item.status === Video.EndOfMedia) {
+                                videoLoader.item.play();
                                 shortsPage.showPlayIcon = true;
-                                playIconTimer.restart(); // Показываем иконку и скрываем через 1.5с
+                                controlsTimer.restart(); // Показываем иконку и скрываем через 1.5с
                             }
                         }
                     }
@@ -294,12 +299,6 @@ Rectangle {
             }
         }
 
-        // Таймер скрытия иконки
-        Timer {
-            id: playIconTimer
-            interval: 1500
-            onTriggered: shortsPage.showPlayIcon = false
-        }
 
         // Иконка Play/Pause по центру
         Image {
@@ -309,7 +308,7 @@ Rectangle {
             source: isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
             opacity: 0.8
             // Всегда видна на паузе, либо видна временно при запуске воспроизведения
-            visible: (!isPlaying && (videoLoader.item.status === Video.Loaded || videoLoader.item.status === Video.Paused)) || shortsPage.showPlayIcon
+            visible: !isPlaying && videoLoader.item && (videoLoader.item.status === Video.Loaded || videoLoader.item.status === Video.Paused)
         }
 
         Rectangle {
@@ -375,7 +374,7 @@ Rectangle {
             Rectangle {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
                 color: "white"
-                width: videoLoader.item.duration > 0 ? (videoLoader.item.position / videoPlayer.duration) * parent.width : 0
+                 width: (videoLoader.item && videoLoader.item.duration > 0) ? (videoLoader.item.position / videoLoader.item.duration) * parent.width : 0
             }
         }
 
