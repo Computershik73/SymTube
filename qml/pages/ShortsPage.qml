@@ -3,7 +3,7 @@ import QtMultimediaKit 1.1
 import "../components"
 
 Rectangle {
-    id: shortsPlayer
+    id: shortsPage
     color: "black"
 
     property variant shortsList:[]
@@ -19,17 +19,60 @@ Rectangle {
     // Флаг для управления видимостью иконки Play/Pause после тапа
     property bool showPlayIcon: false
 
+    property string currentVideoId: ""
+    property variant videoDetails: null
+
+    property variant relatedVideos:[]
+
+    property bool isSeeking: false
+    property bool isLandscape: width > height
+
+    // Переменные для фоновой магии и перемотки
+    property string currentVideoUrl: ""
+    property int recoveryPosition: -1
+    property int pendingSeekSeconds: 0
+    property bool isUserDraggingSlider: false
+    property real sliderDragRatio: 0.0
+    property int recoveryAttempts: 0
+    property bool isVideoEnded: false
+
+
     Connections {
         target: SymbianApp
         onInBackground: {
-            if (isPlaying) videoPlayer.play(); // Сохраняем аудиопоток в фоне
+            if (videoLoader.item && isPlaying) {
+                console.log("УХОД В ФОН: Уничтожаем плеер...");
+                shortsPage.recoveryPosition = videoLoader.item.position;
+                videoLoader.sourceComponent = undefined;
+                recreateTimer.start();
+            }
         }
         onInFocus: {
-            if (isPlaying) {
-                var currentPos = videoPlayer.position;
-                videoPlayer.pause();
-                videoPlayer.position = currentPos;
-                videoPlayer.play();
+            if (videoLoader.item && isPlaying) {
+                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
+                //shortsPage.recoveryPosition = videoLoader.item.position;
+                //videoLoader.sourceComponent = undefined;
+                //recreateTimer.start();
+            }
+        }
+    }
+
+    Timer {
+        id: recreateTimer
+        interval: 150
+        repeat: false
+        onTriggered: {
+            videoLoader.sourceComponent = videoComponent;
+        }
+    }
+
+    Timer {
+        interval: 5000 // Каждые 5 секунд
+        repeat: true
+        running: shortsPage.isPlaying // Работает только пока видео реально играет
+        onTriggered: {
+            if (typeof SymbianApp !== "undefined") {
+                SymbianApp.keepScreenOn(); // Сбрасываем системный таймер гашения экрана
             }
         }
     }
@@ -40,12 +83,14 @@ Rectangle {
             isLoading = false;
             sequenceToken = seqToken;
             if (shortsList.length > 0) {
-                var combined = shortsPlayer.shortsList;
+                var combined = shortsPage.shortsList;
                 for (var i = 0; i < shortsList.length; i++) combined.push(shortsList[i]);
-                shortsPlayer.shortsList = combined;
+                shortsPage.shortsList = combined;
                 if (currentIndex === 0 && !currentShortInfo) loadCurrentShort();
             }
         }
+
+
 
         onVideoInfoReady: {
             if (currentShortInfo && videoDetailsMap.video_id !== currentShortInfo.video_id) return;
@@ -61,10 +106,11 @@ Rectangle {
 
             var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
 
-            if (videoPlayer.source.toString() !== directUrl) {
+            if (shortsPage.currentVideoUrl !== directUrl) {
                 videoPlayer.stop();
-                videoPlayer.source = directUrl;
-                videoPlayer.play();
+                shortsPage.currentVideoUrl  = directUrl;
+                videoLoader.sourceComponent = undefined;
+                recreateTimer.start();
             } else {
                 if (videoPlayer.status === Video.Loaded) videoPlayer.play();
             }
@@ -90,7 +136,7 @@ Rectangle {
         if (currentIndex < 0 || currentIndex >= shortsList.length) return;
 
         // Сброс UI перед новым видео
-        shortsPlayer.showPlayIcon = false;
+        shortsPage.showPlayIcon = false;
         playIconTimer.stop();
 
         currentShortInfo = shortsList[currentIndex];
@@ -104,21 +150,67 @@ Rectangle {
     }
 
     // --- 1. ПЛЕЕР (НА САМОМ НИЖНЕМ СЛОЕ) ---
-    Video {
-        id: videoPlayer
-        anchors.fill: parent
-        fillMode: Video.PreserveAspectCrop
-        source: ""
-        volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
-        onResumed: isPlaying = true
-        onStarted: isPlaying = true
-        onPaused: isPlaying = false
-        onStopped: isPlaying = false
+    Component {
+        id: videoComponent
+        Video {
+            id: videoPlayer
+            anchors.fill: parent
+            fillMode: Video.PreserveAspectFit
+            source: shortsPage.currentVideoUrl
+            volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
 
-        onStatusChanged: {
-            if (status === Video.EndOfMedia) {
-                videoPlayer.position = 0;
-                videoPlayer.play(); // Бесшовное зацикливание
+            property int lastIntendedPosition: -1
+
+            onStarted: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; controlsTimer.restart(); shortsPage.recoveryAttempts = 0; }
+            onResumed: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; controlsTimer.restart(); shortsPage.recoveryAttempts = 0; }
+            onPaused: { shortsPage.isPlaying = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+            onStopped: { shortsPage.isPlaying = false; shortsPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+
+            onStatusChanged: {
+                if (status === Video.Loaded) {
+                    if (shortsPage.recoveryPosition !== -1) {
+                        var target = shortsPage.recoveryPosition;
+                        shortsPage.recoveryPosition = -1;
+                        performSafeSeek(target);
+                    } else {
+                        play();
+                    }
+                }
+                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+                    if (shortsPage.recoveryPosition === -1) {
+                        shortsPage.isSeeking = false;
+                        shortsPage.isPlaying = false;
+                    }
+                }
+            }
+
+            onError: {
+                if (errorString.indexOf("-36") !== -1 && shortsPage.recoveryAttempts < 3) {
+                    shortsPage.recoveryAttempts++;
+                    shortsPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
+                    videoLoader.sourceComponent = undefined;
+                    recreateTimer.start();
+                } else {
+                    shortsPage.isSeeking = false;
+                    shortsPage.isPlaying = false;
+                    shortsPage.recoveryPosition = -1;
+                }
+            }
+
+            function performSafeSeek(newPos) {
+                if (!seekable || duration <= 0) return;
+                if (newPos > duration) newPos = duration;
+                if (newPos < 0) newPos = 0;
+
+                lastIntendedPosition = newPos;
+                shortsPage.isSeeking = true;
+                var wasPlaying = shortsPage.isPlaying;
+
+                if (wasPlaying) pause();
+                position = newPos;
+                play();
+
+                if (!wasPlaying) shortsPage.isSeeking = false;
             }
         }
     }
@@ -128,22 +220,31 @@ Rectangle {
         id: uiOverlay
         anchors.fill: parent
 
+        Loader {
+            id: videoLoader
+            anchors.fill: parent
+        }
+
         // Спиннер загрузки
-        Image {
+        SafeImage {
             id: spinner
-            anchors.centerIn: parent
+            anchors.centerIn: parent; z: 100
             source: "../Assets/player/reload.png"
             width: 48; height: 48
-            z: 100
-            visible: isLoading || videoPlayer.status === Video.Loading || videoPlayer.status === 7 // 7 = Buffering
+            visible: {
+                if (shortsPage.isSeeking) return true;
+                if (videoLoader.item === null) return true;
+                var st = videoLoader.item.status;
+                return (st === Video.Loading || st === Video.Buffering || st === Video.Stalled);
+            }
             NumberAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible }
         }
 
         // Ошибка
         Rectangle {
-            anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 100
+            anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
             width: errorText.width + 40; height: errorText.height + 20
-            visible: videoPlayer.status === Video.InvalidMedia || videoPlayer.status === Video.NoMedia
+            visible: (videoLoader.item !== null) ? (videoLoader.item.status === Video.InvalidMedia && !shortsPage.isSeeking) : false
             Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: "Ошибка воспроизведения" }
         }
 
@@ -179,12 +280,12 @@ Rectangle {
                     if (mouse.x < parent.width - 60) {
                         if (isPlaying) {
                             videoPlayer.pause();
-                            shortsPlayer.showPlayIcon = true;
+                            shortsPage.showPlayIcon = true;
                             playIconTimer.stop(); // Оставляем иконку висеть на экране
                         } else {
                             if (videoPlayer.status === Video.Loaded || videoPlayer.status === Video.Paused || videoPlayer.status === Video.EndOfMedia) {
                                 videoPlayer.play();
-                                shortsPlayer.showPlayIcon = true;
+                                shortsPage.showPlayIcon = true;
                                 playIconTimer.restart(); // Показываем иконку и скрываем через 1.5с
                             }
                         }
@@ -197,7 +298,7 @@ Rectangle {
         Timer {
             id: playIconTimer
             interval: 1500
-            onTriggered: shortsPlayer.showPlayIcon = false
+            onTriggered: shortsPage.showPlayIcon = false
         }
 
         // Иконка Play/Pause по центру
@@ -208,7 +309,59 @@ Rectangle {
             source: isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
             opacity: 0.8
             // Всегда видна на паузе, либо видна временно при запуске воспроизведения
-            visible: (!isPlaying && (videoPlayer.status === Video.Loaded || videoPlayer.status === Video.Paused)) || shortsPlayer.showPlayIcon
+            visible: (!isPlaying && (videoLoader.item.status === Video.Loaded || videoLoader.item.status === Video.Paused)) || shortsPage.showPlayIcon
+        }
+
+        Rectangle {
+            id: volumeOsd
+            anchors.centerIn: parent
+            width: 150; height: 50
+            color: "#CC000000"
+            radius: 8
+            z: 150 // Выше всех оверлеев
+            opacity: 0
+
+            // Таймер для скрытия
+            Timer {
+                id: volumeOsdTimer
+                interval: 2000 // Исчезает через 2 секунды
+                onTriggered: volumeFadeOut.start()
+            }
+
+            // Реакция на изменение громкости
+            Connections {
+                target: VolumeKeys
+                onVolumeChanged: {
+                    volumeOsd.opacity = 1.0;
+                    volumeFadeOut.stop();
+                    volumeOsdTimer.restart();
+                }
+            }
+
+            // Анимация исчезновения
+            SequentialAnimation {
+                id: volumeFadeOut
+                running: false
+                NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
+            }
+
+            Row {
+                anchors.centerIn: parent
+                spacing: 10
+
+                Image {
+                    source: VolumeKeys.volume > 0 ? "../Assets/player/volume_up.png" : "../Assets/player/volume_mute.png"
+                    width: 24; height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: VolumeKeys.volume + "%"
+                    color: "white"
+                    font.pixelSize: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
         }
 
         // --- ПОСТОЯННЫЙ ИНТЕРФЕЙС (не скрывается) ---
@@ -222,7 +375,7 @@ Rectangle {
             Rectangle {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
                 color: "white"
-                width: videoPlayer.duration > 0 ? (videoPlayer.position / videoPlayer.duration) * parent.width : 0
+                width: videoLoader.item.duration > 0 ? (videoLoader.item.position / videoPlayer.duration) * parent.width : 0
             }
         }
 
