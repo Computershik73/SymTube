@@ -17,19 +17,27 @@ Rectangle {
 
     property bool showPlayIcon: false
     property string currentVideoUrl: ""
+    property int recoveryAttempts: 0
+    property int recoveryPosition: -1
+    property bool isSeeking: false
+
 
     Connections {
         target: SymbianApp
         onInBackground: {
             if (videoLoader.item && isPlaying) {
+                console.log("УХОД В ФОН: Уничтожаем плеер...");
+                shortsPage.recoveryPosition = videoLoader.item.position;
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
             }
         }
         onInFocus: {
             if (videoLoader.item && isPlaying) {
-                videoLoader.sourceComponent = undefined;
-                recreateTimer.start();
+                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
+                //videoPage.recoveryPosition = videoLoader.item.position;
+                //videoLoader.sourceComponent = undefined;
+                //recreateTimer.start();
             }
         }
     }
@@ -73,16 +81,18 @@ Rectangle {
 
             currentVideoDetails = videoDetailsMap;
             HistoryManager.addToHistory({
-                "video_id": currentVideoDetails.video_id,
-                "title": currentVideoDetails.title,
-                "author": currentVideoDetails.author,
-                "thumbnail": currentVideoDetails.thumbnail
-            });
+                                        "video_id": currentVideoDetails.video_id,
+                                        "title": currentVideoDetails.title,
+                                        "author": currentVideoDetails.author,
+                                        "thumbnail": currentVideoDetails.thumbnail
+        });
 
             var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
 
             if (shortsPage.currentVideoUrl !== directUrl) {
                 shortsPage.currentVideoUrl = directUrl;
+                shortsPage.recoveryAttempts = 0;
+
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
             } else {
@@ -96,6 +106,9 @@ Rectangle {
     function startPlaying() {
         if (shortsList.length === 0 && !isLoading) {
             isLoading = true;
+            videoLoader.sourceComponent = undefined;
+            isPlaying = false;
+            isSeeking = false;
             ApiManager.getShorts("");
         } else if (currentShortInfo && !isPlaying && videoLoader.item) {
             videoLoader.item.play();
@@ -129,35 +142,74 @@ Rectangle {
     Component {
         id: videoComponent
         Video {
+
+            property int lastIntendedPosition: -1
             anchors.fill: parent
             fillMode: Video.PreserveAspectCrop
             source: shortsPage.currentVideoUrl
             volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
-            onResumed: shortsPage.isPlaying = true
-            onStarted: shortsPage.isPlaying = true
+            onResumed: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; shortsPage.recoveryAttempts = 0; }
+            onStarted: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; shortsPage.recoveryAttempts = 0; }
             onPaused: shortsPage.isPlaying = false
-            onStopped: shortsPage.isPlaying = false
+            onStopped: { shortsPage.isPlaying = false; shortsPage.isSeeking = false; uiOverlay.visible = true; }
+
+            onPositionChanged: {
+                // Если мы играем и длительность известна
+                if (shortsPage.isPlaying && duration > 0) {
+                    // Если до конца осталось меньше 100 миллисекунд
+                    if (position >= duration - 500) {
+                        console.log("Бесшовный луп!");
+                        position = 0;
+                    }
+                }
+            }
+
 
             onStatusChanged: {
                 if (status === Video.Loaded) {
-                    play();
+                    if (shortsPage.recoveryPosition !== -1) {
+                        var target = shortsPage.recoveryPosition;
+                        shortsPage.recoveryPosition = -1;
+                        performSafeSeek(target);
+                    } else {
+                        play();
+                    }
                 }
-                if (status === Video.EndOfMedia) {
-                    position = 0;
-                    play();
-                }
-                if (status === Video.InvalidMedia || status === Video.NoMedia) {
-                    shortsPage.isPlaying = false;
+                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+                    if (shortsPage.recoveryPosition === -1) {
+                        shortsPage.isSeeking = false;
+                        shortsPage.isPlaying = false;
+                    }
                 }
             }
 
             onError: {
-                if (errorString.indexOf("-36") !== -1) {
-                    videoLoader.sourceComponent = undefined;
-                    recreateTimer.start();
-                } else {
+                //if (errorString.indexOf("-36") !== -1 && shortsPage.recoveryAttempts < 3) {
+                shortsPage.recoveryAttempts++;
+                shortsPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
+                videoLoader.sourceComponent = undefined;
+                recreateTimer.start();
+                /* } else {
+                    //shortsPage.isSeeking = false;
                     shortsPage.isPlaying = false;
-                }
+                    shortsPage.recoveryPosition = -1;
+                }*/
+            }
+
+            function performSafeSeek(newPos) {
+                if (!seekable || duration <= 0) return;
+                if (newPos > duration) newPos = duration;
+                if (newPos < 0) newPos = 0;
+
+                lastIntendedPosition = newPos;
+                shortsPage.isSeeking = true;
+                var wasPlaying = shortsPage.isPlaying;
+
+                if (wasPlaying) pause();
+                position = newPos;
+                play();
+
+                if (!wasPlaying) shortsPage.isSeeking = false;
             }
         }
     }
@@ -273,21 +325,54 @@ Rectangle {
         }
 
         // Индикатор громкости OSD
+        // --- ИНДИКАТОР ГРОМКОСТИ (iOS Style) ---
         Rectangle {
             id: volumeOsd
-            anchors.centerIn: parent; width: 150; height: 50; color: "#CC000000"; radius: 8;
-            //z: 150;
-            opacity: 0
-            Timer { id: volumeOsdTimer; interval: 2000; onTriggered: volumeFadeOut.start() }
+            width: 8
+            height: 150
+            // Позиционируем слева или справа (выбрал слева для примера)
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+            anchors.verticalCenter: parent.verticalCenter
+            radius: 4
+            color: "#66000000" // Темный полупрозрачный фон
+            opacity: 0 // Скрыт по умолчанию
+
+            Timer {
+                id: volumeOsdTimer
+                interval: 2000 // Исчезает через 2 секунды
+                onTriggered: volumeFadeOut.start()
+            }
+
             Connections {
                 target: typeof VolumeKeys !== "undefined" ? VolumeKeys : null
-                onVolumeChanged: { volumeOsd.opacity = 1.0; volumeFadeOut.stop(); volumeOsdTimer.restart(); }
+                onVolumeChanged: {
+                    volumeOsd.opacity = 1.0;
+                    volumeFadeOut.stop();
+                    volumeOsdTimer.restart();
+                }
             }
-            SequentialAnimation { id: volumeFadeOut; running: false; NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 } }
-            Row {
-                anchors.centerIn: parent; spacing: 10
-                Image { source: (typeof VolumeKeys !== "undefined" && VolumeKeys.volume > 0) ? "../Assets/player/volume_up.png" : "../Assets/player/volume_mute.png"; width: 24; height: 24; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: (typeof VolumeKeys !== "undefined" ? VolumeKeys.volume : "100") + "%"; color: "white"; font.pixelSize: 18; anchors.verticalCenter: parent.verticalCenter; font.bold: true }
+
+            SequentialAnimation {
+                id: volumeFadeOut
+                running: false
+                NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
+            }
+
+            // Белая полоска-индикатор уровня
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                radius: 4
+                color: "white"
+                // Вычисляем высоту в зависимости от громкости (0-100)
+                height: typeof VolumeKeys !== "undefined" ? (parent.height * (VolumeKeys.volume / 100.0)) : parent.height
+
+                // Добавляем плавность изменения самого уровня
+                Behavior on height {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
             }
         }
 
@@ -323,7 +408,31 @@ Rectangle {
                         width: 36; height: 36; radius: 18; color: "#333"; clip: true
                         SafeImage {
                             anchors.fill: parent
-                            source: currentVideoDetails ? (currentVideoDetails["channel_thumbnail"] || "").replace(/%25/g, "%") : ""
+                            source: {
+                                if (!currentVideoDetails || !currentVideoDetails.channel_thumbnail) return "";
+
+                                var originalUrl = currentVideoDetails["channel_thumbnail"];
+                                var parts = originalUrl.split("channel_icon/");
+
+                                if (parts.length < 2) return "";
+
+                                // Базовая часть (меняем https на http для обхода ошибки SSL на Symbian)
+                                var baseUrl = parts[0].replace("https://", "http://") + "channel_icon/";
+
+                                // 1. Декодируем вторую часть ссылки (дважды, чтобы гарантированно снять все наслоения %25)
+                                var cleanTail = decodeURIComponent(decodeURIComponent(parts[1]));
+
+                                // 2. Энкодим её один раз
+                                var encodedTail = encodeURIComponent(cleanTail);
+
+                                // 3. Полученный результат передаем далее как строку
+                                var fullString = baseUrl + encodedTail;
+
+                                // 4. Энкодим ещё раз и передаем в провайдер
+                                return "image://rounded/" + encodeURIComponent(fullString);
+                            }
+
+
                             fillMode: Image.PreserveAspectCrop
                         }
                     }

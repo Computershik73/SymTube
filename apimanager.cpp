@@ -188,7 +188,8 @@ void ApiManager::getAccountInfo()
 
 void ApiManager::getShorts(const QString &sequenceToken)
 {
-    QString url = m_config->apiBaseUrl() + "get_shorts.php";
+    QString token = m_config->userToken();
+    QString url = m_config->apiBaseUrl() + "get_shorts.php?token=" + token;
     if (!sequenceToken.isEmpty()) {
         url += "?sequence=" + sequenceToken;
     }
