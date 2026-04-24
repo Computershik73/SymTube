@@ -19,6 +19,12 @@ TARGET.STACKSIZE = 0x8000
 TARGET.EPOCHEAPSIZE = 0x20000 0x4000000  # Увеличение хипа для парсинга JSON и картинок
 PKG_VERSION = "0,1,0"
 
+lang_files.sources = lang/*.qm
+lang_files.path = lang
+qml_files.sources = qml
+qml_files.path = .
+DEPLOYMENT += lang_files qml_files
+
 vendor_info = \
         " " \
         "; Localised Vendor name" \
@@ -91,12 +97,12 @@ lupdate_only {
 }
 
 OTHER_FILES += \
-#    qml/*.qml \
-#    qml/components/*.qml \
-#    qml/pages/*.qml \
     Assets/*.png \
     Assets/player/*.png \
-    Assets/tabbar/*.png
+    Assets/tabbar/*.png \
+    lang/SymTube_ru_RU.qm \
+    lang/SymTube_pl_PL.qm \
+    lang/SymTube_en_US.qm
 
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)

@@ -2,22 +2,18 @@
 #include <QApplication>
 #include <QSettings>
 #include <QDir>
+#include <QFileInfoList>
 #include <QDebug>
 
 TranslationManager::TranslationManager(QObject *parent)
     : QObject(parent), m_translator(new QTranslator(this))
 {
-    // Папка для пользовательских файлов локализации на Symbian
-    m_customPath = "E:/SymTube/lang";
-    QDir().mkpath(m_customPath);
-
     scanDirectory();
 
-    // Загружаем сохраненный язык или русский по умолчанию
-    QSettings settings("YouTubeClient", "Settings");
+    QSettings settings("SymTubeApp", "Settings");
     QString savedLang = settings.value("Language", "ru_RU").toString();
 
-    // Если файла нет, откатываемся на en_US
+    // Безопасный откат на английский, если файл был удален
     if (!m_availableLanguages.contains(savedLang)) {
         savedLang = "en_US";
     }
@@ -31,23 +27,55 @@ TranslationManager::~TranslationManager()
 void TranslationManager::scanDirectory()
 {
     m_availableLanguages.clear();
+    m_languageFiles.clear();
 
-    // Базовые встроенные языки
-    m_availableLanguages << "ru_RU" << "en_US" << "pl_PL";
+    QStringList filters;
+    filters << "*.qm";
 
-    // Сканируем пользовательские файлы *.qm на карте памяти
-    QDir dir(m_customPath);
-    if (dir.exists()) {
-        QStringList filters;
-        filters << "*.qm";
-        QStringList files = dir.entryList(filters, QDir::Files);
+    // 1. Ищем встроенные переводы в папке программы (там же, где qml/main.qml)
+    QDir appLangDir("lang");
+    if (appLangDir.exists()) {
+        QStringList files = appLangDir.entryList(filters, QDir::Files);
         for (int i = 0; i < files.size(); ++i) {
-            QString lang = files.at(i);
-            lang.remove(".qm"); // Убираем расширение, оставляя только "fr_FR" и т.д.
-            if (!m_availableLanguages.contains(lang)) {
-                m_availableLanguages.append(lang);
+            QString file = files.at(i);
+            QString lang = file;
+            lang.remove(".qm");
+            lang.remove("SymTube_"); // Очищаем имя (например, из SymTube_ru_RU.qm делаем ru_RU)
+
+            m_availableLanguages.append(lang);
+            m_languageFiles.insert(lang, appLangDir.absoluteFilePath(file));
+        }
+    }
+
+    // 2. Сканируем все диски на устройстве для кастомных переводов (C:\, E:\, F:\)
+    QFileInfoList drives = QDir::drives();
+    for (int d = 0; d < drives.size(); ++d) {
+        QString drivePath = drives.at(d).absolutePath();
+        QDir customDir(drivePath + "SymTube/lang"); // Путь вида E:/SymTube/lang/
+
+        if (customDir.exists()) {
+            QStringList files = customDir.entryList(filters, QDir::Files);
+            for (int i = 0; i < files.size(); ++i) {
+                QString file = files.at(i);
+                QString lang = file;
+                lang.remove(".qm");
+
+                // Если язык новый, добавляем его в список
+                if (!m_availableLanguages.contains(lang)) {
+                    m_availableLanguages.append(lang);
+                }
+
+                // Перезаписываем путь (файл на E: будет в приоритете перед lang/)
+                m_languageFiles.insert(lang, customDir.absoluteFilePath(file));
+                qDebug() << "[Lang] Found custom translation:" << customDir.absoluteFilePath(file);
             }
         }
+    }
+
+    // Если английский нигде не найден, всё равно добавляем его как резервный вариант
+    // (он зашит в исходники QML, для него файл .qm не обязателен)
+    if (!m_availableLanguages.contains("en_US")) {
+        m_availableLanguages.prepend("en_US");
     }
 }
 
@@ -65,23 +93,23 @@ void TranslationManager::setLanguage(const QString &localeName)
 {
     m_currentLanguage = localeName;
 
-    QSettings settings("YouTubeClient", "Settings");
+    QSettings settings("SymTubeApp", "Settings");
     settings.setValue("Language", localeName);
 
-    // Удаляем старый перевод
     qApp->removeTranslator(m_translator);
 
-    // 1. Пробуем загрузить кастомный файл с карты памяти
-    if (m_translator->load(localeName + ".qm", m_customPath)) {
-        qApp->installTranslator(m_translator);
-        qDebug() << "[Lang] Loaded custom translation:" << localeName;
-    }
-    // 2. Иначе грузим из встроенных ресурсов приложения
-    else if (m_translator->load("SymTube_" + localeName + ".qm", ":/lang")) {
-        qApp->installTranslator(m_translator);
-        qDebug() << "[Lang] Loaded internal translation:" << localeName;
+    // Берем точный абсолютный путь к файлу
+    if (m_languageFiles.contains(localeName)) {
+        QString absoluteFilePath = m_languageFiles.value(localeName);
+
+        if (m_translator->load(absoluteFilePath)) {
+            qApp->installTranslator(m_translator);
+            qDebug() << "[Lang] Loaded translation:" << absoluteFilePath;
+        } else {
+            qDebug() << "[Lang] FAILED to load translation:" << absoluteFilePath;
+        }
     } else {
-        qDebug() << "[Lang] Translation not found, fallback to default English";
+        qDebug() << "[Lang] No .qm file for" << localeName << "(using default QML strings)";
     }
 
     emit languageChanged();

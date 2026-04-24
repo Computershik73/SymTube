@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import QtMultimediaKit 1.1
 import "../components"
 
@@ -34,7 +34,7 @@ Rectangle {
     Connections {
         target: SymbianApp
         onInBackground: {
-            if (videoLoader.item && isPlaying) {
+            if (videoLoader.item && videoPage.isPlaying) {
                 console.log("УХОД В ФОН: Уничтожаем плеер...");
                 videoPage.recoveryPosition = videoLoader.item.position;
                 videoLoader.sourceComponent = undefined;
@@ -63,7 +63,7 @@ Rectangle {
     Timer {
         interval: 5000 // Каждые 5 секунд
         repeat: true
-        running: videoPage.isPlaying // Работает только пока видео реально играет
+        running: SymbianApp.foreground()
         onTriggered: {
             if (typeof SymbianApp !== "undefined") {
                 SymbianApp.keepScreenOn(); // Сбрасываем системный таймер гашения экрана
@@ -163,6 +163,7 @@ Rectangle {
                 if (wasPlaying) pause();
                 position = newPos;
                 play();
+                if (!wasPlaying) pause();
 
                 if (!wasPlaying) videoPage.isSeeking = false;
             }

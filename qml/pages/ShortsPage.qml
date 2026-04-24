@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import QtMultimediaKit 1.1
 import "../components"
 
@@ -54,7 +54,7 @@ Rectangle {
     Timer {
         interval: 5000
         repeat: true
-        running: shortsPage.isPlaying
+        running: SymbianApp.foreground()
         onTriggered: {
             if (typeof SymbianApp !== "undefined") {
                 SymbianApp.keepScreenOn();

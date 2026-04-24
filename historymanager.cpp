@@ -5,7 +5,7 @@
 
 HistoryManager::HistoryManager(QObject *parent) : QObject(parent)
 {
-    m_settings = new QSettings("YouTubeClient", "History", this);
+    m_settings = new QSettings("SymTubeApp", "History", this);
     loadHistory();
 }
 

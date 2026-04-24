@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QTranslator>
+#include <QMap>
 
 class TranslationManager : public QObject
 {
@@ -27,6 +28,7 @@ signals:
 private:
     QString m_currentLanguage;
     QStringList m_availableLanguages;
+    QMap<QString, QString> m_languageFiles;
     QTranslator *m_translator;
     QString m_customPath;
 
