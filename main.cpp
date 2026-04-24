@@ -52,12 +52,6 @@ int main(int argc, char *argv[])
         networkSession->open();
     }
 
-    QNetworkProxy proxy;
-    proxy.setType(QNetworkProxy::HttpProxy);
-    proxy.setHostName("192.168.116.224");
-    proxy.setPort(8888);
-   // QNetworkProxy::setApplicationProxy(proxy);
-
     // 2. Инициализация менеджеров
     Config config;
     // Создаем провайдер ПЕРЕД ApiManager

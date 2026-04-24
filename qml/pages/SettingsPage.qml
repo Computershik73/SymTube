@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import "../components"
 
 Rectangle {
@@ -62,9 +62,8 @@ Rectangle {
                     width: parent.width
                     // Жестко зашитый список серверов
                     model:[
-                        "http://yt.modyleprojects.ru/",
-                        "http://yt.swlbst.ru/",
-                        "http://192.168.1.183:8890/"
+                        "https://yt.modyleprojects.ru/",
+                        "https://yt.swlbst.ru/"
                     ]
                 }
             }
@@ -176,7 +175,7 @@ Rectangle {
                 // Модель данных для ссылок
                 Repeater {
                     model: [
-                        { label: "Исходный код клиента (GitHub)", url: "https://github.com/Computershik73/" },
+                        { label: "Исходный код клиента (GitHub)", url: "https://github.com/Computershik73/SymTube" },
                         { label: "API Сервер (Rust)", url: "https://github.com/ZendoMusic/yt-api-legacy" },
                         { label: "Группа в Telegram", url: "https://t.me/cmplog" }
                     ]
