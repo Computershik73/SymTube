@@ -326,23 +326,24 @@ Rectangle {
 
         Rectangle {
             id: volumeOsd
-            anchors.centerIn: parent
-            width: 150; height: 50
-            color: "#CC000000"
-            radius: 8
-            z: 150 // Выше всех оверлеев
-            opacity: 0
+            width: 8
+            height: 150
+            // Позиционируем слева или справа (выбрал слева для примера)
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+            anchors.verticalCenter: parent.verticalCenter
+            radius: 4
+            color: "#66000000" // Темный полупрозрачный фон
+            opacity: 0 // Скрыт по умолчанию
 
-            // Таймер для скрытия
             Timer {
                 id: volumeOsdTimer
                 interval: 2000 // Исчезает через 2 секунды
                 onTriggered: volumeFadeOut.start()
             }
 
-            // Реакция на изменение громкости
             Connections {
-                target: VolumeKeys
+                target: typeof VolumeKeys !== "undefined" ? VolumeKeys : null
                 onVolumeChanged: {
                     volumeOsd.opacity = 1.0;
                     volumeFadeOut.stop();
@@ -350,28 +351,25 @@ Rectangle {
                 }
             }
 
-            // Анимация исчезновения
             SequentialAnimation {
                 id: volumeFadeOut
                 running: false
                 NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
             }
 
-            Row {
-                anchors.centerIn: parent
-                spacing: 10
+            // Белая полоска-индикатор уровня
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.right: parent.right
+                radius: 4
+                color: "white"
+                // Вычисляем высоту в зависимости от громкости (0-100)
+                height: typeof VolumeKeys !== "undefined" ? (parent.height * (VolumeKeys.volume / 100.0)) : parent.height
 
-                Image {
-                    source: VolumeKeys.volume > 0 ? "../../Assets/player/volume_up.png" : "../../Assets/player/volume_mute.png"
-                    width: 24; height: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Text {
-                    text: VolumeKeys.volume + "%"
-                    color: "white"
-                    font.pixelSize: 18
-                    anchors.verticalCenter: parent.verticalCenter
+                // Добавляем плавность изменения самого уровня
+                Behavior on height {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
