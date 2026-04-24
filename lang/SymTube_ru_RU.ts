@@ -6,208 +6,208 @@
     <name>AccountPage</name>
     <message>
         <source>Для входа отсканируйте QR-код</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Для входа отсканируйте QR-код</translation>
     </message>
     <message>
         <source>Загрузка...</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Загрузка...</translation>
     </message>
     <message>
         <source>Настройки</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Настройки</translation>
     </message>
     <message>
         <source>Пользователь</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Пользователь</translation>
     </message>
     <message>
         <source>Выйти</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Выйти</translation>
     </message>
     <message>
         <source>История просмотров</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">История просмотров</translation>
     </message>
 </context>
 <context>
     <name>ChannelPage</name>
     <message>
-        <source>Р—Р°РіСЂСѓР·РєР° РєР°РЅР°Р»Р°...</source>
-        <translation type="unfinished"></translation>
+        <source>Загрузка канала...</source>
+        <translation type="unfinished">Загрузка канала...</translation>
     </message>
     <message>
-        <source>РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РєР°РЅР°Р»</source>
-        <translation type="unfinished"></translation>
+        <source>Не удалось загрузить канал</source>
+        <translation type="unfinished">Не удалось загрузить канал</translation>
     </message>
     <message>
-        <source> РїРѕРґРїРёСЃС‡РёРєРѕРІ</source>
-        <translation type="unfinished"></translation>
+        <source> подписчиков</source>
+        <translation type="unfinished"> подписчиков</translation>
     </message>
 </context>
 <context>
     <name>HistoryPage</name>
     <message>
-        <source>РСЃС‚РѕСЂРёСЏ РїСЂРѕСЃРјРѕС‚СЂРѕРІ</source>
-        <translation type="unfinished"></translation>
+        <source>История просмотров</source>
+        <translation type="unfinished">История просмотров</translation>
     </message>
     <message>
-        <source>РСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°</source>
-        <translation type="unfinished"></translation>
+        <source>История пуста</source>
+        <translation type="unfinished">История пуста</translation>
     </message>
 </context>
 <context>
     <name>HomePage</name>
     <message>
-        <source>Р—Р°РіСЂСѓР·РєР°...</source>
-        <translation type="unfinished"></translation>
+        <source>Загрузка...</source>
+        <translation type="unfinished">Загрузка...</translation>
     </message>
     <message>
-        <source>РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ</source>
-        <translation type="unfinished"></translation>
+        <source>Не удалось получить данные</source>
+        <translation type="unfinished">Не удалось получить данные</translation>
     </message>
     <message>
-        <source>РџРћР’РўРћР РРўР¬</source>
-        <translation type="unfinished"></translation>
+        <source>ПОВТОРИТЬ</source>
+        <translation type="unfinished">ПОВТОРИТЬ</translation>
     </message>
 </context>
 <context>
     <name>Navbar</name>
     <message>
-        <source>РџРѕРёСЃРє</source>
-        <translation type="unfinished"></translation>
+        <source>Поиск</source>
+        <translation type="unfinished">Поиск</translation>
     </message>
 </context>
 <context>
     <name>SearchPage</name>
     <message>
-        <source>РџРѕРёСЃРє...</source>
-        <translation type="unfinished"></translation>
+        <source>Поиск...</source>
+        <translation type="unfinished">Поиск...</translation>
     </message>
     <message>
-        <source>РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ. РќР°Р¶РјРёС‚Рµ РґР»СЏ РїРѕРІС‚РѕСЂР°.</source>
-        <translation type="unfinished"></translation>
+        <source>Ничего не найдено. Нажмите для повтора.</source>
+        <translation type="unfinished">Ничего не найдено. Нажмите для повтора.</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>РќР°СЃС‚СЂРѕР№РєРё</source>
-        <translation type="unfinished"></translation>
+        <source>Настройки</source>
+        <translation type="unfinished">Настройки</translation>
     </message>
     <message>
-        <source>РћСЃРЅРѕРІРЅРѕР№ Р°РґСЂРµСЃ API</source>
-        <translation type="unfinished"></translation>
+        <source>Основной адрес API</source>
+        <translation type="unfinished">Основной адрес API</translation>
     </message>
     <message>
-        <source>РЇР·С‹Рє / Language</source>
-        <translation type="unfinished"></translation>
+        <source>Язык / Language</source>
+        <translation type="unfinished">Язык / Language</translation>
     </message>
     <message>
-        <source>* РР·РјРµРЅРµРЅРёСЏ РІСЃС‚СѓРїСЏС‚ РІ СЃРёР»Сѓ РїРѕСЃР»Рµ РїРµСЂРµР·Р°РїСѓСЃРєР°</source>
-        <translation type="unfinished"></translation>
+        <source>* Изменения вступят в силу после перезапуска</source>
+        <translation type="unfinished">* Изменения вступят в силу после перезапуска</translation>
     </message>
     <message>
-        <source>РЎРѕС…СЂР°РЅРёС‚СЊ</source>
-        <translation type="unfinished"></translation>
+        <source>Сохранить</source>
+        <translation type="unfinished">Сохранить</translation>
     </message>
     <message>
-        <source>РќР°СЃС‚СЂРѕР№РєРё СЃРѕС…СЂР°РЅРµРЅС‹!</source>
-        <translation type="unfinished"></translation>
+        <source>Настройки сохранены!</source>
+        <translation type="unfinished">Настройки сохранены!</translation>
     </message>
     <message>
-        <source>Рћ РїСЂРёР»РѕР¶РµРЅРёРё</source>
-        <translation type="unfinished"></translation>
+        <source>О приложении</source>
+        <translation type="unfinished">О приложении</translation>
     </message>
     <message>
-        <source>SymTube - СЌС‚Рѕ РєР»РёРµРЅС‚ РґР»СЏ YouTube, СЃРѕР·РґР°РЅРЅС‹Р№ СЃРїРµС†РёР°Р»СЊРЅРѕ РґР»СЏ Symbian. РњС‹ СЃС‚СЂРµРјРёРјСЃСЏ РІРµСЂРЅСѓС‚СЊ Р¶РёР·РЅСЊ РІ СЃС‚Р°СЂС‹Рµ СѓСЃС‚СЂРѕР№СЃС‚РІР°, РїСЂРµРґРѕСЃС‚Р°РІР»СЏСЏ РґРѕСЃС‚СѓРї Рє СЃРѕРІСЂРµРјРµРЅРЅРѕРјСѓ РєРѕРЅС‚РµРЅС‚Сѓ.</source>
-        <translation type="unfinished"></translation>
+        <source>SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.</source>
+        <translation type="unfinished">SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.</translation>
     </message>
 </context>
 <context>
     <name>ShortsPage</name>
     <message>
-        <source>РћС€РёР±РєР° РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёСЏ</source>
-        <translation type="unfinished"></translation>
+        <source>Ошибка воспроизведения</source>
+        <translation type="unfinished">Ошибка воспроизведения</translation>
     </message>
     <message>
-        <source>Р›Р°Р№Рє</source>
-        <translation type="unfinished"></translation>
+        <source>Лайк</source>
+        <translation type="unfinished">Лайк</translation>
     </message>
     <message>
-        <source>РљРѕРјРјРµРЅС‚Р°СЂРёРё</source>
-        <translation type="unfinished"></translation>
+        <source>Комментарии</source>
+        <translation type="unfinished">Комментарии</translation>
     </message>
     <message>
-        <source>Р¤СѓРЅРєС†РёСЏ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ...</source>
-        <translation type="unfinished"></translation>
+        <source>Функция комментариев в разработке...</source>
+        <translation type="unfinished">Функция комментариев в разработке...</translation>
     </message>
 </context>
 <context>
     <name>SubscriptionsPage</name>
     <message>
-        <source>Р—Р°РіСЂСѓР·РєР°...</source>
-        <translation type="unfinished"></translation>
+        <source>Загрузка...</source>
+        <translation type="unfinished">Загрузка...</translation>
     </message>
 </context>
 <context>
     <name>Tabbar</name>
     <message>
-        <source>Р“Р»Р°РІРЅР°СЏ</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Shorts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Shorts</translation>
     </message>
     <message>
-        <source>РџРѕРґРїРёСЃРєРё</source>
-        <translation type="unfinished"></translation>
+        <source>Главная</source>
+        <translation type="unfinished">Главная</translation>
     </message>
     <message>
-        <source>Р’С‹</source>
-        <translation type="unfinished"></translation>
+        <source>Подписки</source>
+        <translation type="unfinished">Подписки</translation>
+    </message>
+    <message>
+        <source>Вы</source>
+        <translation type="unfinished">Вы</translation>
     </message>
 </context>
 <context>
     <name>VideoCard</name>
     <message>
-        <source> РїСЂРѕСЃРјРѕС‚СЂРѕРІ</source>
-        <translation type="unfinished"></translation>
+        <source> просмотров</source>
+        <translation type="unfinished"> просмотров</translation>
     </message>
 </context>
 <context>
     <name>VideoPage</name>
     <message>
-        <source>РћС€РёР±РєР° РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёСЏ</source>
-        <translation type="unfinished"></translation>
+        <source>Ошибка воспроизведения</source>
+        <translation type="unfinished">Ошибка воспроизведения</translation>
     </message>
     <message>
-        <source>Р—Р°РіСЂСѓР·РєР°...</source>
-        <translation type="unfinished"></translation>
+        <source>Загрузка...</source>
+        <translation type="unfinished">Загрузка...</translation>
     </message>
     <message>
-        <source> РїСЂРѕСЃРјРѕС‚СЂРѕРІ</source>
-        <translation type="unfinished"></translation>
+        <source> просмотров</source>
+        <translation type="unfinished"> просмотров</translation>
     </message>
     <message>
-        <source>РќРµРёР·РІРµСЃС‚РЅРѕ</source>
-        <translation type="unfinished"></translation>
+        <source>Неизвестно</source>
+        <translation type="unfinished">Неизвестно</translation>
     </message>
     <message>
-        <source> РїРѕРґРїРёСЃС‡РёРєРѕРІ</source>
-        <translation type="unfinished"></translation>
+        <source> подписчиков</source>
+        <translation type="unfinished"> подписчиков</translation>
     </message>
     <message>
-        <source>РќРµС‚ РѕРїРёСЃР°РЅРёСЏ</source>
-        <translation type="unfinished"></translation>
+        <source>Нет описания</source>
+        <translation type="unfinished">Нет описания</translation>
     </message>
     <message>
-        <source>РџРѕС…РѕР¶РёРµ РІРёРґРµРѕ</source>
-        <translation type="unfinished"></translation>
+        <source>Похожие видео</source>
+        <translation type="unfinished">Похожие видео</translation>
     </message>
     <message>
-        <source>РћРїРёСЃР°РЅРёРµ</source>
-        <translation type="unfinished"></translation>
+        <source>Описание</source>
+        <translation type="unfinished">Описание</translation>
     </message>
 </context>
 </TS>
