@@ -63,8 +63,9 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
         }
     }
     else if (event->type() == QSymbianEvent::CommandEvent) {
-        if (event->command() == EEikCmdExit) {
+        if (event->command() == EEikCmdExit || event->command() == EAknCmdExit) {
             emit redPressed();
+            this->quit();
             return true;
 
         }
