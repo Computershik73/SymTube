@@ -139,7 +139,7 @@ Rectangle {
                 font.pixelSize: 16
 
                 Text {
-                    text: "Поиск"
+                    text: qsTr("Поиск")
                     color: "gray"
                     font.pixelSize: 16
                     visible: parent.text.length === 0 && !parent.activeFocus

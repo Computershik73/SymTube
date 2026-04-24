@@ -33,7 +33,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: "Главная"
+                    text: qsTr("Главная")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -64,7 +64,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: "Shorts"
+                    text: qsTr("Shorts")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -98,7 +98,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: "Подписки"
+                    text: qsTr("Подписки")
                     color: Config.userToken !== "" ? "white" : "gray"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -131,7 +131,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: "Вы"
+                    text: qsTr("Вы")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter

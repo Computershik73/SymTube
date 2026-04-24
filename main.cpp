@@ -19,6 +19,7 @@
 #include "qrimageprovider.h"
 #include "roundedimageprovider.h"
 #include "volumekeysobserver.h"
+#include "translationmanager.h"
 
 int main(int argc, char *argv[])
 {
@@ -65,6 +66,7 @@ int main(int argc, char *argv[])
     ApiManager apiManager(&config, qrProvider);
     HistoryManager historyManager;
     VolumeKeysObserver volumeKeys;
+    TranslationManager translationManager;
 
     // 3. Используем чистый QDeclarativeView
     QmlApplicationViewer view;
@@ -97,6 +99,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("HistoryManager", &historyManager);
     context->setContextProperty("VolumeKeys", &volumeKeys);
     context->setContextProperty("SymbianApp", &app);
+    context->setContextProperty("TranslationManager", &translationManager);
 
     // 6. Загружаем QML
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));

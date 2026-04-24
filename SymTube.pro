@@ -2,9 +2,12 @@
 folder_01.source = qml
 folder_01.target = .
 DEPLOYMENTFOLDERS = folder_01
-QT += core quick gui qml multimedia multimedia-private network declarative widgets
+QT += core gui network declarative
 CONFIG += mobility
 MOBILITY += multimedia
+
+CODECFORTR = UTF-8
+CODECFORSRC = UTF-8
 
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
@@ -60,7 +63,8 @@ HEADERS += \
     qrimageprovider.h \
     roundedimageprovider.h \
     volumekeysobserver.h \
-    qsymbianapplication.h
+    qsymbianapplication.h \
+    translationmanager.h
 
 SOURCES += \
     main.cpp \
@@ -71,7 +75,20 @@ SOURCES += \
     qrimageprovider.cpp \
     roundedimageprovider.cpp \
     volumekeysobserver.cpp \
-    qsymbianapplication.cpp
+    qsymbianapplication.cpp \
+    translationmanager.cpp
+
+TRANSLATIONS += \
+    lang/SymTube_ru_RU.ts \
+    lang/SymTube_en_US.ts \
+    lang/SymTube_pl_PL.ts
+
+
+lupdate_only {
+    SOURCES += qml/*.qml \
+               qml/pages/*.qml \
+               qml/components/*.qml
+}
 
 OTHER_FILES += \
 #    qml/*.qml \

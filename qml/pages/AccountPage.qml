@@ -1,4 +1,4 @@
-import QtQuick 1.0
+﻿import QtQuick 1.0
 
 Rectangle {
     id: accountPage
@@ -74,7 +74,7 @@ Rectangle {
         visible: !isAuthenticated
 
         Text {
-            text: "Для входа отсканируйте QR-код"
+            text: qsTr("Для входа отсканируйте QR-код")
             color: "white"
             font.pixelSize: 18
             width: parent.width - 40
@@ -99,7 +99,7 @@ Rectangle {
 
             Text {
                 id: loadingText
-                text: "Загрузка..."
+                text: qsTr("Загрузка...")
                 color: "black"
                 anchors.centerIn: parent
                 visible: !qrImage.visible
@@ -111,7 +111,7 @@ Rectangle {
             color: "#333333"
             radius: 5
             anchors.horizontalCenter: parent.horizontalCenter
-            Text { text: "Настройки"; color: "white"; anchors.centerIn: parent; font.bold: true }
+            Text { text: qsTr("Настройки"); color: "white"; anchors.centerIn: parent; font.bold: true }
             MouseArea {
                 anchors.fill: parent
                 onClicked: root.navigateToSettings()
@@ -186,7 +186,7 @@ Rectangle {
                         spacing: 4
 
                         Text {
-                            text: accountData && accountData.google_account ? (accountData.google_account.given_name || "Пользователь") : "Загрузка..."
+                            text: accountData && accountData.google_account ? (accountData.google_account.given_name || qsTr("Пользователь")) : qsTr("Загрузка...")
                             color: "white"
                             font.pixelSize: 22
                             font.bold: true
@@ -216,7 +216,7 @@ Rectangle {
                     border.color: "#333333"
                     border.width: 1
                     radius: 5
-                    Text { text: "Настройки"; color: "white"; anchors.centerIn: parent; font.bold: true }
+                    Text { text: qsTr("Настройки"); color: "white"; anchors.centerIn: parent; font.bold: true }
                     MouseArea { anchors.fill: parent; onClicked: root.navigateToSettings() }
                 }
 
@@ -224,7 +224,7 @@ Rectangle {
                     width: (parent.width - 10) / 2; height: 40
                     color: "#333333"
                     radius: 5
-                    Text { text: "Выйти"; color: "white"; anchors.centerIn: parent; font.bold: true }
+                    Text { text: qsTr("Выйти"); color: "white"; anchors.centerIn: parent; font.bold: true }
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
@@ -241,7 +241,7 @@ Rectangle {
 
             // 3. Заголовок истории
             Text {
-                text: "История просмотров"
+                text: qsTr("История просмотров")
                 color: "white"
                 font.pixelSize: 18
                 font.bold: true

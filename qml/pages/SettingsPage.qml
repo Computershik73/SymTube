@@ -9,6 +9,7 @@ Rectangle {
     function onNavigatedTo() {
         // Подгружаем текущий URL из C++ при открытии
         apiCombo.text = Config.apiBaseUrl;
+        langCombo.text = TranslationManager.currentLanguage;
     }
 
     // Закрытие списка и клавиатуры при клике в пустое место
@@ -36,7 +37,7 @@ Rectangle {
             spacing: 24
 
             Text {
-                text: "Настройки"
+                text: qsTr("Настройки")
                 color: "white"
                 font.pixelSize: 28
                 font.bold: true
@@ -51,7 +52,7 @@ Rectangle {
                 z: 10 
 
                 Text {
-                    text: "Основной адрес API"
+                    text: qsTr("Основной адрес API")
                     color: "#CCFFFFFF"
                     font.pixelSize: 16
                 }
@@ -68,6 +69,32 @@ Rectangle {
                 }
             }
 
+
+            Column {
+                spacing: 8
+                width: parent.width
+                z: 9 // Обязательно Z-индекс ниже, чем у комбобокса API-URL, чтобы списки не перекрывались!
+
+                Text {
+                    text: qsTr("Язык / Language")
+                    color: "#CCFFFFFF"
+                    font.pixelSize: 16
+                }
+
+                CustomComboBox {
+                    id: langCombo
+                    width: parent.width
+                    // Модель автоматически получает список доступных языков из C++
+                    model: TranslationManager.availableLanguages
+                }
+
+                Text {
+                    text: qsTr("* Изменения вступят в силу после перезапуска")
+                    color: "gray"
+                    font.pixelSize: 12
+                }
+            }
+
             // Кнопка сохранения
             Rectangle {
                 width: parent.width
@@ -76,7 +103,7 @@ Rectangle {
                 radius: 5
                 
                 Text {
-                    text: "Сохранить"
+                    text: qsTr("Сохранить")
                     color: "white"
                     anchors.centerIn: parent
                     font.bold: true
@@ -87,8 +114,11 @@ Rectangle {
                     anchors.fill: parent
                     onClicked: {
                         apiCombo.isOpen = false;
+                        langCombo.isOpen = false;
                         // Отправляем новый URL в C++
                         Config.apiBaseUrl = apiCombo.text;
+
+                        TranslationManager.setLanguage(langCombo.text);
                         
                         saveText.visible = true;
                         saveTimer.start();
@@ -99,7 +129,7 @@ Rectangle {
             // Индикатор успешного сохранения
             Text {
                 id: saveText
-                text: "Настройки сохранены!"
+                text: qsTr("Настройки сохранены!")
                 color: "#4CAF50" // Зеленый цвет успеха
                 font.pixelSize: 16
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -121,7 +151,7 @@ Rectangle {
             }
 
             Text {
-                text: "О приложении"
+                text: qsTr("О приложении")
                 color: "white"
                 font.pixelSize: 20
                 font.bold: true
@@ -131,7 +161,7 @@ Rectangle {
             // Lorem Ipsum
             Text {
                 width: parent.width
-                text: "SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту."
+                text: qsTr("SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.")
                 color: "#AAAAAA"
                 font.pixelSize: 14
                 wrapMode: Text.WordWrap

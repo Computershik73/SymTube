@@ -74,7 +74,7 @@ Rectangle {
         Row {
             anchors.centerIn: parent; spacing: 10
             Image { id: spinner; source: "../Assets/player/reload.png"; width: 24; height: 24; RotationAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible } }
-            Text { text: "Загрузка..."; color: "white"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: qsTr("Загрузка..."); color: "white"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
         }
     }
 
@@ -82,10 +82,10 @@ Rectangle {
     Column {
         id: errorPanel; anchors.centerIn: parent; spacing: 10; visible: false
         Image { source: "../Assets/NoInternet.png"; width: 100; height: 100; anchors.horizontalCenter: parent.horizontalCenter; fillMode: Image.PreserveAspectFit }
-        Text { text: "Не удалось получить данные"; color: "white"; font.pixelSize: 18; anchors.horizontalCenter: parent.horizontalCenter }
+        Text { text: qsTr("Не удалось получить данные"); color: "white"; font.pixelSize: 18; anchors.horizontalCenter: parent.horizontalCenter }
         Rectangle {
             width: 150; height: 40; color: "#333333"; radius: 5; anchors.horizontalCenter: parent.horizontalCenter
-            Text { text: "ПОВТОРИТЬ"; color: "white"; anchors.centerIn: parent; font.bold: true }
+            Text { text: qsTr("ПОВТОРИТЬ"); color: "white"; anchors.centerIn: parent; font.bold: true }
             MouseArea { anchors.fill: parent; onClicked: refreshData() }
         }
     }
@@ -127,7 +127,7 @@ Rectangle {
             Row {
                 anchors.centerIn: parent; spacing: 10
                 Image { id: bSpinner; source: "../Assets/player/reload.png"; width: 24; height: 24; RotationAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: bSpinner.visible } }
-                Text { text: "Загрузка..."; color: "gray"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: qsTr("Загрузка..."); color: "gray"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
             }
         }
     }

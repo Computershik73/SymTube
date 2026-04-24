@@ -254,7 +254,7 @@ Rectangle {
                 var st = videoLoader.item.status;
                 return (st === Video.InvalidMedia || st === Video.NoMedia);
             }
-            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: "Ошибка воспроизведения" }
+            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: qsTr("Ошибка воспроизведения") }
         }
 
         // Управление свайпами и паузой
@@ -463,7 +463,7 @@ Rectangle {
             Column {
                 spacing: 4; anchors.horizontalCenter: parent.horizontalCenter
                 Image { source: "../Assets/player/like.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "like") } }
-                Text { text: currentVideoDetails ? (currentVideoDetails["likes"] || "Лайк") : ""; color: "white"; font.pixelSize: 12; anchors.horizontalCenter: parent.horizontalCenter }
+                Text { text: currentVideoDetails ? (currentVideoDetails["likes"] || qsTr("Лайк")) : ""; color: "white"; font.pixelSize: 12; anchors.horizontalCenter: parent.horizontalCenter }
             }
             Image { source: "../Assets/player/dislike.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "dislike") } }
             Column {
@@ -495,13 +495,13 @@ Rectangle {
                     Column {
                         anchors.fill: parent; spacing: 10
                         Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                        Text { text: "Комментарии"; color: "white"; font.pixelSize: 18; font.bold: true }
+                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
                         Flickable {
                             width: parent.width; height: parent.height - 40
                             contentWidth: width; contentHeight: commentsText.height; clip: true
                             Text {
                                 id: commentsText; width: parent.width
-                                text: "Функция комментариев в разработке..."
+                                text: qsTr("Функция комментариев в разработке...")
                                 color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap
                             }
                         }

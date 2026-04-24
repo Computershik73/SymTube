@@ -66,7 +66,7 @@ Rectangle {
 
     Text {
         id: loadingIndicator
-        text: "Загрузка..."
+        text: qsTr("Загрузка...")
         color: "white"
         font.pixelSize: 18
         anchors.centerIn: parent

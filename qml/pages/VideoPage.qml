@@ -202,7 +202,7 @@ Rectangle {
             anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
             width: errorText.width + 40; height: errorText.height + 20
             visible: (videoLoader.item !== null) ? (videoLoader.item.status === Video.InvalidMedia && !videoPage.isSeeking) : false
-            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: "Ошибка воспроизведения" }
+            Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: qsTr("Ошибка воспроизведения") }
         }
 
         MouseArea {
@@ -414,14 +414,14 @@ Rectangle {
                 width: parent.width; height: titleText.height + 32
                 Text {
                     id: titleText; x: 16; y: 16; width: parent.width - 32
-                    text: videoDetails ? (videoDetails["title"] || "Загрузка...") : ""
+                    text: videoDetails ? (videoDetails["title"] || qsTr("Загрузка...")) : ""
                     color: "white"; font.pixelSize: 18; font.bold: true
                     wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
                 }
             }
 
             // Просмотры
-            Text { x: 16; text: videoDetails ? ((videoDetails["views"] || "0") + " просмотров") : ""; color: "gray"; font.pixelSize: 14 }
+            Text { x: 16; text: videoDetails ? ((videoDetails["views"] || "0") + qsTr(" просмотров")) : ""; color: "gray"; font.pixelSize: 14 }
 
             // Автор
             Item {
@@ -443,10 +443,10 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width: videoPage.width - 100
                         Text {
-                            text: videoDetails ? (videoDetails["author"] || "Неизвестно") : ""; color: "white"; font.pixelSize: 16; font.bold: true
+                            text: videoDetails ? (videoDetails["author"] || qsTr("Неизвестно")) : ""; color: "white"; font.pixelSize: 16; font.bold: true
                             font.family: "Nokia Pure Text"; width: parent.width; elide: Text.ElideRight
                         }
-                        Text { text: videoDetails ? (videoDetails["subscriberCount"] || "") + " подписчиков" : ""; color: "gray"; font.pixelSize: 12 }
+                        Text { text: videoDetails ? (videoDetails["subscriberCount"] || "") + qsTr(" подписчиков") : ""; color: "gray"; font.pixelSize: 12 }
                     }
                 }
             }
@@ -459,7 +459,7 @@ Rectangle {
                     color: "#272727"; radius: 12; clip: true
                     Text {
                         x: 12; y: 12; width: parent.width - 24; height: 56
-                        text: videoDetails ? (videoDetails["description"] || "Нет описания") : ""
+                        text: videoDetails ? (videoDetails["description"] || qsTr("Нет описания")) : ""
                         color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; elide: Text.ElideRight; font.family: "Nokia Pure Text"
                     }
                     MouseArea { anchors.fill: parent; onClicked: descriptionSheet.state = "visible" }
@@ -470,7 +470,7 @@ Rectangle {
             Item {
                 width: parent.width; height: 40
                 Text {
-                    x: 16; y: 8; text: "Похожие видео"
+                    x: 16; y: 8; text: qsTr("Похожие видео")
                     color: "white"; font.pixelSize: 18; font.bold: true
                     font.family: "Nokia Pure Text"
                     visible: relatedVideos.length > 0
@@ -509,7 +509,7 @@ Rectangle {
                 Column {
                     anchors.fill: parent; spacing: 10
                     Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                    Text { text: "Описание"; color: "white"; font.pixelSize: 18; font.bold: true }
+                    Text { text: qsTr("Описание"); color: "white"; font.pixelSize: 18; font.bold: true }
                     Flickable {
                         width: parent.width; height: parent.height - 60
                         contentWidth: width; contentHeight: descriptionText.height; clip: true

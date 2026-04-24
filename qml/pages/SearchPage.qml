@@ -33,7 +33,7 @@ Rectangle {
 
     Text {
         id: loadingIndicator
-        text: "Поиск..."
+        text: qsTr("Поиск...")
         color: "white"
         font.pixelSize: 18
         anchors.centerIn: parent
@@ -42,7 +42,7 @@ Rectangle {
 
     Text {
         id: errorText
-        text: "Ничего не найдено. Нажмите для повтора."
+        text: qsTr("Ничего не найдено. Нажмите для повтора.")
         color: "gray"
         font.pixelSize: 16
         anchors.centerIn: parent

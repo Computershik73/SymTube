@@ -36,7 +36,7 @@ Rectangle {
 
     Text {
         id: loadingIndicator
-        text: "Загрузка канала..."
+        text: qsTr("Загрузка канала...")
         color: "white"
         font.pixelSize: 18
         anchors.centerIn: parent
@@ -46,7 +46,7 @@ Rectangle {
 
     Text {
         id: errorText
-        text: "Не удалось загрузить канал"
+        text: qsTr("Не удалось загрузить канал")
         color: "gray"
         font.pixelSize: 16
         anchors.centerIn: parent
@@ -121,7 +121,7 @@ Rectangle {
                             font.family: "Nokia Pure Text"
                         }
                         Text {
-                            text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0") + " подписчиков") : ""
+                            text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0") + qsTr(" подписчиков")) : ""
                             color: "gray"
                             font.pixelSize: 14
                             font.family: "Nokia Pure Text"

@@ -21,7 +21,7 @@ Rectangle {
 
     Text {
         id: header
-        text: "История просмотров"
+        text: qsTr("История просмотров")
         color: "white"
         font.pixelSize: 22
         font.bold: true
@@ -31,7 +31,7 @@ Rectangle {
     }
 
     Text {
-        text: "История пуста"
+        text: qsTr("История пуста")
         color: "gray"
         font.pixelSize: 16
         anchors.centerIn: parent

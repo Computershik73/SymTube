@@ -104,7 +104,7 @@ Rectangle {
                     spacing: 4
                     Text {
                         // Для форматирования нужно было бы писать JS функцию, для упрощения выводим как есть
-                        text: modelData && modelData.views ? modelData.views + " просмотров" : ""
+                        text: modelData && modelData.views ? modelData.views + qsTr(" просмотров") : ""
                         color: "#AAAAAA"
                         font.pixelSize: 12
                     }
