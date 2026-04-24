@@ -111,9 +111,15 @@ Rectangle {
             anchors.fill: parent
             fillMode: Video.PreserveAspectFit
             source: videoPage.currentVideoUrl
-            volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
+            volume: Config.persistentVolume
 
             property int lastIntendedPosition: -1
+
+            onVolumeChanged: {
+                if (Config.persistentVolume !== volume) {
+                    Config.persistentVolume = volume;
+                }
+            }
 
             onStarted: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
             onResumed: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
@@ -122,6 +128,10 @@ Rectangle {
 
             onStatusChanged: {
                 if (status === Video.Loaded) {
+
+                    if (typeof VolumeKeys !== "undefined") {
+                        VolumeKeys.volume = Config.persistentVolume * 100;
+                    }
                     if (videoPage.recoveryPosition !== -1) {
                         var target = videoPage.recoveryPosition;
                         videoPage.recoveryPosition = -1;
@@ -163,7 +173,7 @@ Rectangle {
                 if (wasPlaying) pause();
                 position = newPos;
                 play();
-                if (!wasPlaying) pause();
+
 
                 if (!wasPlaying) videoPage.isSeeking = false;
             }
@@ -349,6 +359,7 @@ Rectangle {
                     volumeOsd.opacity = 1.0;
                     volumeFadeOut.stop();
                     volumeOsdTimer.restart();
+                    Config.persistentVolume = VolumeKeys.volume / 100.0;
                 }
             }
 

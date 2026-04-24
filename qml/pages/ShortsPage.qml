@@ -147,7 +147,14 @@ Rectangle {
             anchors.fill: parent
             fillMode: Video.PreserveAspectCrop
             source: shortsPage.currentVideoUrl
-            volume: typeof VolumeKeys !== "undefined" ? (VolumeKeys.volume / 100.0) : 1.0
+            volume: Config.persistentVolume
+
+            onVolumeChanged: {
+                if (Config.persistentVolume !== volume) {
+                    Config.persistentVolume = volume; // 2. Обновляем глобальную громкость
+                }
+            }
+
             onResumed: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; shortsPage.recoveryAttempts = 0; }
             onStarted: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; shortsPage.recoveryAttempts = 0; }
             onPaused: shortsPage.isPlaying = false
@@ -167,6 +174,10 @@ Rectangle {
 
             onStatusChanged: {
                 if (status === Video.Loaded) {
+                    if (typeof VolumeKeys !== "undefined") {
+                        VolumeKeys.volume = Config.persistentVolume * 100;
+                    }
+
                     if (shortsPage.recoveryPosition !== -1) {
                         var target = shortsPage.recoveryPosition;
                         shortsPage.recoveryPosition = -1;
@@ -350,6 +361,7 @@ Rectangle {
                     volumeOsd.opacity = 1.0;
                     volumeFadeOut.stop();
                     volumeOsdTimer.restart();
+                    Config.persistentVolume = VolumeKeys.volume / 100.0;
                 }
             }
 

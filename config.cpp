@@ -12,10 +12,28 @@ Config::Config(QObject *parent) : QObject(parent)
     m_apiKey = m_settings->value("YouTubeApiKey", "").toString();
     m_userToken = m_settings->value("AuthToken", "").toString();
     m_enableChannelThumbnails = m_settings->value("EnableChannelThumbnails", true).toBool();
+    m_persistentVolume = m_settings->value("PersistentVolume", 0.45).toReal();
 }
 
 Config::~Config()
 {
+}
+
+qreal Config::persistentVolume() const
+{
+    return m_persistentVolume;
+}
+
+void Config::setPersistentVolume(qreal volume)
+{
+    if (volume < 0.0) volume = 0.0;
+    if (volume > 1.0) volume = 1.0;
+
+    if (m_persistentVolume != volume) {
+        m_persistentVolume = volume;
+        m_settings->setValue("PersistentVolume", m_persistentVolume);
+        emit persistentVolumeChanged();
+    }
 }
 
 QString Config::apiBaseUrl() const
