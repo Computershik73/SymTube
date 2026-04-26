@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import QtMultimediaKit 1.1
 import "components"
 
@@ -14,7 +14,13 @@ Rectangle {
     // --- ПРИВЯЗКИ ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА ---
     property bool isLandscape: width > height
     property bool isVideoPageOpen: contentLoader.source.toString().indexOf("VideoPage.qml") !== -1
-    property bool isFullscreen: isLandscape && isVideoPageOpen
+    property int forceFullscreen: 0
+
+     property bool isFullscreen: isVideoPageOpen && (forceFullscreen === 2 || (forceFullscreen === 0 && isLandscape))
+
+    onWidthChanged: {
+        forceFullscreen = 0; // Сбрасываем при физическом повороте телефона
+    }
 
     // Кикстарт (теперь без dummy файла, просто дергаем компонент)
     Loader {

@@ -21,6 +21,27 @@ Rectangle {
     property int recoveryPosition: -1
     property bool isSeeking: false
 
+    property int uiPosition: 0
+
+    Timer {
+        id: uiTimer
+        interval: 500
+        repeat: true
+        running: shortsPage.isPlaying
+        onTriggered: {
+            if (videoLoader.item) {
+                var pos = videoLoader.item.position;
+                var dur = videoLoader.item.duration;
+                shortsPage.uiPosition = pos;
+
+                // Делаем луп здесь (2 раза в секунду), а не 60!
+                if (dur > 0 && pos >= dur - 600) {
+                    videoLoader.item.position = 0;
+                }
+            }
+        }
+    }
+
 
     Connections {
         target: SymbianApp
@@ -87,7 +108,7 @@ Rectangle {
                                         "thumbnail": currentVideoDetails.thumbnail
         });
 
-            var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "720").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
 
             if (shortsPage.currentVideoUrl !== directUrl) {
                 shortsPage.currentVideoUrl = directUrl;
@@ -160,16 +181,7 @@ Rectangle {
             onPaused: shortsPage.isPlaying = false
             onStopped: { shortsPage.isPlaying = false; shortsPage.isSeeking = false; uiOverlay.visible = true; }
 
-            onPositionChanged: {
-                // Если мы играем и длительность известна
-                if (shortsPage.isPlaying && duration > 0) {
-                    // Если до конца осталось меньше 100 миллисекунд
-                    if (position >= duration - 500) {
-                        console.log("Бесшовный луп!");
-                        position = 0;
-                    }
-                }
-            }
+
 
 
             onStatusChanged: {
@@ -397,7 +409,7 @@ Rectangle {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
                 color: "white"
                 // ИСПРАВЛЕНИЕ: Безопасный расчет ширины
-                width: (videoLoader.item !== null && videoLoader.item.duration > 0) ? (videoLoader.item.position / videoLoader.item.duration) * parent.width : 0
+                width: (videoLoader.item !== null && videoLoader.item.duration > 0) ? (shortsPage.uiPosition / videoLoader.item.duration) * parent.width : 0
             }
         }
 

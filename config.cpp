@@ -1,4 +1,5 @@
 #include "config.h"
+#include <QSysInfo>
 
 Config::Config(QObject *parent) : QObject(parent)
 {
@@ -13,10 +14,25 @@ Config::Config(QObject *parent) : QObject(parent)
     m_userToken = m_settings->value("AuthToken", "").toString();
     m_enableChannelThumbnails = m_settings->value("EnableChannelThumbnails", true).toBool();
     m_persistentVolume = m_settings->value("PersistentVolume", 0.45).toReal();
+    m_videoQuality = m_settings->value("VideoQuality", getDefaultQualityByOs()).toString();
 }
 
 Config::~Config()
 {
+}
+
+QString Config::getDefaultQualityByOs() const
+{
+#ifdef Q_OS_SYMBIAN
+    // Версии до SV_S60_5_1 — это Symbian 9.2, 9.3, 9.4. Начиная с 5_1 — Symbian^3/Anna/Belle.
+    if (QSysInfo::s60Version() < QSysInfo::SV_S60_5_1) {
+        return "240";
+    } else {
+        return "360";
+    }
+#else
+    return "360";
+#endif
 }
 
 qreal Config::persistentVolume() const
@@ -95,6 +111,21 @@ void Config::setEnableChannelThumbnails(bool enable)
         emit enableChannelThumbnailsChanged();
     }
 }
+
+QString Config::videoQuality() const
+{
+    return m_videoQuality;
+}
+
+void Config::setVideoQuality(const QString &quality)
+{
+    if (m_videoQuality != quality) {
+        m_videoQuality = quality;
+        m_settings->setValue("VideoQuality", m_videoQuality);
+        emit videoQualityChanged();
+    }
+}
+
 
 QString Config::getVideoUrl(const QString &videoId, const QString &quality) const
 {

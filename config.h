@@ -13,6 +13,7 @@ class Config : public QObject
     Q_PROPERTY(QString userToken READ userToken WRITE setUserToken NOTIFY userTokenChanged)
     Q_PROPERTY(bool enableChannelThumbnails READ enableChannelThumbnails WRITE setEnableChannelThumbnails NOTIFY enableChannelThumbnailsChanged)
     Q_PROPERTY(qreal persistentVolume READ persistentVolume WRITE setPersistentVolume NOTIFY persistentVolumeChanged)
+    Q_PROPERTY(QString videoQuality READ videoQuality WRITE setVideoQuality NOTIFY videoQualityChanged)
 
 public:
     explicit Config(QObject *parent = 0);
@@ -33,6 +34,9 @@ public:
     qreal persistentVolume() const;
     void setPersistentVolume(qreal volume);
 
+    QString videoQuality() const;
+    void setVideoQuality(const QString &quality);
+
     Q_INVOKABLE QString getVideoUrl(const QString &videoId, const QString &quality = QString()) const;
 
 signals:
@@ -41,6 +45,7 @@ signals:
     void userTokenChanged();
     void enableChannelThumbnailsChanged();
     void persistentVolumeChanged();
+    void videoQualityChanged();
 
 private:
     QSettings *m_settings;
@@ -49,6 +54,8 @@ private:
     QString m_userToken;
     bool m_enableChannelThumbnails;
     qreal m_persistentVolume;
+    QString m_videoQuality;
+    QString getDefaultQualityByOs() const;
 };
 
 #endif // CONFIG_H

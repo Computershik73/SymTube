@@ -23,6 +23,23 @@ Rectangle {
     property int recoveryAttempts: 0
     property bool isVideoEnded: false
 
+
+
+    property int uiPosition: 0
+
+    Timer {
+        id: uiTimer
+        interval: 500 // Обновляем интерфейс всего 2 раза в секунду
+        repeat: true
+        // Таймер работает ТОЛЬКО когда видео играет и панель открыта
+        running: videoPage.isPlaying && controlsOverlay.visible
+        onTriggered: {
+            if (videoLoader.item) {
+                videoPage.uiPosition = videoLoader.item.position;
+            }
+        }
+    }
+
     function formatTime(ms) {
         if (ms <= 0) return "0:00";
         var totalSeconds = Math.floor(ms / 1000);
@@ -79,7 +96,7 @@ Rectangle {
                                         "video_id": videoDetails.video_id, "title": videoDetails.title,
                                         "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
         });
-            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, "360").replace("https://", "http://");
+            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, Config.videoQuality).replace("https://", "http://");
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
             recreateTimer.start();
@@ -90,6 +107,20 @@ Rectangle {
             // Принудительно сбрасываем скролл
             mainList.contentY = 0;
         }
+    }
+
+    function changeQuality(newQuality) {
+        if (!videoDetails) return;
+        var pos = 0;
+        if (videoLoader.item) {
+            pos = videoLoader.item.position;
+            videoLoader.item.stop();
+        }
+        videoPage.recoveryPosition = pos;
+        videoPage.recoveryAttempts = 0;
+        videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, newQuality).replace("https://", "http://");
+        videoLoader.sourceComponent = undefined;
+        recreateTimer.start();
     }
 
     function loadVideo(videoId) {
@@ -115,11 +146,7 @@ Rectangle {
 
             property int lastIntendedPosition: -1
 
-            onVolumeChanged: {
-                if (Config.persistentVolume !== volume) {
-                    Config.persistentVolume = volume;
-                }
-            }
+
 
             onStarted: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
             onResumed: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
@@ -196,7 +223,7 @@ Rectangle {
     Rectangle {
         id: playerContainer
         width: parent.width
-        height: isLandscape ? parent.height : (parent.width * 0.5625)
+        height: root.isFullscreen ? parent.height : (root.isLandscape ? parent.height * 0.6 : parent.width * 0.5625)
         anchors.top: parent.top
         color: "black"
         z: 5
@@ -261,9 +288,49 @@ Rectangle {
                 }
             }
 
+            Image {
+                id: qualityIcon
+                source: "../Assets/player/quality.png"
+                width: 32; height: 32
+                anchors.top: parent.top; anchors.right: parent.right
+                anchors.margins: 16
+                visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (videoLoader.item !== null ? videoLoader.item.status !== Video.Loading : true)
+                opacity: 0.8
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        controlsTimer.stop();
+                        qualitySheet.state = "visible";
+                    }
+                }
+            }
+
             Rectangle {
                 anchors.bottom: parent.bottom; width: parent.width; height: 40; color: "#B3000000"
                 visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (videoLoader.item !== null ? videoLoader.item.status !== Video.Loading : false)
+
+                Image {
+                    id: fullscreenBtn
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin: 10
+                    width: 24; height: 24
+                    source: root.isFullscreen ? "../Assets/player/exit_fullscreen.png" : "../Assets/player/fullscreen.png"
+                    opacity: 0.8
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            controlsTimer.restart();
+                            // ИЗМЕНЕННАЯ ЛОГИКА:
+                            if (root.isFullscreen) {
+                                root.forceFullscreen = 1; // Выйти из полного экрана
+                            } else {
+                                root.forceFullscreen = 2; // Войти в полный экран
+                            }
+                        }
+                    }
+                }
+
 
                 MouseArea { anchors.fill: parent; onClicked: controlsTimer.restart() }
 
@@ -271,12 +338,12 @@ Rectangle {
                     id: currentTimeText
                     anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; anchors.leftMargin: 10
                     color: "white"; font.pixelSize: 14
-                    text: videoLoader.item ? formatTime(videoLoader.item.position) : "0:00"
+                    text: formatTime(videoPage.uiPosition)
                 }
 
                 Text {
                     id: totalTimeText
-                    anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 10
+                    anchors.right: fullscreenBtn.left; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 10
                     color: "white"; font.pixelSize: 14
                     text: (videoLoader.item && videoLoader.item.duration > 0) ? formatTime(videoLoader.item.duration) : "0:00"
                 }
@@ -294,13 +361,13 @@ Rectangle {
 
                     Rectangle {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; height: 4; color: "red"; radius: 2
-                        width: (videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoLoader.item.position / videoLoader.item.duration)) * parent.width : 0
+                        width: (videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoPage.uiPosition / videoLoader.item.duration)) * parent.width : 0
                     }
 
                     Rectangle {
                         width: 16; height: 16; radius: 8; color: "red"
                         anchors.verticalCenter: parent.verticalCenter
-                        x: ((videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoLoader.item.position / videoLoader.item.duration)) * parent.width : 0) - 8
+                        x: ((videoLoader.item && videoLoader.item.duration > 0) ? (videoPage.isUserDraggingSlider ? videoPage.sliderDragRatio : (videoPage.uiPosition / videoLoader.item.duration)) * parent.width : 0) - 8
                     }
 
                     MouseArea {
@@ -409,7 +476,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: !isLandscape
+        visible: !root.isFullscreen
 
         snapMode: ListView.NoSnap
         highlightMoveDuration: 0
@@ -535,4 +602,66 @@ Rectangle {
             }
         }
     }
+
+    Rectangle {
+        id: qualitySheet
+        anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
+        state: "hidden"
+        states:[
+            State { name: "visible"; PropertyChanges { target: qualityPanel; y: root.height - qualityPanel.height } },
+            State { name: "hidden"; PropertyChanges { target: qualityPanel; y: root.height } }
+        ]
+        transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+        MouseArea {
+            anchors.fill: parent;
+            onClicked: {
+                qualitySheet.state = "hidden";
+                if (videoPage.isPlaying) controlsTimer.restart();
+            }
+        }
+
+        Rectangle {
+            id: qualityPanel
+            width: parent.width; height: 280
+            anchors.bottom: parent.bottom; color: "#282828"
+            MouseArea { anchors.fill: parent } // Блокируем клики сквозь панель
+            Item {
+                anchors.fill: parent; anchors.margins: 16
+                Column {
+                    anchors.fill: parent; spacing: 10
+                    Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: qsTr("Качество видео"); color: "white"; font.pixelSize: 18; font.bold: true; font.family: "Nokia Pure Text" }
+
+                    ListView {
+                        width: parent.width; height: parent.height - 40
+                        model:["144", "240", "360", "480", "720"]
+                        clip: true
+                        delegate: Rectangle {
+                            width: parent.width; height: 40
+                            color: Config.videoQuality === modelData ? "#333333" : "transparent"
+                            radius: 5
+                            Text {
+                                text: modelData + "p"
+                                color: Config.videoQuality === modelData ? "#007ACC" : "white"
+                                font.pixelSize: 16; font.bold: Config.videoQuality === modelData
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left; anchors.leftMargin: 10
+                                font.family: "Nokia Pure Text"
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    Config.videoQuality = modelData;
+                                    qualitySheet.state = "hidden";
+                                    videoPage.changeQuality(modelData);
+                                    if (videoPage.isPlaying) controlsTimer.restart();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
