@@ -87,7 +87,8 @@ SOURCES += \
 TRANSLATIONS += \
     lang/SymTube_ru_RU.ts \
     lang/SymTube_en_US.ts \
-    lang/SymTube_pl_PL.ts
+    lang/SymTube_pl_PL.ts \
+    lang/SymTube_tr_TR.ts
 
 
 lupdate_only {
@@ -102,7 +103,8 @@ OTHER_FILES += \
     Assets/tabbar/*.png \
     lang/SymTube_ru_RU.qm \
     lang/SymTube_pl_PL.qm \
-    lang/SymTube_en_US.qm
+    lang/SymTube_en_US.qm \
+    lang/SymTube_tr_TR.qm
 
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)

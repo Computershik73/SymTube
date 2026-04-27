@@ -22,7 +22,7 @@ void ApiManager::getHistory()
 {
     QString token = m_config->userToken();
     if (token.isEmpty()) return;
-    QString url = m_config->apiBaseUrl() + "get_history.php?token=" + token;
+    QString url = m_config->apiBaseUrl() + "get_history.php?token=" + token + getLocaleParams();
     sendRequest(url, "History");
 }
 
@@ -70,7 +70,7 @@ void ApiManager::getHomeVideos(const QString &pageToken)
     QString url;
 
     if (!token.isEmpty()) {
-        url = m_config->apiBaseUrl() + "get_recommendations.php?token=" + token;
+        url = m_config->apiBaseUrl() + "get_recommendations.php?token=" + token + getLocaleParams();
         if (!pageToken.isEmpty()) {
             url += "&pageToken=" + pageToken;
         }
@@ -88,22 +88,22 @@ void ApiManager::searchVideos(const QString &query)
 {
     QString apiKey = m_config->apiKey();
     // Пользовательский ввод кодируем
-    QString url = m_config->apiBaseUrl() + "get_search_videos.php?query=" + QUrl::toPercentEncoding(query);
+    QString url = m_config->apiBaseUrl() + "get_search_videos.php?query=" + QUrl::toPercentEncoding(query) + getLocaleParams();
     sendRequest(url, "SearchVideos");
 }
 
 void ApiManager::getSearchSuggestions(const QString &query)
 {
     QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get_search_suggestions.php?query=" + QUrl::toPercentEncoding(query);
+    QString url = m_config->apiBaseUrl() + "get_search_suggestions.php?query=" + QUrl::toPercentEncoding(query) + getLocaleParams();
     sendRequest(url, "SearchSuggestions");
 }
 
 void ApiManager::getVideoInfo(const QString &videoId)
 {
     QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get-ytvideo-info.php?video_id=" + videoId;
-    qDebug() << "[ApiManager] Запрос информации о видео по URL:" << url; // <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+    QString url = m_config->apiBaseUrl() + "get-ytvideo-info.php?video_id=" + videoId + getLocaleParams();
+    qDebug() << "[ApiManager] Запрос информации о видео по URL:" << url;
     sendRequest(url, "VideoInfo");
 }
 
@@ -111,7 +111,7 @@ void ApiManager::getRelatedVideos(const QString &videoId, int page)
 {
     QString apiKey = m_config->apiKey();
     QString token = m_config->userToken();
-    QString url = m_config->apiBaseUrl() + "get_related_videos.php?video_id=" + videoId + "&page=" + QString::number(page) + "&token=" + token;
+    QString url = m_config->apiBaseUrl() + "get_related_videos.php?video_id=" + videoId + "&page=" + QString::number(page) + "&token=" + token + getLocaleParams();
     sendRequest(url, "RelatedVideos");
 }
 
@@ -164,7 +164,7 @@ void ApiManager::unsubscribeFromChannel(const QString &channelIdentifier)
 void ApiManager::getChannelVideos(const QString &author)
 {
     QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get_author_videos.php?author=" + author;
+    QString url = m_config->apiBaseUrl() + "get_author_videos.php?author=" + author + getLocaleParams();
     sendRequest(url, "ChannelVideos");
 }
 
@@ -175,7 +175,7 @@ void ApiManager::getSubscriptions()
         emit requestFailed("Subscriptions", "Token missing");
         return;
     }
-    QString url = m_config->apiBaseUrl() + "get_subscriptions.php?token=" + token;
+    QString url = m_config->apiBaseUrl() + "get_subscriptions.php?token=" + token + getLocaleParams();
     sendRequest(url, "Subscriptions");
 }
 
@@ -189,7 +189,7 @@ void ApiManager::getAccountInfo()
 void ApiManager::getShorts(const QString &sequenceToken)
 {
     QString token = m_config->userToken();
-    QString url = m_config->apiBaseUrl() + "get_shorts.php?token=" + token;
+    QString url = m_config->apiBaseUrl() + "get_shorts.php?token=" + token + getLocaleParams();
     if (!sequenceToken.isEmpty()) {
         url += "&sequence=" + sequenceToken;
     }
@@ -443,14 +443,28 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             emit authContentReady(content, "Unknown");
         }
     } else if (requestType == "History") {
-            if (parseSuccess && parsedJson.type() == QVariant::List) {
-                QVariantList list = parsedJson.toList();
-                sanitizeVideoList(list); // Применяем ту же очистку ссылок
-                emit historyReady(list);
-            } else {
-                emit requestFailed(requestType, "JSON parse error");
-            }
+        if (parseSuccess && parsedJson.type() == QVariant::List) {
+            QVariantList list = parsedJson.toList();
+            sanitizeVideoList(list); // Применяем ту же очистку ссылок
+            emit historyReady(list);
+        } else {
+            emit requestFailed(requestType, "JSON parse error");
         }
+    }
 
     reply->deleteLater();
+}
+
+QString ApiManager::getLocaleParams(bool firstParam)
+{
+    QSettings settings("SymTubeApp", "Settings");
+    // Если языка нет, по умолчанию отдаем английский
+    QString lang = settings.value("Language", "en_US").toString();
+    QStringList parts = lang.split("_");
+    QString prefix = firstParam ? "?" : "&";
+
+    if (parts.size() >= 2) {
+        return prefix + "hl=" + parts[0] + "&gl=" + parts[1];
+    }
+    return prefix + "hl=en&gl=US";
 }

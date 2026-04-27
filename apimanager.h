@@ -85,6 +85,7 @@ private slots:
 private:
     void sendRequest(const QString &url, const QString &requestType);
     QString extractContentFromYtreq(const QString &response);
+    QString getLocaleParams(bool firstParam = false);
 
     QNetworkAccessManager *m_networkManager;
     Config *m_config;
