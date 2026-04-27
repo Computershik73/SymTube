@@ -290,7 +290,7 @@ Rectangle {
 
             Image {
                 id: qualityIcon
-                source: "../Assets/player/quality.png"
+                source: "../Assets/player/settings.png"
                 width: 32; height: 32
                 anchors.top: parent.top; anchors.right: parent.right
                 anchors.margins: 16
@@ -309,30 +309,39 @@ Rectangle {
                 anchors.bottom: parent.bottom; width: parent.width; height: 40; color: "#B3000000"
                 visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (videoLoader.item !== null ? videoLoader.item.status !== Video.Loading : false)
 
-                Image {
-                    id: fullscreenBtn
+                Item {
+                    id: fullscreenBtnItem
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin: 10
-                    width: 24; height: 24
-                    source: root.isFullscreen ? "../Assets/player/exit_fullscreen.png" : "../Assets/player/fullscreen.png"
-                    opacity: 0.8
+                    width: 50; height: parent.height // Создаем огромную зону для пальца (50x40 пикселей)
+                    z: 10 // Гарантируем, что панель под ней не перехватит клик
+
+                    Image {
+                        id: fullscreenBtn
+                        anchors.centerIn: parent
+                        width: 24; height: 24
+                        source: root.isFullscreen ? "../Assets/player/exit_fullscreen.png" : "../Assets/player/fullscreen.png"
+                        opacity: 0.8
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
+                            if (!videoLoader.item) return;
                             controlsTimer.restart();
-                            // ИЗМЕНЕННАЯ ЛОГИКА:
+
+                            // Мгновенное переключение! Никаких пауз и черных экранов.
                             if (root.isFullscreen) {
-                                root.forceFullscreen = 1; // Выйти из полного экрана
+                                root.forceFullscreen = 1; // Выйти в окно
                             } else {
-                                root.forceFullscreen = 2; // Войти в полный экран
+                                root.forceFullscreen = 2; // В полный экран
                             }
                         }
                     }
                 }
 
 
-                MouseArea { anchors.fill: parent; onClicked: controlsTimer.restart() }
+                MouseArea { anchors.fill: parent; z: -1; onClicked: controlsTimer.restart() }
 
                 Text {
                     id: currentTimeText
@@ -343,7 +352,9 @@ Rectangle {
 
                 Text {
                     id: totalTimeText
-                    anchors.right: fullscreenBtn.left; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 10
+                    // СТАЛО:
+                    anchors.right: fullscreenBtnItem.left; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 5
+
                     color: "white"; font.pixelSize: 14
                     text: (videoLoader.item && videoLoader.item.duration > 0) ? formatTime(videoLoader.item.duration) : "0:00"
                 }
@@ -516,7 +527,7 @@ Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        SafeImage { anchors.fill: parent; source: videoDetails ? ("http://yt.modyleprojects.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
+                        SafeImage { anchors.fill: parent; source: videoDetails ? ("http://yt.swlbst.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter

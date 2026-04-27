@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 
 Rectangle {
     id: navbarRoot
@@ -58,6 +58,7 @@ Rectangle {
             
             MouseArea {
                 anchors.fill: parent
+                anchors.margins: -15
                 onClicked: {
                     isSearchMode = true;
                     searchInput.forceActiveFocus();
@@ -84,7 +85,7 @@ Rectangle {
                 anchors.right: closeSearchBtn.left
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
-                width: 40; height: 40
+                width: 50; height: parent.height
                 color: "transparent"
 
                 Image {
@@ -116,6 +117,9 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 12
+                width: 50; height: parent.height
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
 
                 MouseArea {
                     anchors.fill: parent
@@ -137,6 +141,15 @@ Rectangle {
                 anchors.margins: 10
                 color: "white"
                 font.pixelSize: 16
+
+                onAccepted: {
+                    if (text.length > 0) {
+                        navbarRoot.searchRequested(text);
+                        isSearchMode = false;
+                        text = "";
+                        focus = false; // Скрыть клавиатуру
+                    }
+                }
 
                 Text {
                     text: qsTr("Поиск")

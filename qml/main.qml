@@ -14,12 +14,15 @@ Rectangle {
     // --- ПРИВЯЗКИ ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА ---
     property bool isLandscape: width > height
     property bool isVideoPageOpen: contentLoader.source.toString().indexOf("VideoPage.qml") !== -1
-    property int forceFullscreen: 0
 
-     property bool isFullscreen: isVideoPageOpen && (forceFullscreen === 2 || (forceFullscreen === 0 && isLandscape))
+    property int forceFullscreen: 1
 
-    onWidthChanged: {
-        forceFullscreen = 0; // Сбрасываем при физическом повороте телефона
+    property bool isFullscreen: isVideoPageOpen && forceFullscreen === 2
+
+    onIsLandscapeChanged: {
+        if (!isLandscape && forceFullscreen === 2) {
+            forceFullscreen = 1;
+        }
     }
 
     // Кикстарт (теперь без dummy файла, просто дергаем компонент)
@@ -138,6 +141,7 @@ Rectangle {
 
     function navigateToVideo(videoId) {
         //contentLoader.source = "";
+        forceFullscreen = 1;
         navbar.showBackButton = true;
         contentLoader.source = "pages/VideoPage.qml";
         if (contentLoader.item && typeof contentLoader.item.loadVideo !== "undefined") {

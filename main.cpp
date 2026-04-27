@@ -75,10 +75,10 @@ int main(int argc, char *argv[])
     view.setStyleSheet("background: black;"); // Дополнительно для QWidget-контейнера
 
     // Оптимизация: не очищать фон каждый раз (ускоряет Symbian)
-    view.setAttribute(Qt::WA_OpaquePaintEvent);
-    view.setAttribute(Qt::WA_NoSystemBackground);
-    view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    //view.setAttribute(Qt::WA_OpaquePaintEvent);
+    //view.setAttribute(Qt::WA_NoSystemBackground);
+    //view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
+    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
     // Оптимизации для Symbian
     //view.setAttribute(Qt::WA_OpaquePaintEvent);

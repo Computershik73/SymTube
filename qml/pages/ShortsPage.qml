@@ -88,7 +88,7 @@ Rectangle {
         onShortsReady: {
             isLoading = false;
             sequenceToken = seqToken;
-            if (shortsList.length > 0) {
+            if (shortsList && shortsList.length > 0) {
                 var combined = shortsPage.shortsList;
                 for (var i=0; i<shortsList.length; i++) combined.push(shortsList[i]);
                 shortsPage.shortsList = combined;
@@ -108,7 +108,7 @@ Rectangle {
                                         "thumbnail": currentVideoDetails.thumbnail
         });
 
-            var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "720").replace("https://", "http://").replace("yt.swlbst.ru", "yt.modyleprojects.ru");
+            var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://");
 
             if (shortsPage.currentVideoUrl !== directUrl) {
                 shortsPage.currentVideoUrl = directUrl;
@@ -433,9 +433,9 @@ Rectangle {
                         SafeImage {
                             anchors.fill: parent
                             source: {
-                                if (!currentVideoDetails || !currentVideoDetails.channel_thumbnail) return "";
-
+                                if (!currentVideoDetails) return "";
                                 var originalUrl = currentVideoDetails["channel_thumbnail"];
+                                if (!originalUrl) return "";
                                 var parts = originalUrl.split("channel_icon/");
 
                                 if (parts.length < 2) return "";
@@ -486,10 +486,10 @@ Rectangle {
 
             Column {
                 spacing: 4; anchors.horizontalCenter: parent.horizontalCenter
-                Image { source: "../Assets/player/like.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "like") } }
+                Image { source: "../Assets/player/like.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentShortInfo.video_id, "like") } }
                 Text { text: currentVideoDetails ? (currentVideoDetails["likes"] || qsTr("Лайк")) : ""; color: "white"; font.pixelSize: 12; anchors.horizontalCenter: parent.horizontalCenter }
             }
-            Image { source: "../Assets/player/dislike.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "dislike") } }
+            Image { source: "../Assets/player/dislike.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentShortInfo.video_id, "dislike") } }
             Column {
                 spacing: 4; anchors.horizontalCenter: parent.horizontalCenter
                 Image { source: "../Assets/player/comments.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" } }
