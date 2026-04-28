@@ -18,6 +18,12 @@ ApiManager::~ApiManager()
 {
 }
 
+void ApiManager::fetchServerList()
+{
+    QString url = "https://raw.githubusercontent.com/Computershik73/SymTube/refs/heads/main/servers.txt";
+    sendRequest(url, "ServerList");
+}
+
 void ApiManager::getHistory()
 {
     QString token = m_config->userToken();
@@ -450,6 +456,17 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         } else {
             emit requestFailed(requestType, "JSON parse error");
         }
+    } else if (requestType == "ServerList") {
+        QStringList servers;
+        QString content = QString::fromUtf8(responseData);
+        QStringList lines = content.split('\n', QString::SkipEmptyParts);
+        foreach (const QString &line, lines) {
+            QString trimmed = line.trimmed();
+            if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
+                servers.append(trimmed);
+            }
+        }
+        emit serverListReady(servers);
     }
 
     reply->deleteLater();

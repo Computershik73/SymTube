@@ -6,10 +6,24 @@ Rectangle {
     anchors.fill: parent
     color: "black"
 
+    Connections {
+        target: ApiManager
+        onServerListReady: {
+            if (servers && servers.length > 0) {
+                // Если список успешно загружен, обновляем модель комбобокса
+                apiCombo.model = servers;
+            } else {
+                // Если загрузка не удалась, показываем текст с подсказкой
+                qtlsText.visible = true;
+            }
+        }
+    }
+
     function onNavigatedTo() {
         // Подгружаем текущий URL из C++ при открытии
         apiCombo.text = Config.apiBaseUrl;
         langCombo.text = TranslationManager.currentLanguage;
+        ApiManager.fetchServerList();
     }
 
     // Закрытие списка и клавиатуры при клике в пустое место
@@ -62,10 +76,35 @@ Rectangle {
                     width: parent.width
                     // Жестко зашитый список серверов
                     model:[
-                        "https://yt.modyleprojects.ru/",
-                        "https://yt.swlbst.ru/"
+                        "http://yt.swlbst.ru/"
                     ]
                 }
+
+                Row {
+                    id: qtlsText
+                    spacing: 4
+                    visible: false // Показываем только если список не загрузился
+
+                    Text {
+                        text: qsTr("Не грузится список серверов? Установите патч QTLS по ")
+                        color: "gray"
+                        font.pixelSize: 12
+                    }
+                    Text {
+                        text: qsTr("ссылке")
+                        color: "#0099FF" // Цвет ссылки
+                        font.underline: true
+                        font.pixelSize: 12
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                Qt.openUrlExternally("http://nnproject.cc/qtls/")
+                            }
+                        }
+                    }
+                }
+
             }
 
 

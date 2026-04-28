@@ -50,6 +50,8 @@ public:
 
     Q_INVOKABLE void checkAuthContent();
 
+    Q_INVOKABLE void fetchServerList();
+
 
 
     void downloadChannelIcon(const QString &url);
@@ -79,6 +81,7 @@ signals:
     void authImageReady();
     void shortsReady(QVariantList shortsList, QString seqToken);
     void historyReady(QVariantList historyList);
+    void serverListReady(const QStringList &servers);
 private slots:
     void onReplyFinished(QNetworkReply *reply);
 
