@@ -20,6 +20,7 @@
 #include "roundedimageprovider.h"
 #include "volumekeysobserver.h"
 #include "translationmanager.h"
+#include "localhttpproxy.h"
 
 int main(int argc, char *argv[])
 {
@@ -38,6 +39,8 @@ int main(int argc, char *argv[])
         dlclose(library);
     }
 
+
+
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QTextCodec::setCodecForTr(codec);
     QTextCodec::setCodecForCStrings(codec);
@@ -52,10 +55,19 @@ int main(int argc, char *argv[])
         networkSession->open();
     }
 
+
     // 2. Инициализация менеджеров
     Config config;
     // Создаем провайдер ПЕРЕД ApiManager
     QrImageProvider *qrProvider = new QrImageProvider();
+
+    LocalHttpProxy localProxy;
+    if (!localProxy.start()) {
+        qCritical() << "Failed to start local proxy server!";
+        return -1;
+    }
+
+
     // Передаем указатель на провайдер в конструктор
     ApiManager apiManager(&config, qrProvider);
     HistoryManager historyManager;

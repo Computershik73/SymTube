@@ -93,10 +93,16 @@ Rectangle {
         onVideoInfoReady: {
             videoDetails = videoDetailsMap;
             HistoryManager.addToHistory({
-                                        "video_id": videoDetails.video_id, "title": videoDetails.title,
-                                        "author": videoDetails.author, "thumbnail": videoDetails.thumbnail
+                                        "video_id": videoDetails.video_id,
+                                        "title": videoDetails.title,
+                                        "author": videoDetails.author,
+                                        "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
         });
-            videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, Config.videoQuality).replace("https://", "http://");
+
+            // Получаем прямую ссылку из ответа API
+            videoPage.currentVideoUrl = videoDetails.video_url.replace("https://", "http://");
+            console.log(videoPage.currentVideoUrl)
+
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
             recreateTimer.start();
@@ -118,7 +124,7 @@ Rectangle {
         }
         videoPage.recoveryPosition = pos;
         videoPage.recoveryAttempts = 0;
-        videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, newQuality).replace("https://", "http://");
+        //videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, newQuality).replace("https://", "http://");
         videoLoader.sourceComponent = undefined;
         recreateTimer.start();
     }

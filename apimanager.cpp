@@ -1,470 +1,524 @@
 #include "apimanager.h"
 #include "config.h"
 #include "json.h"
-#include "qrimageprovider.h"
-#include <QUrl>
 #include <QNetworkRequest>
+#include <QSettings>
+#include <QEventLoop>
+#include <QUuid>
 #include <QDebug>
-#include <QImage>
+#include <QNetworkProxy>
+
+// Константы OAuth для получения токена
+const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
+const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
 
 ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent)
-    : QObject(parent), m_config(config), m_qrProvider(qrProvider) // Снова принимаем провайдер здесь
+    : QObject(parent), m_config(config), m_qrProvider(qrProvider)
 {
     m_networkManager = new QNetworkAccessManager(this);
+
+    QNetworkProxy proxy;
+    proxy.setType(QNetworkProxy::HttpProxy);
+    proxy.setHostName("192.168.1.183");
+    proxy.setPort(8890);
+    m_networkManager->setProxy(proxy);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
 }
 
-ApiManager::~ApiManager()
-{
-}
+ApiManager::~ApiManager() {}
 
-void ApiManager::fetchServerList()
-{
-    QString url = "https://raw.githubusercontent.com/Computershik73/SymTube/refs/heads/main/servers.txt";
-    sendRequest(url, "ServerList");
-}
-
-void ApiManager::getHistory()
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) return;
-    QString url = m_config->apiBaseUrl() + "get_history.php?token=" + token + getLocaleParams();
-    sendRequest(url, "History");
-}
-
-void ApiManager::sanitizeVideoList(QVariantList &list) {
-    for (int i = 0; i < list.size(); ++i) {
-        QVariantMap map = list[i].toMap();
-
-        // Исправляем превью видео
-        if (map.contains("thumbnail")) {
-            QString url = map["thumbnail"].toString();
-            url.replace("https://", "http://");
-            map["thumbnail"] = url;
-        }
-
-        // Исправляем аватарку канала
-        if (map.contains("channel_thumbnail")) {
-            QString url = map["channel_thumbnail"].toString();
-            url.replace("https://", "http://");
-            map["channel_thumbnail"] = url;
-        }
-
-        list[i] = map;
-    }
-}
-
-void ApiManager::setImageProvider(QrImageProvider *provider)
-{
+void ApiManager::setImageProvider(QrImageProvider *provider) {
     m_qrProvider = provider;
 }
 
-void ApiManager::sendRequest(const QString &url, const QString &requestType)
-{
-    QNetworkRequest request;
-    request.setUrl(QUrl(url)); // QUrl сам безопасно обработает строку
-    request.setRawHeader("User-Agent", "Mozilla/5.0 (Symbian/3; Series60/5.3 NokiaN8-00) Qt/4.7.3");
-    request.setRawHeader("Accept", "application/json");
+QString ApiManager::getLocaleParams(bool firstParam) {
+    QSettings settings("SymTubeApp", "Settings");
+    QString lang = settings.value("Language", "en_US").toString();
+    QStringList parts = lang.split("_");
+    QString prefix = firstParam ? "?" : "&";
+    if (parts.size() >= 2) return prefix + "hl=" + parts[0] + "&gl=" + parts[1];
+    return prefix + "hl=en&gl=US";
+}
 
-    QNetworkReply *reply = m_networkManager->get(request);
+QVariantMap ApiManager::buildContext(const QString &clientName, const QString &clientVersion) {
+    QSettings settings("SymTubeApp", "Settings");
+    QString lang = settings.value("Language", "en_US").toString();
+    QStringList parts = lang.split("_");
+
+    QVariantMap client;
+    client["clientName"] = clientName;
+    client["clientVersion"] = clientVersion;
+    client["hl"] = parts.size() > 0 ? parts[0] : "en";
+    client["gl"] = parts.size() > 1 ? parts[1] : "US";
+
+    if (clientName == "TVHTML5") {
+        client["platform"] = "TV";
+        client["deviceMake"] = "Samsung";
+        client["deviceModel"] = "SmartTV";
+        client["osName"] = "Tizen";
+        client["osVersion"] = "5.0";
+    }
+
+    QVariantMap context;
+    context["client"] = client;
+    return context;
+}
+
+// Получение свежего Access Token через сохраненный Refresh Token (Синхронно)
+QString ApiManager::getAccessToken() {
+    QString refreshToken = m_config->userToken();
+    if (refreshToken.isEmpty()) return "";
+
+    if (!m_accessToken.isEmpty() && QDateTime::currentDateTime() < m_tokenExpiry) {
+        return m_accessToken;
+    }
+
+    QNetworkAccessManager syncManager;
+    QNetworkRequest req(QUrl("https://oauth2.googleapis.com/token"));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    QString data = "client_id=" + OAUTH_CLIENT_ID + "&client_secret=" + OAUTH_CLIENT_SECRET + "&refresh_token=" + refreshToken + "&grant_type=refresh_token";
+
+    QNetworkReply *reply = syncManager.post(req, data.toUtf8());
+    QEventLoop loop;
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    if (reply->error() == QNetworkReply::NoError) {
+        bool ok;
+        QVariantMap map = QtJson::parse(QString::fromUtf8(reply->readAll()), ok).toMap();
+        m_accessToken = map.value("access_token").toString();
+        m_tokenExpiry = QDateTime::currentDateTime().addSecs(map.value("expires_in").toInt() - 60);
+    }
+    reply->deleteLater();
+    return m_accessToken;
+}
+
+void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth) {
+    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint + "?key=" + m_config->apiKey();
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
+
+    // Вытаскиваем clientName из payload, чтобы выставить правильный заголовок x-youtube-client-name
+    QVariantMap context = payload.value("context").toMap();
+    QVariantMap client = context.value("client").toMap();
+    QString clientName = client.value("clientName").toString();
+
+    if (clientName == "ANDROID") {
+        request.setRawHeader("x-youtube-client-name", "3");
+        request.setRawHeader("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip");
+    } else if (clientName == "TVHTML5") {
+        request.setRawHeader("x-youtube-client-name", "85");
+        request.setRawHeader("User-Agent", "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebkit/537.36");
+    }
+
+    if (requiresAuth) {
+        QString token = getAccessToken();
+        if (!token.isEmpty()) {
+            request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
+        }
+    }
+
+    bool success;
+    QByteArray data = QtJson::serialize(payload, success);
+    QNetworkReply *reply = m_networkManager->post(request, data);
     reply->setProperty("RequestType", requestType);
 }
 
-void ApiManager::getHomeVideos(const QString &pageToken)
-{
-    QString token = m_config->userToken();
-    QString url;
+// === API ВОССТАНОВЛЕННЫЕ ФУНКЦИИ ===
 
-    if (!token.isEmpty()) {
-        url = m_config->apiBaseUrl() + "get_recommendations.php?token=" + token + getLocaleParams();
-        if (!pageToken.isEmpty()) {
-            url += "&pageToken=" + pageToken;
-        }
-
-        sendRequest(url, "HomeVideos");
-    } else {
-
-        url = m_config->apiBaseUrl() + "get_top_videos.php";
-        if (!pageToken.isEmpty()) url += "&pageToken=" + pageToken;
-        sendRequest(url, "HomeVideos");
-    }
-}
-
-void ApiManager::searchVideos(const QString &query)
-{
-    QString apiKey = m_config->apiKey();
-    // Пользовательский ввод кодируем
-    QString url = m_config->apiBaseUrl() + "get_search_videos.php?query=" + QUrl::toPercentEncoding(query) + getLocaleParams();
-    sendRequest(url, "SearchVideos");
-}
-
-void ApiManager::getSearchSuggestions(const QString &query)
-{
-    QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get_search_suggestions.php?query=" + QUrl::toPercentEncoding(query) + getLocaleParams();
-    sendRequest(url, "SearchSuggestions");
-}
-
-void ApiManager::getVideoInfo(const QString &videoId)
-{
-    QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get-ytvideo-info.php?video_id=" + videoId + getLocaleParams();
-    qDebug() << "[ApiManager] Запрос информации о видео по URL:" << url;
-    sendRequest(url, "VideoInfo");
-}
-
-void ApiManager::getRelatedVideos(const QString &videoId, int page)
-{
-    QString apiKey = m_config->apiKey();
-    QString token = m_config->userToken();
-    QString url = m_config->apiBaseUrl() + "get_related_videos.php?video_id=" + videoId + "&page=" + QString::number(page) + "&token=" + token + getLocaleParams();
-    sendRequest(url, "RelatedVideos");
-}
-
-void ApiManager::checkRating(const QString &videoId)
-{
-    // QString token = m_config->userToken();
-    // if (token.isEmpty()) {
-    emit ratingChecked("none");
-    // return;
-    /* }
-    QString url = m_config->apiBaseUrl() + "actions/check_rating?video_id=" + videoId + "&token=" + token;
-    sendRequest(url, "CheckRating");*/
-}
-
-void ApiManager::checkSubscription(const QString &channelIdentifier)
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) {
-        emit subscriptionChecked(false);
-        return;
-    }
-    QString url = m_config->apiBaseUrl() + "actions/check_subscription?channel=" + channelIdentifier + "&token=" + token;
-    sendRequest(url, "CheckSubscription");
-}
-
-void ApiManager::rateVideo(const QString &videoId, const QString &rating)
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) return;
-    QString url = m_config->apiBaseUrl() + "actions/rate?video_id=" + videoId + "&rating=" + rating + "&token=" + token;
-    sendRequest(url, "RateVideo");
-}
-
-void ApiManager::subscribeToChannel(const QString &channelIdentifier)
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) return;
-    QString url = m_config->apiBaseUrl() + "actions/subscribe?channel=" + channelIdentifier + "&token=" + token;
-    sendRequest(url, "SubscribeChannel");
-}
-
-void ApiManager::unsubscribeFromChannel(const QString &channelIdentifier)
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) return;
-    QString url = m_config->apiBaseUrl() + "actions/unsubscribe?channel=" + channelIdentifier + "&token=" + token;
-    sendRequest(url, "UnsubscribeChannel");
-}
-
-void ApiManager::getChannelVideos(const QString &author)
-{
-    QString apiKey = m_config->apiKey();
-    QString url = m_config->apiBaseUrl() + "get_author_videos.php?author=" + author + getLocaleParams();
-    sendRequest(url, "ChannelVideos");
-}
-
-void ApiManager::getSubscriptions()
-{
-    QString token = m_config->userToken();
-    if (token.isEmpty()) {
-        emit requestFailed("Subscriptions", "Token missing");
-        return;
-    }
-    QString url = m_config->apiBaseUrl() + "get_subscriptions.php?token=" + token + getLocaleParams();
-    sendRequest(url, "Subscriptions");
-}
-
-void ApiManager::getAccountInfo()
-{
-    QString token = m_config->userToken();
-    QString url = m_config->apiBaseUrl() + "account_info?token=" + token;
-    sendRequest(url, "AccountInfo");
-}
-
-void ApiManager::getShorts(const QString &sequenceToken)
-{
-    QString token = m_config->userToken();
-    QString url = m_config->apiBaseUrl() + "get_shorts.php?token=" + token + getLocaleParams();
-    if (!sequenceToken.isEmpty()) {
-        url += "&sequence=" + sequenceToken;
-    }
-    sendRequest(url, "Shorts");
-}
-
-void ApiManager::checkAuthContent()
-{
-    QString url = m_config->apiBaseUrl() + "auth";
-    sendRequest(url, "AuthContent");
-}
-
-QString ApiManager::extractContentFromYtreq(const QString &response)
-{
-    QString content = response;
-    int start = content.indexOf("<ytreq>");
-    int end = content.indexOf("</ytreq>");
-
-    if (start != -1 && end != -1) {
-        content = content.mid(start + 7, end - start - 7).trimmed();
-    }
-    return content;
-}
-
-void ApiManager::downloadChannelIcon(const QString &url)
-{
+void ApiManager::getSearchSuggestions(const QString &query) {
+    QString url = "https://clients1.google.com/complete/search?client=youtube&ds=yt&q=" + QUrl::toPercentEncoding(query) + getLocaleParams();
     QNetworkRequest request;
     request.setUrl(QUrl(url));
     QNetworkReply *reply = m_networkManager->get(request);
-    // Помечаем запрос как загрузку иконки
-    reply->setProperty("RequestType", "DownloadIcon");
+    reply->setProperty("RequestType", "SearchSuggestions");
+}
+
+void ApiManager::getHistory() {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["browseId"] = "FEhistory";
+    postInnertube("browse", payload, "History", true);
+}
+
+void ApiManager::getSubscriptions() {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["browseId"] = "FEchannels";
+    postInnertube("browse", payload, "Subscriptions", true);
+}
+
+void ApiManager::getAccountInfo() {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    QVariantMap accountReadMask;
+    accountReadMask["returnOwner"] = true;
+    payload["accountReadMask"] = accountReadMask;
+    postInnertube("account/accounts_list", payload, "AccountInfo", true);
+}
+
+void ApiManager::rateVideo(const QString &videoId, const QString &rating) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    QVariantMap target;
+    target["videoId"] = videoId;
+    payload["target"] = target;
+    postInnertube("like/" + rating, payload, "RateVideo", true);
+}
+
+void ApiManager::subscribeToChannel(const QString &channelIdentifier) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["channelIds"] = QVariantList() << channelIdentifier;
+    postInnertube("subscription/subscribe", payload, "SubscribeChannel", true);
+}
+
+void ApiManager::unsubscribeFromChannel(const QString &channelIdentifier) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["channelIds"] = QVariantList() << channelIdentifier;
+    postInnertube("subscription/unsubscribe", payload, "UnsubscribeChannel", true);
+}
+
+void ApiManager::fetchServerList() {
+    QNetworkRequest request(QUrl("https://raw.githubusercontent.com/Computershik73/SymTube-Revived/main/servers.txt"));
+    QNetworkReply *reply = m_networkManager->get(request);
+    reply->setProperty("RequestType", "ServerList");
+}
+
+// Авторизация по QR Коду (Полный аналог UWP StartDeviceFlow)
+void ApiManager::checkAuthContent() {
+    if (m_deviceCode.isEmpty()) {
+        // Шаг 1: Запрашиваем Device Code
+        QNetworkRequest request(QUrl("https://www.youtube.com/o/oauth2/device/code"));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        request.setRawHeader("User-Agent", "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0)");
+        QString data = "client_id=" + OAUTH_CLIENT_ID + "&scope=http://gdata.youtube.com https://www.googleapis.com/auth/youtube-paid-content&device_id=" + QUuid::createUuid().toString().replace("{","").replace("}","") + "&device_model=ytlr:samsung:smarttv";
+        QNetworkReply *reply = m_networkManager->post(request, data.toUtf8());
+        reply->setProperty("RequestType", "OAuthDeviceCode");
+    } else {
+        // Шаг 3: Опрашиваем статус (Poll)
+        QNetworkRequest request(QUrl("https://www.youtube.com/o/oauth2/token"));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        request.setRawHeader("User-Agent", "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0)");
+        QString data = "client_id=" + OAUTH_CLIENT_ID + "&client_secret=" + OAUTH_CLIENT_SECRET + "&code=" + m_deviceCode + "&grant_type=http://oauth.net/grant_type/device/1.0";
+        QNetworkReply *reply = m_networkManager->post(request, data.toUtf8());
+        reply->setProperty("RequestType", "OAuthTokenPoll");
+    }
+}
+
+// === СУЩЕСТВУЮЩИЕ ФУНКЦИИ ===
+void ApiManager::getHomeVideos(const QString &pageToken) {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["browseId"] = "FEwhat_to_watch";
+    if (!pageToken.isEmpty()) payload["continuation"] = pageToken;
+    postInnertube("browse", payload, "HomeVideos", !m_config->userToken().isEmpty());
+}
+
+void ApiManager::searchVideos(const QString &query) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["query"] = query;
+    postInnertube("search", payload, "SearchVideos");
+}
+
+void ApiManager::getVideoInfo(const QString &videoId) {
+    // ВАЖНО: Используем ANDROID, чтобы ссылка была совместима с прокси!
+    QVariantMap client;
+    client["clientName"] = "ANDROID";
+    client["clientVersion"] = "20.10.38";
+    client["androidSdkVersion"] = 30;
+    client["hl"] = "en";
+    client["gl"] = "US";
+
+    QVariantMap context;
+    context["client"] = client;
+
+    QVariantMap payload;
+    payload["context"] = context;
+    payload["videoId"] = videoId;
+
+    postInnertube("player", payload, "VideoInfo");
+}
+
+void ApiManager::getRelatedVideos(const QString &videoId, int page) {
+    Q_UNUSED(page)
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["videoId"] = videoId;
+    postInnertube("next", payload, "RelatedVideos");
+}
+
+void ApiManager::getChannelVideos(const QString &author) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["browseId"] = author;
+    postInnertube("browse", payload, "ChannelVideos");
+}
+
+void ApiManager::getShorts(const QString &sequenceToken) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    if (!sequenceToken.isEmpty()) {
+        payload["sequenceParams"] = sequenceToken;
+        postInnertube("reel/reel_watch_sequence", payload, "Shorts");
+    } else {
+        postInnertube("reel/reel_item_watch", payload, "Shorts");
+    }
+}
+
+// === Итеративный поиск в JSON ===
+QList<QVariantMap> ApiManager::enumerateObjectsWithKey(const QVariant &root, const QString &targetKey)
+{
+    QList<QVariantMap> result;
+    QList<QVariant> stack;
+    stack.append(root);
+
+    while (!stack.isEmpty()) {
+        QVariant current = stack.takeLast();
+        if (current.type() == QVariant::Map) {
+            QVariantMap map = current.toMap();
+            if (map.contains(targetKey)) {
+                result.append(map.value(targetKey).toMap());
+            }
+            foreach (const QVariant &child, map.values()) {
+                if (child.type() == QVariant::Map || child.type() == QVariant::List) stack.append(child);
+            }
+        } else if (current.type() == QVariant::List) {
+            foreach (const QVariant &child, current.toList()) {
+                if (child.type() == QVariant::Map || child.type() == QVariant::List) stack.append(child);
+            }
+        }
+    }
+    return result;
+}
+
+QString ApiManager::extractTextFromField(const QVariantMap &obj, const QString &fieldName) {
+    if (!obj.contains(fieldName)) return "";
+    QVariantMap field = obj.value(fieldName).toMap();
+    if (field.contains("simpleText")) return field.value("simpleText").toString();
+    if (field.contains("runs")) {
+        QString result;
+        foreach(const QVariant &run, field.value("runs").toList()) {
+            result += run.toMap().value("text").toString();
+        }
+        return result;
+    }
+    return "";
+}
+
+QString ApiManager::extractThumbnailUrl(const QVariantMap &obj, const QString &fieldName) {
+    if (!obj.contains(fieldName)) return "";
+    QVariantList thumbs = obj.value(fieldName).toMap().value("thumbnails").toList();
+    if (!thumbs.isEmpty()) {
+        QString url = thumbs.first().toMap().value("url").toString();
+        if (url.startsWith("//")) url = "https:" + url;
+        return url;
+    }
+    return "";
 }
 
 void ApiManager::onReplyFinished(QNetworkReply *reply)
 {
     QString requestType = reply->property("RequestType").toString();
+    QByteArray responseData = reply->readAll();
 
-
-    // Проверяем, есть ли ошибка
-    if (reply->error() != QNetworkReply::NoError) {
-        int retryCount = reply->property("RetryCount").toInt();
-        // Если попытки остались - повторяем
-        if (retryCount < 3) {
-            qDebug() << "[ApiManager] Ошибка" << requestType << ". Попытка" << retryCount + 1 << "из" << "3";
-
-            QNetworkRequest request = reply->request();
-            QNetworkReply *newReply = m_networkManager->get(request); // Повторяем GET-запрос
-            newReply->setProperty("RequestType", requestType);
-            newReply->setProperty("RetryCount", retryCount + 1);
-
-            reply->deleteLater();
-            return;
-        }
-
-        // Если все попытки исчерпаны
+    if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll") {
         emit requestFailed(requestType, reply->errorString());
         reply->deleteLater();
         return;
     }
 
+    bool parseSuccess;
+    QVariant parsedJson = QtJson::parse(QString::fromUtf8(responseData), parseSuccess);
+    QVariantMap parsedMap = parsedJson.toMap();
 
-    /* if (reply->error() != QNetworkReply::NoError) {
-        emit requestFailed(requestType, reply->errorString());
-        reply->deleteLater();
-        return;
-    }*/
+    if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos" || requestType == "ChannelVideos" || requestType == "History") {
+        QVariantList outVideos;
 
-    QByteArray responseData = reply->readAll();
-    QString responseString = QString::fromUtf8(responseData);
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
 
-    // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-    // Этот костыль заменяет некорректное значение на валидное (пустая строка)
-    responseString.replace("\"embed_url\": ,", "\"embed_url\": \"\",");
-    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
 
-    bool parseSuccess = false;
-    QVariant parsedJson = QtJson::parse(responseString, parseSuccess);
-
-    if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos") {
-        if (requestType == "HomeVideos") {
-            if (parseSuccess && parsedJson.type() == QVariant::Map) {
-                // Новый формат: { "videos": [...], "next_page_token": "..." }
-                QVariantMap map = parsedJson.toMap();
-                QVariantList list = map.value("videos").toList();
-                QString token = map.value("next_page_token").toString();
-
-                sanitizeVideoList(list);
-                emit homeVideosReady(list, token);
-            } else if (parseSuccess && parsedJson.type() == QVariant::List) {
-                // Запасной план (если почему-то пришел старый формат)
-                QVariantList list = parsedJson.toList();
-                sanitizeVideoList(list);
-                emit homeVideosReady(list, "");
+            if (renderer.contains("onSelectCommand")) {
+                QVariantMap endpoint = renderer.value("onSelectCommand").toMap().value("watchEndpoint").toMap();
+                item["video_id"] = endpoint.value("videoId").toString();
+                QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
+                item["title"] = extractTextFromField(meta, "title");
             } else {
-                emit requestFailed(requestType, "JSON parse error");
+                item["video_id"] = renderer.value("videoId").toString();
+                item["title"] = extractTextFromField(renderer, "title");
+                item["author"] = extractTextFromField(renderer, "shortBylineText");
+                if (item["author"].toString().isEmpty()) item["author"] = extractTextFromField(renderer, "ownerText");
+                item["duration"] = extractTextFromField(renderer, "lengthText");
+                item["views"] = extractTextFromField(renderer, "viewCountText");
+            }
+
+            if (item["video_id"].toString().isEmpty()) continue;
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/mqdefault.jpg";
+            outVideos.append(item);
+        }
+
+        if (requestType == "HomeVideos") emit homeVideosReady(outVideos, "");
+        else if (requestType == "SearchVideos") emit searchResultsReady(outVideos);
+        else if (requestType == "RelatedVideos") emit relatedVideosReady(outVideos);
+        else if (requestType == "ChannelVideos") { QVariantMap m; m["videos"] = outVideos; emit channelVideosReady(m); }
+        else if (requestType == "History") emit historyReady(outVideos);
+    }
+    else if (requestType == "VideoInfo") {
+        QVariantMap details;
+        QVariantMap root = parsedJson.toMap();
+        QVariantMap videoDetails = root.value("videoDetails").toMap();
+        details["video_id"] = videoDetails.value("videoId").toString();
+        details["title"] = videoDetails.value("title").toString();
+        details["author"] = videoDetails.value("author").toString();
+        details["views"] = videoDetails.value("viewCount").toString();
+
+        QString directUrl = "";
+        QVariantMap streamingData = root.value("streamingData").toMap();
+        QVariantList formats = streamingData.value("formats").toList();
+        foreach (const QVariant &f, formats) {
+            QVariantMap format = f.toMap();
+            if (format.value("itag").toInt() == 18) { // Ищем 360p
+                directUrl = format.value("url").toString();
+                break;
             }
         }
-        // -------------------------------------------
-
-        else if (parseSuccess && parsedJson.type() == QVariant::List) {
-            // Для SearchVideos и RelatedVideos пока остается старый формат массива
-            QVariantList list = parsedJson.toList();
-            sanitizeVideoList(list);
-
-            if (requestType == "SearchVideos") emit searchResultsReady(list);
-            else emit relatedVideosReady(list);
+        if (!directUrl.isEmpty()) {
+            // ВАЖНО: Используем Base64 для передачи ссылки в прокси.
+            // Это ГАРАНТИРУЕТ, что QUrl не закодирует проценты дважды.
+            QString proxyUrl = QString("http://127.0.0.1:8080/proxy?b64url=%1")
+                    .arg(QString(directUrl.toUtf8().toBase64()));
+            details["video_url"] = proxyUrl;
         } else {
-            emit requestFailed(requestType, "JSON parse error");
+            details["video_url"] = ""; // Если ссылки нет, отдаем пустоту
+        }
+
+        emit videoInfoReady(details);
+    }
+    else if (requestType == "Shorts") {
+        QVariantList outShorts;
+        QList<QVariantMap> endpoints = enumerateObjectsWithKey(parsedJson, "reelWatchEndpoint");
+        foreach (QVariantMap endpoint, endpoints) {
+            QVariantMap item;
+            item["video_id"] = endpoint.value("videoId").toString();
+            if (item["video_id"].toString().isEmpty()) continue;
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/hqdefault.jpg";
+            outShorts.append(item);
+        }
+        emit shortsReady(outShorts, "");
+    }
+    else if (requestType == "Subscriptions") {
+        QVariantList subsList;
+        QList<QVariantMap> tiles = enumerateObjectsWithKey(parsedJson, "tileRenderer");
+        foreach (const QVariantMap &tile, tiles) {
+            if (tile.value("contentType").toString() == "TILE_CONTENT_TYPE_CHANNEL") {
+                QVariantMap sub;
+                sub["channel_id"] = tile.value("contentId").toString();
+                sub["title"] = extractTextFromField(tile.value("metadata").toMap().value("tileMetadataRenderer").toMap(), "title");
+                sub["local_thumbnail"] = extractThumbnailUrl(tile.value("header").toMap().value("tileHeaderRenderer").toMap(), "thumbnail");
+                sub["profile_url"] = sub["channel_id"];
+                subsList.append(sub);
+            }
+        }
+        emit subscriptionsReady(subsList);
+    }
+    else if (requestType == "AccountInfo") {
+        QList<QVariantMap> accountItems = enumerateObjectsWithKey(parsedJson, "accountItem");
+        if (!accountItems.isEmpty()) {
+            QVariantMap account = accountItems.first();
+            QVariantMap info;
+
+            QVariantMap google_account;
+            google_account["given_name"] = extractTextFromField(account, "accountName");
+            google_account["picture"] = extractThumbnailUrl(account, "accountPhoto");
+            info["google_account"] = google_account;
+
+            QVariantMap youtube_channel;
+            youtube_channel["custom_url"] = extractTextFromField(account, "channelHandle");
+            info["youtube_channel"] = youtube_channel;
+
+            emit accountInfoReady(info);
         }
     }
     else if (requestType == "SearchSuggestions") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            QVariantList resultList;
-            if (map.contains("suggestions")) {
-                QVariantList rawSuggestions = map["suggestions"].toList();
-                for (int i = 0; i < rawSuggestions.size(); ++i) {
-                    QVariantList subList = rawSuggestions[i].toList();
-                    if (!subList.isEmpty()) {
-                        resultList.append(subList[0].toString());
-                    }
+        QString data = QString::fromUtf8(responseData);
+        if (data.startsWith("window.google.ac.h(")) {
+            data = data.mid(19);
+            if (data.endsWith(")")) data.chop(1);
+        }
+        bool ok;
+        QVariant parsed = QtJson::parse(data, ok);
+        QVariantList suggestions;
+        if (ok && parsed.type() == QVariant::List) {
+            QVariantList arr = parsed.toList();
+            if (arr.size() > 1) {
+                QVariantList suggArr = arr[1].toList();
+                foreach (const QVariant &item, suggArr) {
+                    QVariantList suggItem = item.toList();
+                    if (!suggItem.isEmpty()) suggestions.append(suggItem[0].toString());
                 }
             }
-            emit searchSuggestionsReady(resultList);
         }
+        emit searchSuggestionsReady(suggestions);
     }
-    else if (requestType == "VideoInfo" || requestType == "ChannelVideos") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
+    else if (requestType == "OAuthDeviceCode") {
+        m_deviceCode = parsedMap.value("device_code").toString();
+        m_userCode = parsedMap.value("user_code").toString();
 
-            QVariantMap map = parsedJson.toMap();
-
-            if (map.contains("videos")) {
-                QVariantList vList = map["videos"].toList();
-                sanitizeVideoList(vList); // <--- ДОБАВИТЬ ЗДЕСЬ
-                map["videos"] = vList;
-            }
-
-            // --- УНИВЕРСАЛЬНЫЙ ДЕКОДЕР ---
-            if (map.contains("channel_thumbnail")) {
-                QString url = map.value("channel_thumbnail").toString();
-
-                // Просто заменяем %25 на % на случай, если сервер прислал двойную кодировку.
-                // Это превратит "https%253A" в "https%3A", не ломая саму ссылку "http://..."
-                url = url;
-
-                map.insert("channel_thumbnail", url);
-            }
-            // -----------------------------
-
-            if (requestType == "VideoInfo") emit videoInfoReady(map);
-            else emit channelVideosReady(map);
-        } else {
-            emit requestFailed(requestType, "JSON parse error");
-        }
+        // Шаг 2: Получаем QR-код для мобильного ТВ
+        QVariantMap rapidQrParams;
+        rapidQrParams["qrPresetStyle"] = "HANDOFF_QR_LIMITED_PRESET_STYLE_MODERN_BIG_DOTS_INVERT_WITH_YT_LOGO";
+        rapidQrParams["userCode"] = m_userCode;
+        rapidQrParams["rapidQrFeature"] = "RAPID_QR_FEATURE_DEFAULT";
+        QVariantMap handoff;
+        handoff["rapidQrParams"] = rapidQrParams;
+        QVariantMap payload;
+        payload["context"] = buildContext("TVHTML5", "7.20251217.19.00");
+        payload["handoffQrParams"] = handoff;
+        postInnertube("mdx/handoff", payload, "OAuthQrCode");
     }
-    else if (requestType == "CheckRating") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            emit ratingChecked(map.value("rating", "none").toString());
-        }
-    }
-    else if (requestType == "CheckSubscription") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            emit subscriptionChecked(map.value("subscribed", false).toBool());
-        }
-    }
-    else if (requestType == "RateVideo" || requestType == "SubscribeChannel" || requestType == "UnsubscribeChannel") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            emit actionCompleted(requestType, map.value("status").toString(), map.value("message").toString());
-        }
-    }
-    else if (requestType == "Subscriptions") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            if (map.value("status").toString() == "success") {
-                emit subscriptionsReady(map.value("subscriptions").toList());
-            } else {
-                emit requestFailed(requestType, "Status not success");
+    else if (requestType == "OAuthQrCode") {
+        QString qrUrl = parsedMap.value("rapidQrRenderer").toMap().value("qrCodeRenderer").toMap().value("qrCodeImage").toMap().value("thumbnails").toList().first().toMap().value("url").toString();
+        if (!qrUrl.isEmpty()) {
+            int marker = qrUrl.indexOf("base64,");
+            if (marker >= 0) {
+                QString b64 = qrUrl.mid(marker + 7);
+                QImage img;
+                img.loadFromData(QByteArray::fromBase64(b64.toUtf8()));
+                if (m_qrProvider) {
+                    m_qrProvider->setImage(img);
+                    emit authImageReady();
+                }
             }
         }
     }
-    else if (requestType == "AccountInfo") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            emit accountInfoReady(parsedJson.toMap());
-        }
-    } else if (requestType == "DownloadIcon") {
-        QByteArray imgData = reply->readAll();
-        QImage img;
-        img.loadFromData(imgData);
-        if (!img.isNull() && m_qrProvider) {
-            m_qrProvider->setImage(img);
-            emit authImageReady(); // Используем тот же сигнал для обновления
+    else if (requestType == "OAuthTokenPoll") {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString refreshToken = parsedMap.value("refresh_token").toString();
+            QString accessToken = parsedMap.value("access_token").toString();
+            if (!refreshToken.isEmpty()) {
+                m_deviceCode.clear();
+                m_userCode.clear();
+                emit authContentReady(refreshToken, "Token");
+            } else if (!accessToken.isEmpty()) {
+                m_deviceCode.clear();
+                m_userCode.clear();
+                emit authContentReady(accessToken, "Token");
+            }
         }
     }
-    else if (requestType == "Shorts") {
-        if (parseSuccess && parsedJson.type() == QVariant::Map) {
-            QVariantMap map = parsedJson.toMap();
-            if (map.contains("shorts")) {
-                QVariantList shortsList = map["shorts"].toList();
-                QString seqToken = map.value("sequence_token").toString();
-
-                sanitizeVideoList(shortsList);
-                emit shortsReady(shortsList, seqToken);
-            }
-        } else {
-            emit requestFailed(requestType, "JSON parse error");
-        }
-    }
-
-    else if (requestType == "AuthContent") {
-        QString content = extractContentFromYtreq(responseString);
-
-        if (content.startsWith("Token:", Qt::CaseInsensitive)) {
-            emit authContentReady(content.mid(6).trimmed(), "Token");
-        }
-        // Если длина больше 100 символов, то это точно наш Base64 QR-код (токены короче)
-        else if (content.length() > 100) {
-            QString base64Data = content;
-
-            // Если сервер прислал префикс, убираем его
-            int b64Index = base64Data.indexOf("base64,");
-            if (b64Index != -1) {
-                base64Data = base64Data.mid(b64Index + 7);
-            }
-
-            // ЖЕСТКАЯ ОЧИСТКА: удаляем все пробелы и переносы строк,
-            // которые могут сломать декодер Base64
-            base64Data = base64Data.remove('\n').remove('\r').remove(' ');
-
-            // Декодируем и загружаем
-            QByteArray imgData = QByteArray::fromBase64(base64Data.toAscii());
-            QImage img;
-            bool success = img.loadFromData(imgData);
-
-            qDebug() << "[Auth] Размер Base64:" << base64Data.length();
-            qDebug() << "[Auth] Декодирование картинки успешно:" << success;
-
-            if (success && m_qrProvider) {
-                // ВАЖНО: Если вы меняли провайдер на поддержку ID (как мы делали для иконок),
-                // то вызов должен быть: m_qrProvider->setImage("auth", img);
-                // Если оставили старый QrImageProvider, то просто:
-                m_qrProvider->setImage(img);
-
-                emit authImageReady();
-            } else {
-                qDebug() << "[Auth] ОШИБКА: QImage не смог прочитать данные!";
-            }
-        } else {
-            emit authContentReady(content, "Unknown");
-        }
-    } else if (requestType == "History") {
-        if (parseSuccess && parsedJson.type() == QVariant::List) {
-            QVariantList list = parsedJson.toList();
-            sanitizeVideoList(list); // Применяем ту же очистку ссылок
-            emit historyReady(list);
-        } else {
-            emit requestFailed(requestType, "JSON parse error");
-        }
-    } else if (requestType == "ServerList") {
+    else if (requestType == "ServerList") {
         QStringList servers;
         QString content = QString::fromUtf8(responseData);
-        QStringList lines = content.split('\n', QString::SkipEmptyParts);
-        foreach (const QString &line, lines) {
+        foreach (const QString &line, content.split('\n', QString::SkipEmptyParts)) {
             QString trimmed = line.trimmed();
-            if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
-                servers.append(trimmed);
-            }
+            if (!trimmed.isEmpty() && !trimmed.startsWith("#")) servers.append(trimmed);
         }
         emit serverListReady(servers);
     }
@@ -472,16 +526,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-QString ApiManager::getLocaleParams(bool firstParam)
+void ApiManager::setProxyPort(quint16 port)
 {
-    QSettings settings("SymTubeApp", "Settings");
-    // Если языка нет, по умолчанию отдаем английский
-    QString lang = settings.value("Language", "en_US").toString();
-    QStringList parts = lang.split("_");
-    QString prefix = firstParam ? "?" : "&";
-
-    if (parts.size() >= 2) {
-        return prefix + "hl=" + parts[0] + "&gl=" + parts[1];
-    }
-    return prefix + "hl=en&gl=US";
+    m_proxyPort = port;
 }

@@ -70,7 +70,8 @@ HEADERS += \
     roundedimageprovider.h \
     volumekeysobserver.h \
     qsymbianapplication.h \
-    translationmanager.h
+    translationmanager.h \
+    localhttpproxy.h
 
 SOURCES += \
     main.cpp \
@@ -82,7 +83,8 @@ SOURCES += \
     roundedimageprovider.cpp \
     volumekeysobserver.cpp \
     qsymbianapplication.cpp \
-    translationmanager.cpp
+    translationmanager.cpp \
+    localhttpproxy.cpp
 
 TRANSLATIONS += \
     lang/SymTube_ru_RU.ts \

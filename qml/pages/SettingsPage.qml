@@ -21,7 +21,7 @@ Rectangle {
 
     function onNavigatedTo() {
         // Подгружаем текущий URL из C++ при открытии
-        apiCombo.text = Config.apiBaseUrl;
+        //apiCombo.text = Config.apiBaseUrl;
         langCombo.text = TranslationManager.currentLanguage;
         ApiManager.fetchServerList();
     }
@@ -154,7 +154,7 @@ Rectangle {
                         apiCombo.isOpen = false;
                         langCombo.isOpen = false;
                         // Отправляем новый URL в C++
-                        Config.apiBaseUrl = apiCombo.text;
+                        //Config.apiBaseUrl = apiCombo.text;
 
                         TranslationManager.setLanguage(langCombo.text);
                         
