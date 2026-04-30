@@ -91,7 +91,15 @@ Rectangle {
     Connections {
         target: ApiManager
         onVideoInfoReady: {
-            videoDetails = videoDetailsMap;
+            var temp = {}
+            if (videoDetails) {
+                for (var k in videoDetails) temp[k] = videoDetails[k];
+            }
+            for (var key in videoDetailsMap) {
+                temp[key] = videoDetailsMap[key];
+            }
+            videoDetails = temp;
+
             HistoryManager.addToHistory({
                                         "video_id": videoDetails.video_id,
                                         "title": videoDetails.title,
@@ -99,14 +107,24 @@ Rectangle {
                                         "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
         });
 
-            // Получаем прямую ссылку из ответа API
             videoPage.currentVideoUrl = videoDetails.video_url;
-            console.log(videoPage.currentVideoUrl)
 
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
             recreateTimer.start();
         }
+
+        onVideoExtraInfoReady: {
+            var temp = {}
+            if (videoDetails) {
+                for (var k in videoDetails) temp[k] = videoDetails[k];
+            }
+            for (var key in extraDetails) {
+                temp[key] = extraDetails[key];
+            }
+            videoDetails = temp;
+        }
+
         onRelatedVideosReady: {
             if (!videoPage.visible) return;
             relatedVideos = videos;
@@ -537,7 +555,7 @@ Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        SafeImage { anchors.fill: parent; source: videoDetails && videoDetails["channel_thumbnail"] ? "image://rounded/" + encodeURIComponent(videoDetails["channel_thumbnail"]) : "../Assets/placeholder.png"; fillMode: Image.PreserveAspectCrop }
+                        SafeImage { anchors.fill: parent; source: videoDetails && videoDetails["channel_thumbnail"] ? "image://rounded/" + encodeURIComponent(videoDetails["channel_thumbnail"].replace("https://", "http://")) : "../Assets/placeholder.png"; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
@@ -546,7 +564,8 @@ Rectangle {
                             text: videoDetails ? (videoDetails["author"] || qsTr("Неизвестно")) : ""; color: "white"; font.pixelSize: 16; font.bold: true
                             font.family: "Nokia Pure Text"; width: parent.width; elide: Text.ElideRight
                         }
-                        Text { text: videoDetails ? (videoDetails["subscriberCount"] || "") + qsTr(" подписчиков") : ""; color: "gray"; font.pixelSize: 12 }
+                        // Изменили логику отрисовки "подписчиков", чтобы не было дубляжей слов. API теперь возвращает готовую строку с текстом.
+                        Text { text: videoDetails && videoDetails["subscriberCount"] ? videoDetails["subscriberCount"] : ""; color: "gray"; font.pixelSize: 12 }
                     }
                 }
             }

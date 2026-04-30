@@ -59,6 +59,7 @@ signals:
     void authImageReady();
     void serverListReady(const QStringList &servers);
     void requestFailed(QString endpoint, QString errorMessage);
+    void videoExtraInfoReady(QVariantMap extraDetails);
 
 private slots:
     void onReplyFinished(QNetworkReply *reply);
