@@ -15,11 +15,11 @@ LocalHttpProxy::LocalHttpProxy(QObject *parent) : QObject(parent)
     m_networkManager = new QNetworkAccessManager(this);
 
     // 1. НАСТРАИВАЕМ ВНЕШНИЙ ПРОКСИ (Чтобы прокси на телефоне мог обойти блокировку)
-    QNetworkProxy extProxy;
+   /* QNetworkProxy extProxy;
     extProxy.setType(QNetworkProxy::HttpProxy);
     extProxy.setHostName("192.168.1.183"); // IP вашего ПК
-    extProxy.setPort(8890);                // Порт вашего прокси
-    m_networkManager->setProxy(extProxy);
+    extProxy.setPort(8890);                // Порт вашего прокси*/
+    //m_networkManager->setProxy(extProxy);
 }
 
 bool LocalHttpProxy::start()

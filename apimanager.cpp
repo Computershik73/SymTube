@@ -17,11 +17,6 @@ ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *par
 {
     m_networkManager = new QNetworkAccessManager(this);
 
-    QNetworkProxy proxy;
-    proxy.setType(QNetworkProxy::HttpProxy);
-    proxy.setHostName("192.168.1.183");
-    proxy.setPort(8890);
-    m_networkManager->setProxy(proxy);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
 }
 
@@ -350,6 +345,34 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 item["video_id"] = endpoint.value("videoId").toString();
                 QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
                 item["title"] = extractTextFromField(meta, "title");
+
+                // Парсинг продолжительности (duration)
+                QVariantList overlays = renderer.value("header").toMap().value("tileHeaderRenderer").toMap().value("thumbnailOverlays").toList();
+                foreach (const QVariant &ov, overlays) {
+                    QVariantMap ovMap = ov.toMap();
+                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) {
+                        item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
+                    }
+                }
+
+                // Парсинг автора, просмотров и даты (author, views, published_at)
+                QVariantList lines = meta.value("lines").toList();
+                if (lines.size() > 0) {
+                    QVariantList items0 = lines[0].toMap().value("lineRenderer").toMap().value("items").toList();
+                    if (items0.size() > 0) {
+                        item["author"] = extractTextFromField(items0[0].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
+                }
+                if (lines.size() > 1) {
+                    QVariantList items1 = lines[1].toMap().value("lineRenderer").toMap().value("items").toList();
+                    int count = items1.size();
+                    if (count >= 1) {
+                        item["published_at"] = extractTextFromField(items1[count - 1].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
+                    if (count >= 3) {
+                        item["views"] = extractTextFromField(items1[count - 3].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
+                }
             } else {
                 item["video_id"] = renderer.value("videoId").toString();
                 item["title"] = extractTextFromField(renderer, "title");
@@ -364,11 +387,38 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             outVideos.append(item);
         }
 
-        if (requestType == "HomeVideos") emit homeVideosReady(outVideos, "");
-        else if (requestType == "SearchVideos") emit searchResultsReady(outVideos);
-        else if (requestType == "RelatedVideos") emit relatedVideosReady(outVideos);
-        else if (requestType == "ChannelVideos") { QVariantMap m; m["videos"] = outVideos; emit channelVideosReady(m); }
-        else if (requestType == "History") emit historyReady(outVideos);
+        // --- ДОБАВЛЕНО: Защита от пустых массивов (Feed Nudge) ---
+        if (requestType == "HomeVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("HomeVideos", "Empty feed (Nudge)");
+            } else {
+                emit homeVideosReady(outVideos, "");
+            }
+        }
+        else if (requestType == "SearchVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("SearchVideos", "No results");
+            } else {
+                emit searchResultsReady(outVideos);
+            }
+        }
+        else if (requestType == "RelatedVideos") {
+            // Для рекомендаций пустой массив допустим
+            emit relatedVideosReady(outVideos);
+        }
+        else if (requestType == "ChannelVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("ChannelVideos", "No videos");
+            } else {
+                QVariantMap m;
+                m["videos"] = outVideos;
+                emit channelVideosReady(m);
+            }
+        }
+        else if (requestType == "History") {
+            // Пустая история тоже допустима
+            emit historyReady(outVideos);
+        }
     }
     else if (requestType == "VideoInfo") {
         QVariantMap details;
@@ -389,15 +439,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 break;
             }
         }
-        if (!directUrl.isEmpty()) {
-            // ВАЖНО: Используем Base64 для передачи ссылки в прокси.
-            // Это ГАРАНТИРУЕТ, что QUrl не закодирует проценты дважды.
-            QString proxyUrl = QString("http://127.0.0.1:8080/proxy?b64url=%1")
-                    .arg(QString(directUrl.toUtf8().toBase64()));
-            details["video_url"] = proxyUrl;
-        } else {
-            details["video_url"] = ""; // Если ссылки нет, отдаем пустоту
-        }
+        details["video_url"] = directUrl;
 
         emit videoInfoReady(details);
     }
@@ -471,7 +513,6 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         m_deviceCode = parsedMap.value("device_code").toString();
         m_userCode = parsedMap.value("user_code").toString();
 
-        // Шаг 2: Получаем QR-код для мобильного ТВ
         QVariantMap rapidQrParams;
         rapidQrParams["qrPresetStyle"] = "HANDOFF_QR_LIMITED_PRESET_STYLE_MODERN_BIG_DOTS_INVERT_WITH_YT_LOGO";
         rapidQrParams["userCode"] = m_userCode;

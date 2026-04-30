@@ -54,19 +54,16 @@ int main(int argc, char *argv[])
         QNetworkSession *networkSession = new QNetworkSession(config, &app); // Привязываем к жизни приложения
         networkSession->open();
     }
-
+    QNetworkProxy proxy;
+        proxy.setType(QNetworkProxy::HttpProxy);
+        proxy.setHostName("192.168.1.183");
+        proxy.setPort(8890);
+        QNetworkProxy::setApplicationProxy(proxy);
 
     // 2. Инициализация менеджеров
     Config config;
     // Создаем провайдер ПЕРЕД ApiManager
     QrImageProvider *qrProvider = new QrImageProvider();
-
-    LocalHttpProxy localProxy;
-    if (!localProxy.start()) {
-        qCritical() << "Failed to start local proxy server!";
-        return -1;
-    }
-
 
     // Передаем указатель на провайдер в конструктор
     ApiManager apiManager(&config, qrProvider);

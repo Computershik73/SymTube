@@ -100,7 +100,7 @@ Rectangle {
         });
 
             // Получаем прямую ссылку из ответа API
-            videoPage.currentVideoUrl = videoDetails.video_url.replace("https://", "http://");
+            videoPage.currentVideoUrl = videoDetails.video_url;
             console.log(videoPage.currentVideoUrl)
 
             videoPage.recoveryAttempts = 0;
@@ -115,8 +115,11 @@ Rectangle {
         }
     }
 
-    function changeQuality(newQuality) {
-        if (!videoDetails) return;
+
+
+    function changeQuality(newUrl) {
+        if (!videoDetails || currentVideoUrl === newUrl) return;
+
         var pos = 0;
         if (videoLoader.item) {
             pos = videoLoader.item.position;
@@ -124,7 +127,8 @@ Rectangle {
         }
         videoPage.recoveryPosition = pos;
         videoPage.recoveryAttempts = 0;
-        //videoPage.currentVideoUrl = Config.getVideoUrl(videoDetails.video_id, newQuality).replace("https://", "http://");
+        videoPage.currentVideoUrl = newUrl;
+
         videoLoader.sourceComponent = undefined;
         recreateTimer.start();
     }
@@ -533,7 +537,7 @@ Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
                     Rectangle {
                         width: 40; height: 40; radius: 20; color: "#333"; clip: true
-                        SafeImage { anchors.fill: parent; source: videoDetails ? ("http://yt.swlbst.ru/channel_icon/"+videoDetails["video_id"]) : ""; fillMode: Image.PreserveAspectCrop }
+                        SafeImage { anchors.fill: parent; source: videoDetails && videoDetails["channel_thumbnail"] ? "image://rounded/" + encodeURIComponent(videoDetails["channel_thumbnail"]) : "../Assets/placeholder.png"; fillMode: Image.PreserveAspectCrop }
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
@@ -611,7 +615,7 @@ Rectangle {
                         contentWidth: width; contentHeight: descriptionText.height; clip: true
                         Text {
                             id: descriptionText; width: parent.width
-                            text: videoDetails ? (videoDetails["description"] || "") : ""
+                            text: videoDetails ? (videoDetails["description"] || qsTr("Нет описания")) : ""
                             color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
                         }
                     }
@@ -651,26 +655,28 @@ Rectangle {
 
                     ListView {
                         width: parent.width; height: parent.height - 40
-                        model:["144", "240", "360", "480", "720"]
+                        model: videoDetails ? videoDetails["qualities"] : []
                         clip: true
+
                         delegate: Rectangle {
                             width: parent.width; height: 40
-                            color: Config.videoQuality === modelData ? "#333333" : "transparent"
+                            color: videoPage.currentVideoUrl === modelData.url ? "#333333" : "transparent"
                             radius: 5
+
                             Text {
-                                text: modelData + "p"
-                                color: Config.videoQuality === modelData ? "#007ACC" : "white"
-                                font.pixelSize: 16; font.bold: Config.videoQuality === modelData
+                                text: modelData.label + (modelData.hasAudio ? "" : " (без звука)")
+                                color: videoPage.currentVideoUrl === modelData.url ? "#007ACC" : "white"
+                                font.pixelSize: 16
+                                font.bold: videoPage.currentVideoUrl === modelData.url
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left; anchors.leftMargin: 10
-                                font.family: "Nokia Pure Text"
                             }
+
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
-                                    Config.videoQuality = modelData;
                                     qualitySheet.state = "hidden";
-                                    videoPage.changeQuality(modelData);
+                                    videoPage.changeQuality(modelData.url);
                                     if (videoPage.isPlaying) controlsTimer.restart();
                                 }
                             }
