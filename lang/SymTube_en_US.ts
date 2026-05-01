@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.0" language="en_US">
 <defaultcodec>UTF-8</defaultcodec>
@@ -57,6 +57,18 @@
 </context>
 <context>
     <name>HomePage</name>
+    <message>
+        <source>Попробуйте найти что-нибудь</source>
+        <translation>Try to find something</translation>
+    </message>
+    <message>
+        <source>Войдите в аккаунт, чтобы видеть рекомендации</source>
+        <translation>Log in to your account to see recommendations</translation>
+    </message>
+    <message>
+        <source>Войти</source>
+        <translation>Log in</translation>
+    </message>
     <message>
         <source>Загрузка...</source>
         <translation>Loading...</translation>
@@ -208,6 +220,17 @@
     <message>
         <source>Описание</source>
         <translation>Description</translation>
+    </message>
+    <message>
+        <source>Качество видео</source>
+        <translation>Video quality</translation>
+    </message>
+</context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Loading...</translation>
     </message>
 </context>
 </TS>

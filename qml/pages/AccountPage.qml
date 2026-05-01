@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 
 Rectangle {
     id: accountPage
@@ -42,7 +42,7 @@ Rectangle {
 
     Timer {
         id: pollingTimer
-        interval: 3000 // Для проверки лучше ставить 3 сек
+        interval: 5000 // Для проверки лучше ставить 3 сек
         repeat: true
         running: !isAuthenticated
         onTriggered: {
@@ -56,6 +56,8 @@ Rectangle {
         if (isAuthenticated) {
             loadAccountInfo();
         } else {
+            qrImage.visible = false;
+            loadingText.visible = true;
             qrVersion++;
             pollingTimer.start();
             ApiManager.checkAuthContent();
@@ -153,28 +155,12 @@ Rectangle {
                         Image {
                             anchors.fill: parent
                             source: {
-                                    if (!accountData || !accountData.google_account || !accountData.google_account.picture) return "";
+                                if (!accountData || !accountData.google_account || !accountData.google_account.picture) return "";
 
-                                    var originalUrl = accountData.google_account.picture;
-                                    var parts = originalUrl.split("channel_icon/");
-
-                                    if (parts.length < 2) return "";
-
-                                    // Базовая часть (меняем https на http для обхода ошибки SSL на Symbian)
-                                    var baseUrl = parts[0].replace("https://", "http://") + "channel_icon/";
-
-                                    // 1. Декодируем вторую часть ссылки (дважды, чтобы гарантированно снять все наслоения %25)
-                                    var cleanTail = decodeURIComponent(decodeURIComponent(parts[1]));
-
-                                    // 2. Энкодим её один раз
-                                    var encodedTail = encodeURIComponent(cleanTail);
-
-                                    // 3. Полученный результат передаем далее как строку
-                                    var fullString = baseUrl + encodedTail;
-
-                                    // 4. Энкодим ещё раз и передаем в провайдер
-                                    return "image://rounded/" + encodeURIComponent(fullString);
-                                }
+                                var originalUrl = accountData.google_account.picture;
+                                // Просто энкодим URL и отдаем провайдеру (меняем https на http для стабильности на Symbian)
+                                return "image://rounded/" + encodeURIComponent(originalUrl);
+                            }
                             fillMode: Image.PreserveAspectCrop
                         }
                     }

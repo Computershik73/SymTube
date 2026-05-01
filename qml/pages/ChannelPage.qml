@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import "../components"
 
 Rectangle {
@@ -95,15 +95,24 @@ Rectangle {
                     spacing: 16
 
                     // Аватар
+
+
                     Rectangle {
                         width: 80; height: 80; radius: 40; color: "#333"; clip: true
                         Image {
                             anchors.fill: parent
-                            source: channelData && channelData.channel_info ? (channelData.channel_info["thumbnail"] || "") : ""
+                            source: {
+                                var thumb = channelData && channelData.channel_info ? (channelData.channel_info.thumbnail || "") : "";
+                                if (thumb !== "") {
+                                    return "image://rounded/" + encodeURIComponent(thumb.replace("https://", "http://"));
+                                }
+                                return "";
+                            }
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                         }
                     }
+
 
                     // Текст
                     Column {
@@ -121,7 +130,7 @@ Rectangle {
                             font.family: "Nokia Pure Text"
                         }
                         Text {
-                            text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0") + qsTr(" подписчиков")) : ""
+                            text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0")) : ""
                             color: "gray"
                             font.pixelSize: 14
                             font.family: "Nokia Pure Text"

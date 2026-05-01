@@ -17,7 +17,7 @@ symbian:TARGET.UID3 = 0xE748633B
 
 TARGET.STACKSIZE = 0x8000
 TARGET.EPOCHEAPSIZE = 0x20000 0x4000000  # Увеличение хипа для парсинга JSON и картинок
-PKG_VERSION = "0,2,0"
+PKG_VERSION = "0,3,0"
 
 lang_files.sources = lang/*.qm
 lang_files.path = lang

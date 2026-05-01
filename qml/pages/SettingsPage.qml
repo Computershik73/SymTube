@@ -10,11 +10,9 @@ Rectangle {
         target: ApiManager
         onServerListReady: {
             if (servers && servers.length > 0) {
-                // Если список успешно загружен, обновляем модель комбобокса
-                apiCombo.model = servers;
+
             } else {
-                // Если загрузка не удалась, показываем текст с подсказкой
-                qtlsText.visible = true;
+
             }
         }
     }
@@ -30,7 +28,7 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            apiCombo.isOpen = false;
+
             settingsPage.focus = true;
         }
     }
@@ -56,57 +54,6 @@ Rectangle {
                 font.pixelSize: 28
                 font.bold: true
             }
-
-            // Блок настройки API URL
-            Column {
-                spacing: 8
-                width: parent.width
-                // Z-индекс здесь критичен, чтобы выпадающий список 
-                // комбобокса вылез поверх кнопки "Сохранить"
-                z: 10 
-
-                Text {
-                    text: qsTr("Основной адрес API")
-                    color: "#CCFFFFFF"
-                    font.pixelSize: 16
-                }
-
-                CustomComboBox {
-                    id: apiCombo
-                    width: parent.width
-                    // Жестко зашитый список серверов
-                    model:[
-                        "http://yt.swlbst.ru/"
-                    ]
-                }
-
-                Row {
-                    id: qtlsText
-                    spacing: 4
-                    visible: false // Показываем только если список не загрузился
-
-                    Text {
-                        text: qsTr("Не грузится список серверов? Установите патч QTLS по ")
-                        color: "gray"
-                        font.pixelSize: 12
-                    }
-                    Text {
-                        text: qsTr("ссылке")
-                        color: "#0099FF" // Цвет ссылки
-                        font.underline: true
-                        font.pixelSize: 12
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                Qt.openUrlExternally("http://nnproject.cc/qtls/")
-                            }
-                        }
-                    }
-                }
-
-            }
-
 
             Column {
                 spacing: 8
@@ -151,7 +98,7 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        apiCombo.isOpen = false;
+                        //apiCombo.isOpen = false;
                         langCombo.isOpen = false;
                         // Отправляем новый URL в C++
                         //Config.apiBaseUrl = apiCombo.text;
@@ -214,8 +161,9 @@ Rectangle {
                 // Модель данных для ссылок
                 Repeater {
                     model: [
+                        { label: "Разработчик - Computershik", url: "https://4pda.to/forum/index.php?showuser=4458524" },
                         { label: "Исходный код клиента (GitHub)", url: "https://github.com/Computershik73/SymTube" },
-                        { label: "API Сервер (Rust)", url: "https://github.com/ZendoMusic/yt-api-legacy" },
+                        { label: "Подсказал с InnerTube API - Zemonkamin", url: "https://github.com/ZendoMusic/yt-api-legacy" },
                         { label: "Группа в Telegram", url: "https://t.me/cmplog" }
                     ]
 

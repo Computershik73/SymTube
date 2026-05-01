@@ -192,6 +192,7 @@ void ApiManager::checkAuthContent() {
         QNetworkReply *reply = m_networkManager->post(request, data.toUtf8());
         reply->setProperty("RequestType", "OAuthDeviceCode");
     } else {
+        emit authImageReady();
         // Шаг 3: Опрашиваем статус (Poll)
         QNetworkRequest request(QUrl("https://www.youtube.com/o/oauth2/token"));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -205,10 +206,23 @@ void ApiManager::checkAuthContent() {
 // === СУЩЕСТВУЮЩИЕ ФУНКЦИИ ===
 void ApiManager::getHomeVideos(const QString &pageToken) {
     QVariantMap payload;
+
+    if (m_config->userToken().isEmpty()) {
+        // Пользователь не авторизован - возвращаем пустой список,
+        // QML интерфейс сам покажет заглушку-предложение поиска
+        emit homeVideosReady(QVariantList(), "");
+        return;
+    }
+
+
     payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+
+
     payload["browseId"] = "FEwhat_to_watch";
+
     if (!pageToken.isEmpty()) payload["continuation"] = pageToken;
-    postInnertube("browse", payload, "HomeVideos", !m_config->userToken().isEmpty());
+
+    postInnertube("browse", payload, "HomeVideos", true);
 }
 
 void ApiManager::searchVideos(const QString &query) {
@@ -255,10 +269,14 @@ void ApiManager::getChannelVideos(const QString &author) {
 void ApiManager::getShorts(const QString &sequenceToken) {
     QVariantMap payload;
     payload["context"] = buildContext("WEB", "2.20250101");
+
     if (!sequenceToken.isEmpty()) {
         payload["sequenceParams"] = sequenceToken;
         postInnertube("reel/reel_watch_sequence", payload, "Shorts");
     } else {
+        payload["inputType"] = "REEL_WATCH_INPUT_TYPE_SEEDLESS";
+        payload["params"] = "CA8%3D";
+        payload["disablePlayerResponse"] = true;
         postInnertube("reel/reel_item_watch", payload, "Shorts");
     }
 }
@@ -330,156 +348,249 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QVariantMap parsedMap = parsedJson.toMap();
 
     if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos" || requestType == "ChannelVideos" || requestType == "History") {
-            QVariantList outVideos;
+        QVariantList outVideos;
+        QStringList seenIds; // Для защиты от дубликатов в рамках одного ответа
 
-            QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
-            renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
-            renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
-            renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
-            renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "videoWithContextRenderer"));
 
-            foreach (QVariantMap renderer, renderers) {
-                QVariantMap item;
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
 
-                // 1. Формат lockupViewModel (Новые карточки рекомендаций из WEB-клиента)
-                if (renderer.contains("contentImage") && renderer.contains("metadata") && renderer.value("metadata").toMap().contains("lockupMetadataViewModel")) {
-                    item["video_id"] = renderer.value("contentId").toString();
+            // 1. Формат lockupViewModel (Новые карточки рекомендаций из WEB-клиента)
+            if (renderer.contains("contentImage") && renderer.contains("metadata") && renderer.value("metadata").toMap().contains("lockupMetadataViewModel")) {
+                item["video_id"] = renderer.value("contentId").toString();
 
-                    QVariantMap meta = renderer.value("metadata").toMap().value("lockupMetadataViewModel").toMap();
-                    item["title"] = meta.value("title").toMap().value("content").toString();
+                QVariantMap meta = renderer.value("metadata").toMap().value("lockupMetadataViewModel").toMap();
+                item["title"] = meta.value("title").toMap().value("content").toString();
 
-                    QVariantList rows = meta.value("metadata").toMap().value("contentMetadataViewModel").toMap().value("metadataRows").toList();
-                    if (rows.size() > 0) {
-                        QVariantList parts = rows[0].toMap().value("metadataParts").toList();
-                        if (!parts.isEmpty()) {
-                            item["author"] = parts[0].toMap().value("text").toMap().value("content").toString();
-                        }
-                    }
-                    if (rows.size() > 1) {
-                        QVariantList parts = rows[1].toMap().value("metadataParts").toList();
-                        if (parts.size() > 0) {
-                            item["views"] = parts[0].toMap().value("text").toMap().value("content").toString();
-                        }
-                        if (parts.size() > 1) {
-                            item["published_at"] = parts[1].toMap().value("text").toMap().value("content").toString();
-                        }
-                    }
-
-                    QVariantList overlays = renderer.value("contentImage").toMap().value("thumbnailViewModel").toMap().value("overlays").toList();
-                    foreach (const QVariant &ov, overlays) {
-                        QVariantMap ovMap = ov.toMap();
-                        if (ovMap.contains("thumbnailBottomOverlayViewModel")) {
-                            QVariantList badges = ovMap.value("thumbnailBottomOverlayViewModel").toMap().value("badges").toList();
-                            if (!badges.isEmpty()) {
-                                item["duration"] = badges[0].toMap().value("thumbnailBadgeViewModel").toMap().value("text").toString();
-                            }
-                        }
+                QVariantList rows = meta.value("metadata").toMap().value("contentMetadataViewModel").toMap().value("metadataRows").toList();
+                if (rows.size() > 0) {
+                    QVariantList parts = rows[0].toMap().value("metadataParts").toList();
+                    if (!parts.isEmpty()) {
+                        item["author"] = parts[0].toMap().value("text").toMap().value("content").toString();
                     }
                 }
-                // 2. Формат tileRenderer (TVHTML5 - Главная страница, Поиск)
-                else if (renderer.contains("onSelectCommand")) {
-                    QVariantMap endpoint = renderer.value("onSelectCommand").toMap().value("watchEndpoint").toMap();
-                    item["video_id"] = endpoint.value("videoId").toString();
-                    QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
-                    item["title"] = extractTextFromField(meta, "title");
-
-                    QVariantList overlays = renderer.value("header").toMap().value("tileHeaderRenderer").toMap().value("thumbnailOverlays").toList();
-                    foreach (const QVariant &ov, overlays) {
-                        QVariantMap ovMap = ov.toMap();
-                        if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) {
-                            item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
-                        }
+                if (rows.size() > 1) {
+                    QVariantList parts = rows[1].toMap().value("metadataParts").toList();
+                    if (parts.size() > 0) {
+                        item["views"] = parts[0].toMap().value("text").toMap().value("content").toString();
                     }
-
-                    QVariantList lines = meta.value("lines").toList();
-                    if (lines.size() > 0) {
-                        QVariantList items0 = lines[0].toMap().value("lineRenderer").toMap().value("items").toList();
-                        if (items0.size() > 0) {
-                            item["author"] = extractTextFromField(items0[0].toMap().value("lineItemRenderer").toMap(), "text");
-                        }
-                    }
-                    if (lines.size() > 1) {
-                        QVariantList items1 = lines[1].toMap().value("lineRenderer").toMap().value("items").toList();
-                        int count = items1.size();
-                        if (count >= 1) {
-                            item["published_at"] = extractTextFromField(items1[count - 1].toMap().value("lineItemRenderer").toMap(), "text");
-                        }
-                        if (count >= 3) {
-                            item["views"] = extractTextFromField(items1[count - 3].toMap().value("lineItemRenderer").toMap(), "text");
-                        }
+                    if (parts.size() > 1) {
+                        item["published_at"] = parts[1].toMap().value("text").toMap().value("content").toString();
                     }
                 }
-                // 3. Старый формат (compactVideoRenderer / videoRenderer - старые API)
-                else {
-                    item["video_id"] = renderer.value("videoId").toString();
-                    item["title"] = extractTextFromField(renderer, "title");
-                    item["author"] = extractTextFromField(renderer, "shortBylineText");
-                    if (item["author"].toString().isEmpty()) item["author"] = extractTextFromField(renderer, "ownerText");
-                    item["duration"] = extractTextFromField(renderer, "lengthText");
-                    item["views"] = extractTextFromField(renderer, "viewCountText");
-                }
 
-                if (item["video_id"].toString().isEmpty()) continue;
-                item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/mqdefault.jpg";
-                outVideos.append(item);
-            }
-
-            if (requestType == "HomeVideos") {
-                if (outVideos.isEmpty()) {
-                    emit requestFailed("HomeVideos", "Empty feed (Nudge)");
-                } else {
-                    emit homeVideosReady(outVideos, "");
+                QVariantList overlays = renderer.value("contentImage").toMap().value("thumbnailViewModel").toMap().value("overlays").toList();
+                foreach (const QVariant &ov, overlays) {
+                    QVariantMap ovMap = ov.toMap();
+                    if (ovMap.contains("thumbnailBottomOverlayViewModel")) {
+                        QVariantList badges = ovMap.value("thumbnailBottomOverlayViewModel").toMap().value("badges").toList();
+                        if (!badges.isEmpty()) {
+                            item["duration"] = badges[0].toMap().value("thumbnailBadgeViewModel").toMap().value("text").toString();
+                        }
+                    }
                 }
             }
-            else if (requestType == "SearchVideos") {
-                if (outVideos.isEmpty()) {
-                    emit requestFailed("SearchVideos", "No results");
-                } else {
-                    emit searchResultsReady(outVideos);
-                }
-            }
-            else if (requestType == "RelatedVideos") {
-                QVariantMap extraDetails;
+            // 2. Формат tileRenderer (TVHTML5 - Главная страница, Поиск)
+            else if (renderer.contains("onSelectCommand")) {
+                QVariantMap endpoint = renderer.value("onSelectCommand").toMap().value("watchEndpoint").toMap();
+                item["video_id"] = endpoint.value("videoId").toString();
+                QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
+                item["title"] = extractTextFromField(meta, "title");
 
-                QList<QVariantMap> structuredDesc = enumerateObjectsWithKey(parsedJson, "expandableVideoDescriptionBodyRenderer");
-                if (!structuredDesc.isEmpty()) {
-                    extraDetails["description"] = structuredDesc.first().value("attributedDescriptionBodyText").toMap().value("content").toString();
-                }
-
-                QList<QVariantMap> videoOwner = enumerateObjectsWithKey(parsedJson, "videoOwnerRenderer");
-                if (!videoOwner.isEmpty()) {
-                    QVariantMap owner = videoOwner.first();
-                    extraDetails["channel_thumbnail"] = extractThumbnailUrl(owner, "thumbnail");
-                    extraDetails["subscriberCount"] = extractTextFromField(owner, "subscriberCountText");
-
-                    QVariantMap navEndpoint = owner.value("navigationEndpoint").toMap();
-                    if (navEndpoint.contains("browseEndpoint")) {
-                        extraDetails["channel_custom_url"] = navEndpoint.value("browseEndpoint").toMap().value("browseId").toString();
+                QVariantList overlays = renderer.value("header").toMap().value("tileHeaderRenderer").toMap().value("thumbnailOverlays").toList();
+                foreach (const QVariant &ov, overlays) {
+                    QVariantMap ovMap = ov.toMap();
+                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) {
+                        item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
                     }
                 }
 
-                QList<QVariantMap> likeButton = enumerateObjectsWithKey(parsedJson, "likeButtonViewModel");
-                if (!likeButton.isEmpty()) {
-                    QVariantMap toggle = likeButton.first().value("toggleButtonViewModel").toMap().value("toggleButtonViewModel").toMap().value("defaultButtonViewModel").toMap().value("buttonViewModel").toMap();
-                    extraDetails["likes"] = toggle.value("title").toString();
+                QVariantList lines = meta.value("lines").toList();
+                if (lines.size() > 0) {
+                    QVariantList items0 = lines[0].toMap().value("lineRenderer").toMap().value("items").toList();
+                    if (items0.size() > 0) {
+                        item["author"] = extractTextFromField(items0[0].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
                 }
+                if (lines.size() > 1) {
+                    QVariantList items1 = lines[1].toMap().value("lineRenderer").toMap().value("items").toList();
+                    int count = items1.size();
+                    if (count >= 1) {
+                        item["published_at"] = extractTextFromField(items1[count - 1].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
+                    if (count >= 3) {
+                        item["views"] = extractTextFromField(items1[count - 3].toMap().value("lineItemRenderer").toMap(), "text");
+                    }
+                }
+            }
+            // 3. Старый формат (compactVideoRenderer / videoRenderer - старые API)
+            else {
+                item["video_id"] = renderer.value("videoId").toString();
+                item["title"] = extractTextFromField(renderer, "title");
+                if (item["title"].toString().isEmpty()) {
+                    item["title"] = extractTextFromField(renderer, "headline"); // <--- Для Android
+                }
+                item["author"] = extractTextFromField(renderer, "shortBylineText");
+                if (item["author"].toString().isEmpty()) item["author"] = extractTextFromField(renderer, "ownerText");
+                item["duration"] = extractTextFromField(renderer, "lengthText");
+                item["views"] = extractTextFromField(renderer, "viewCountText");
+                item["published_at"] = extractTextFromField(renderer, "publishedTimeText");
+            }
 
-                emit videoExtraInfoReady(extraDetails);
-                emit relatedVideosReady(outVideos);
-            }
-            else if (requestType == "ChannelVideos") {
-                if (outVideos.isEmpty()) {
-                    emit requestFailed("ChannelVideos", "No videos");
-                } else {
-                    QVariantMap m;
-                    m["videos"] = outVideos;
-                    emit channelVideosReady(m);
-                }
-            }
-            else if (requestType == "History") {
-                emit historyReady(outVideos);
+            QString videoId = item["video_id"].toString();
+            // Пропускаем видео, если нет ID или мы его уже спарсили в этом ответе (дубликат)
+            if (videoId.isEmpty() || seenIds.contains(videoId)) continue;
+            seenIds.append(videoId);
+
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
+            outVideos.append(item);
+        }
+
+        // Извлекаем токен продолжения для пагинации (бесконечный скролл)
+        QString nextToken = "";
+        QList<QVariantMap> nextContData = enumerateObjectsWithKey(parsedJson, "nextContinuationData");
+        if (!nextContData.isEmpty()) {
+            nextToken = nextContData.first().value("continuation").toString();
+        } else {
+            QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
+            if (!contCmd.isEmpty()) {
+                nextToken = contCmd.first().value("token").toString();
             }
         }
+
+        if (requestType == "HomeVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("HomeVideos", "Empty feed (Nudge)");
+            } else {
+                emit homeVideosReady(outVideos, nextToken); // Передаем найденный токен
+            }
+        }
+        else if (requestType == "SearchVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("SearchVideos", "No results");
+            } else {
+                emit searchResultsReady(outVideos);
+            }
+        }
+        else if (requestType == "RelatedVideos") {
+            QVariantMap extraDetails;
+
+            QList<QVariantMap> structuredDesc = enumerateObjectsWithKey(parsedJson, "expandableVideoDescriptionBodyRenderer");
+            if (!structuredDesc.isEmpty()) {
+                extraDetails["description"] = structuredDesc.first().value("attributedDescriptionBodyText").toMap().value("content").toString();
+            }
+
+            QList<QVariantMap> videoOwner = enumerateObjectsWithKey(parsedJson, "videoOwnerRenderer");
+            if (!videoOwner.isEmpty()) {
+                QVariantMap owner = videoOwner.first();
+                extraDetails["channel_thumbnail"] = extractThumbnailUrl(owner, "thumbnail");
+                extraDetails["subscriberCount"] = extractTextFromField(owner, "subscriberCountText");
+
+                QVariantMap navEndpoint = owner.value("navigationEndpoint").toMap();
+                if (navEndpoint.contains("browseEndpoint")) {
+                    extraDetails["channel_custom_url"] = navEndpoint.value("browseEndpoint").toMap().value("browseId").toString();
+                }
+            }
+
+            QList<QVariantMap> likeButton = enumerateObjectsWithKey(parsedJson, "likeButtonViewModel");
+            if (!likeButton.isEmpty()) {
+                QVariantMap toggle = likeButton.first().value("toggleButtonViewModel").toMap().value("toggleButtonViewModel").toMap().value("defaultButtonViewModel").toMap().value("buttonViewModel").toMap();
+                extraDetails["likes"] = toggle.value("title").toString();
+            }
+
+            emit videoExtraInfoReady(extraDetails);
+            emit relatedVideosReady(outVideos);
+        }
+        else if (requestType == "ChannelVideos") {
+            if (outVideos.isEmpty()) {
+                emit requestFailed("ChannelVideos", "No videos");
+            } else {
+                QVariantMap m;
+                m["videos"] = outVideos;
+
+                QVariantMap channelInfo;
+
+                // 1. Аватарка, название, ID
+                QList<QVariantMap> channelMetadataList = enumerateObjectsWithKey(parsedJson, "channelMetadataRenderer");
+                if (!channelMetadataList.isEmpty()) {
+                    QVariantMap meta = channelMetadataList.first();
+                    channelInfo["title"] = meta.value("title").toString();
+                    channelInfo["description"] = meta.value("description").toString();
+                    channelInfo["thumbnail"] = extractThumbnailUrl(meta, "avatar");
+                    channelInfo["channel_id"] = meta.value("externalId").toString();
+                }
+
+                // 2. Шапка канала (Баннер)
+                QList<QVariantMap> imageBannerList = enumerateObjectsWithKey(parsedJson, "imageBannerViewModel");
+                if (!imageBannerList.isEmpty()) {
+                    QVariantMap img = imageBannerList.first().value("image").toMap();
+                    if (img.contains("sources")) {
+                        QVariantList sources = img.value("sources").toList();
+                        if (!sources.isEmpty()) channelInfo["banner"] = sources.first().toMap().value("url").toString();
+                    }
+                }
+
+                // 3. Количество подписчиков (в новом дизайне спрятано в pageHeaderViewModel)
+                QList<QVariantMap> pageHeaderList = enumerateObjectsWithKey(parsedJson, "pageHeaderViewModel");
+                if (!pageHeaderList.isEmpty()) {
+                    QVariantMap headerMeta = pageHeaderList.first().value("metadata").toMap().value("contentMetadataViewModel").toMap();
+                    QVariantList rows = headerMeta.value("metadataRows").toList();
+                    if (rows.size() > 1) {
+                        QVariantList parts = rows[1].toMap().value("metadataParts").toList();
+                        if (!parts.isEmpty()) {
+                            channelInfo["subscriber_count"] = parts[0].toMap().value("text").toMap().value("content").toString();
+                        }
+                    }
+                }
+
+                // 4. Фолбэк для старого дизайна каналов YouTube
+                if (channelInfo["thumbnail"].toString().isEmpty()) {
+                    QList<QVariantMap> c4List = enumerateObjectsWithKey(parsedJson, "c4TabbedHeaderRenderer");
+                    if (!c4List.isEmpty()) {
+                        channelInfo["thumbnail"] = extractThumbnailUrl(c4List.first(), "avatar");
+                        channelInfo["banner"] = extractThumbnailUrl(c4List.first(), "banner");
+                        channelInfo["title"] = extractTextFromField(c4List.first(), "title");
+                        channelInfo["subscriber_count"] = extractTextFromField(c4List.first(), "subscriberCountText");
+                    }
+                }
+
+                // Убираем SSL-ошибки из картинок на Symbian
+                QString thumb = channelInfo["thumbnail"].toString();
+                if (thumb.startsWith("//")) thumb = "http:" + thumb;
+                else thumb.replace("https://", "http://");
+                channelInfo["thumbnail"] = thumb;
+
+                QString banner = channelInfo["banner"].toString();
+                if (banner.startsWith("//")) banner = "http:" + banner;
+                else banner.replace("https://", "http://");
+                channelInfo["banner"] = banner;
+
+                m["channel_info"] = channelInfo;
+
+                QString channelName = channelInfo["title"].toString();
+                QVariantList updatedVideos;
+                foreach (const QVariant &v, outVideos) {
+                    QVariantMap vid = v.toMap();
+                    if (vid["author"].toString().isEmpty()) {
+                        vid["author"] = channelName; // Если YouTube не прислал автора, берем название канала
+                    }
+                    updatedVideos.append(vid);
+                }
+                m["videos"] = updatedVideos;
+
+                emit channelVideosReady(m);
+            }
+        }
+        else if (requestType == "History") {
+            emit historyReady(outVideos);
+        }
+    }
     else if (requestType == "VideoInfo") {
         QVariantMap details;
         QVariantMap root = parsedJson.toMap();
@@ -505,15 +616,93 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     }
     else if (requestType == "Shorts") {
         QVariantList outShorts;
-        QList<QVariantMap> endpoints = enumerateObjectsWithKey(parsedJson, "reelWatchEndpoint");
-        foreach (QVariantMap endpoint, endpoints) {
+        QString seqToken = "";
+
+        QVariantMap rootMap = parsedJson.toMap();
+
+        // Достаем токен продолжения (он может лежать в разных местах)
+        if (rootMap.contains("sequenceContinuation")) {
+            seqToken = rootMap.value("sequenceContinuation").toString();
+        } else {
+            QList<QVariantMap> contCmds = enumerateObjectsWithKey(parsedJson, "continuationCommand");
+            if (!contCmds.isEmpty()) {
+                seqToken = contCmds.first().value("token").toString();
+            }
+        }
+
+        // Данные могут быть в массиве "entries" (если это sequence)
+        // или в корне "replacementEndpoint" (если это SEEDLESS)
+        QVariantList entries;
+        if (rootMap.contains("entries")) {
+            entries = rootMap.value("entries").toList();
+        } else if (rootMap.contains("replacementEndpoint")) {
+            entries.append(rootMap);
+        }
+
+        foreach (const QVariant &e, entries) {
+            QVariantMap entry = e.toMap();
+            QVariantMap endpoint;
+
+            if (entry.contains("reelWatchEndpoint"))
+                endpoint = entry.value("reelWatchEndpoint").toMap();
+            else if (entry.contains("command") && entry.value("command").toMap().contains("reelWatchEndpoint"))
+                endpoint = entry.value("command").toMap().value("reelWatchEndpoint").toMap();
+            else if (entry.contains("replacementEndpoint") && entry.value("replacementEndpoint").toMap().contains("reelWatchEndpoint"))
+                endpoint = entry.value("replacementEndpoint").toMap().value("reelWatchEndpoint").toMap();
+
+            QString videoId = endpoint.value("videoId").toString();
+            if (videoId.isEmpty()) continue;
+
+            QString title = "Shorts";
+
+            QVariantMap prefetch;
+            if (endpoint.contains("unserializedPrefetchData")) {
+                prefetch = endpoint.value("unserializedPrefetchData").toMap();
+            } else if (entry.contains("unserializedPrefetchData")) {
+                prefetch = entry.value("unserializedPrefetchData").toMap();
+            } else if (entry.contains("command") && entry.value("command").toMap().contains("unserializedPrefetchData")) {
+                prefetch = entry.value("command").toMap().value("unserializedPrefetchData").toMap();
+            }
+
+            if (!prefetch.isEmpty() && prefetch.contains("playerResponse")) {
+                QVariant prVar = prefetch.value("playerResponse");
+                QVariantMap prMap;
+                if (prVar.type() == QVariant::String) {
+                    bool ok;
+                    prMap = QtJson::parse(prVar.toString(), ok).toMap();
+                } else {
+                    prMap = prVar.toMap();
+                }
+
+                if (prMap.contains("videoDetails")) {
+                    QVariantMap videoDetails = prMap.value("videoDetails").toMap();
+                    if (videoDetails.contains("title")) {
+                        title = videoDetails.value("title").toString();
+                    }
+                }
+            }
+
             QVariantMap item;
-            item["video_id"] = endpoint.value("videoId").toString();
-            if (item["video_id"].toString().isEmpty()) continue;
-            item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/hqdefault.jpg";
+            item["video_id"] = videoId;
+            item["title"] = title;
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg";
             outShorts.append(item);
         }
-        emit shortsReady(outShorts, "");
+
+        // Фолбек: если ничего не нашли, просто ищем все reelWatchEndpoint
+        if (outShorts.isEmpty()) {
+            QList<QVariantMap> endpoints = enumerateObjectsWithKey(parsedJson, "reelWatchEndpoint");
+            foreach (QVariantMap endpoint, endpoints) {
+                QVariantMap item;
+                item["video_id"] = endpoint.value("videoId").toString();
+                if (item["video_id"].toString().isEmpty()) continue;
+                item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/hqdefault.jpg";
+                item["title"] = "Shorts";
+                outShorts.append(item);
+            }
+        }
+
+        emit shortsReady(outShorts, seqToken);
     }
     else if (requestType == "Subscriptions") {
         QVariantList subsList;
@@ -537,11 +726,19 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             QVariantMap info;
 
             QVariantMap google_account;
+            // Берем accountName -> simpleText
             google_account["given_name"] = extractTextFromField(account, "accountName");
-            google_account["picture"] = extractThumbnailUrl(account, "accountPhoto");
+
+            // Аватарка: accountPhoto -> thumbnails -> последний элемент
+            QVariantMap photoObj = account.value("accountPhoto").toMap();
+            QVariantList thumbs = photoObj.value("thumbnails").toList();
+            if (!thumbs.isEmpty()) {
+                google_account["picture"] = thumbs.last().toMap().value("url").toString();
+            }
             info["google_account"] = google_account;
 
             QVariantMap youtube_channel;
+            // Берем channelHandle -> simpleText
             youtube_channel["custom_url"] = extractTextFromField(account, "channelHandle");
             info["youtube_channel"] = youtube_channel;
 

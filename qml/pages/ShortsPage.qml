@@ -108,7 +108,7 @@ Rectangle {
                                         "thumbnail": currentVideoDetails.thumbnail
         });
 
-            var directUrl = Config.getVideoUrl(currentVideoDetails.video_id, "360").replace("https://", "http://");
+            var directUrl = currentVideoDetails.video_url;
 
             if (shortsPage.currentVideoUrl !== directUrl) {
                 shortsPage.currentVideoUrl = directUrl;
@@ -162,7 +162,17 @@ Rectangle {
     // --- 1. ШАБЛОН ПЛЕЕРА ---
     Component {
         id: videoComponent
+
+
         Video {
+
+            Rectangle {
+                anchors.fill: parent
+                color: "black"
+                z: -1
+            }
+
+            z: 111
 
             property int lastIntendedPosition: -1
             anchors.fill: parent

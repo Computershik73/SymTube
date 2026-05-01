@@ -2,7 +2,6 @@ import QtQuick 1.0
 import QtMultimediaKit 1.1
 import "components"
 
-
 Rectangle {
     id: root
     width: 360
@@ -10,13 +9,9 @@ Rectangle {
     color: "black"
 
     property string currentTab: "Home"
-
-    // --- ПРИВЯЗКИ ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА ---
     property bool isLandscape: width > height
     property bool isVideoPageOpen: contentLoader.source.toString().indexOf("VideoPage.qml") !== -1
-
     property int forceFullscreen: 1
-
     property bool isFullscreen: isVideoPageOpen && forceFullscreen === 2
 
     onIsLandscapeChanged: {
@@ -25,7 +20,6 @@ Rectangle {
         }
     }
 
-    // Кикстарт (теперь без dummy файла, просто дергаем компонент)
     Loader {
         id: kickstartLoader
         anchors.fill: parent
@@ -76,90 +70,152 @@ Rectangle {
     Navbar {
         id: navbar
         anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-        // Скрываем навбар в полноэкранном режиме
         height: isFullscreen ? 0 : 56
         visible: !isFullscreen
         z: 10
 
         onSearchRequested: {
-            contentLoader.source = "pages/SearchPage.qml";
-            if (contentLoader.item) contentLoader.item.performSearch(query);
+            root.pendingQuery = query;
+            safeLoadPage("pages/SearchPage.qml");
         }
-
         onBackClicked: {
-            if (currentTab === "Home") contentLoader.source = "pages/HomePage.qml";
-            else if (currentTab === "Subscriptions") contentLoader.source = "pages/SubscriptionsPage.qml";
-            else if (currentTab === "Account") contentLoader.source = "pages/AccountPage.qml";
-            navbar.showBackButton = false;
+            switchToTab(currentTab);
         }
     }
 
+    // --- БЕЗОПАСНАЯ АСИНХРОННАЯ ЗАГРУЗКА ---
+    property string pendingVideoId: ""
+    property string pendingChannelId: ""
+    property string pendingQuery: ""
+
+    Rectangle {
+        id: loadingOverlay
+        anchors.fill: parent
+        color: "black"
+        z: 100
+        visible: false
+        Text {
+            anchors.centerIn: parent
+            text: qsTr("Загрузка...")
+            color: "gray"
+            font.pixelSize: 18
+        }
+        MouseArea { anchors.fill: parent } // Блокировка случайных нажатий
+    }
 
     Loader {
         id: contentLoader
-        // Занимаем весь экран, если включен Fullscreen
         anchors.top: isFullscreen ? parent.top : navbar.bottom
         anchors.bottom: isFullscreen ? parent.bottom : tabbar.top
         anchors.left: parent.left; anchors.right: parent.right
-        source: "pages/HomePage.qml"
 
         onLoaded: {
-            if (typeof item.onNavigatedTo !== "undefined") item.onNavigatedTo();
+            loadingOverlay.visible = false;
+            if (!item) return;
+
+            var src = source.toString();
+            if (src.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
+                item.loadVideo(root.pendingVideoId);
+                root.pendingVideoId = "";
+            } else if (src.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
+                item.loadChannel(root.pendingChannelId);
+                root.pendingChannelId = "";
+            } else if (src.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
+                item.performSearch(root.pendingQuery);
+                root.pendingQuery = "";
+            } else if (src.indexOf("ShortsPage.qml") !== -1) {
+                if (typeof item.startPlaying !== "undefined") item.startPlaying();
+            } else if (typeof item.onNavigatedTo !== "undefined") {
+                item.onNavigatedTo();
+            }
         }
+    }
+
+    Timer {
+        id: pageLoadTimer
+        interval: 10 // Минимальная задержка, чтобы UI успел показать черный экран с текстом "Загрузка..."
+        repeat: false
+        property string nextSource: ""
+        onTriggered: {
+            contentLoader.source = nextSource;
+        }
+    }
+
+    function safeLoadPage(pageSource) {
+        var currentStr = contentLoader.source.toString();
+        if (currentStr.indexOf(pageSource) !== -1) {
+            // Если страница уже открыта - не перезагружаем компонент, а просто обновляем
+            loadingOverlay.visible = false;
+            if (contentLoader.item) {
+                if (pageSource.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
+                    contentLoader.item.loadVideo(root.pendingVideoId);
+                    root.pendingVideoId = "";
+                } else if (pageSource.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
+                    contentLoader.item.loadChannel(root.pendingChannelId);
+                    root.pendingChannelId = "";
+                } else if (pageSource.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
+                    contentLoader.item.performSearch(root.pendingQuery);
+                    root.pendingQuery = "";
+                } else if (pageSource.indexOf("ShortsPage.qml") !== -1) {
+                    if (typeof contentLoader.item.startPlaying !== "undefined") contentLoader.item.startPlaying();
+                } else if (typeof contentLoader.item.onNavigatedTo !== "undefined") {
+                    contentLoader.item.onNavigatedTo();
+                }
+            }
+        } else {
+            loadingOverlay.visible = true;
+            pageLoadTimer.nextSource = pageSource;
+            pageLoadTimer.start();
+        }
+    }
+
+    function switchToTab(tabName) {
+        currentTab = tabName;
+        navbar.showBackButton = false;
+        tabbar.activeTab = tabName;
+
+        var src = "";
+        if (tabName === "Home") src = "pages/HomePage.qml";
+        else if (tabName === "Subscriptions") src = "pages/SubscriptionsPage.qml";
+        else if (tabName === "Account") src = "pages/AccountPage.qml";
+        else if (tabName === "Shorts") src = "pages/ShortsPage.qml";
+
+        if (src !== "") {
+            safeLoadPage(src);
+        }
+    }
+
+    Component.onCompleted: {
+        switchToTab("Home");
+    }
+
+    function navigateToVideo(videoId) {
+        forceFullscreen = 1;
+        navbar.showBackButton = true;
+        root.pendingVideoId = videoId;
+        safeLoadPage("pages/VideoPage.qml");
+    }
+
+    function navigateToChannel(author) {
+        navbar.showBackButton = true;
+        root.pendingChannelId = author;
+        safeLoadPage("pages/ChannelPage.qml");
+    }
+
+    function navigateToSettings() {
+        navbar.showBackButton = true;
+        safeLoadPage("pages/SettingsPage.qml");
     }
 
     Tabbar {
         id: tabbar
         anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
-        // Скрываем таббар в полноэкранном режиме
         height: isFullscreen ? 0 : 50
         visible: !isFullscreen
         z: 10
 
         onTabClicked: {
-            root.currentTab = tabName;
-            navbar.showBackButton = false;
-
-            if (tabName === "Home") contentLoader.source = "pages/HomePage.qml";
-            else if (tabName === "Subscriptions") contentLoader.source = "pages/SubscriptionsPage.qml";
-            else if (tabName === "Account") contentLoader.source = "pages/AccountPage.qml";
-            else if (tabName === "Shorts") {
-                // Если страница Shorts еще не загружена
-                if (contentLoader.source.toString().indexOf("ShortsPage.qml") === -1) {
-                    contentLoader.source = "pages/ShortsPage.qml";
-                }
-
-                // ВАЖНО: Вызываем функцию для старта, даже если страница уже была загружена
-                if (contentLoader.item && typeof contentLoader.item.startPlaying !== "undefined") {
-                    contentLoader.item.startPlaying();
-                }
-
-            }
-
+            root.switchToTab(tabName);
         }
-    }
-
-    function navigateToVideo(videoId) {
-        //contentLoader.source = "";
-        forceFullscreen = 1;
-        navbar.showBackButton = true;
-        contentLoader.source = "pages/VideoPage.qml";
-        if (contentLoader.item && typeof contentLoader.item.loadVideo !== "undefined") {
-            contentLoader.item.loadVideo(videoId);
-        }
-    }
-
-    function navigateToChannel(author) {
-        navbar.showBackButton = true;
-        contentLoader.source = "pages/ChannelPage.qml";
-        if (contentLoader.item && typeof contentLoader.item.loadChannel !== "undefined") {
-            contentLoader.item.loadChannel(author);
-        }
-    }
-
-    function navigateToSettings() {
-        navbar.showBackButton = true;
-        contentLoader.source = "pages/SettingsPage.qml";
-
     }
 }

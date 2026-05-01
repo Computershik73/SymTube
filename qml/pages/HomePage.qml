@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import "../components"
 
 Rectangle {
@@ -10,8 +10,8 @@ Rectangle {
     property bool isLoading: false
     property bool isLoadingMore: false
     property string nextPageToken: ""
+    property bool isAuthenticated: Config.userToken !== ""
 
-    // --- ИСПРАВЛЕНИЕ: Вместо alias используем простое свойство-флаг ---
     property bool showBottomLoading: false
 
     Connections {
@@ -26,7 +26,19 @@ Rectangle {
             if (homePage.isLoadingMore) {
                 var savedY = mainList.contentY;
                 var temp = homePage.videosModel;
-                for (var i = 0; i < videos.length; i++) temp.push(videos[i]);
+
+                // Фильтруем межстраничные дубликаты, которые часто выдает YouTube
+                var existingIds = {};
+                for (var j = 0; j < temp.length; j++) {
+                    existingIds[temp[j].video_id] = true;
+                }
+
+                for (var i = 0; i < videos.length; i++) {
+                    if (!existingIds[videos[i].video_id]) {
+                        temp.push(videos[i]);
+                    }
+                }
+
                 homePage.videosModel = temp;
                 mainList.contentY = savedY;
                 homePage.isLoadingMore = false;
@@ -36,7 +48,6 @@ Rectangle {
                 mainList.contentY = 0;
             }
 
-            // Управляем флагом
             homePage.showBottomLoading = false;
         }
 
@@ -54,10 +65,13 @@ Rectangle {
     }
 
     function onNavigatedTo() {
-        if (videosModel.length === 0 && !isLoading) refreshData();
+        if (isAuthenticated && videosModel.length === 0 && !isLoading) {
+            refreshData();
+        }
     }
 
     function refreshData() {
+        if (!isAuthenticated) return;
         isLoading = true;
         isLoadingMore = false;
         nextPageToken = "";
@@ -66,6 +80,62 @@ Rectangle {
         videosModel = [];
         ApiManager.getHomeVideos("");
     }
+
+    Column {
+            id: unauthPanel
+            anchors.centerIn: parent
+            spacing: 16
+            visible: !isAuthenticated
+            z: 100
+
+            Image {
+                source: "../Assets/search.png"
+                width: 64; height: 64
+                anchors.horizontalCenter: parent.horizontalCenter
+                opacity: 0.4
+            }
+            Text {
+                text: qsTr("Попробуйте найти что-нибудь")
+                color: "white"
+                font.pixelSize: 22
+                font.bold: true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text {
+                text: qsTr("Войдите в аккаунт, чтобы видеть рекомендации")
+                color: "gray"
+                font.pixelSize: 14
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Text.AlignHCenter
+                width: parent.width - 32
+                wrapMode: Text.WordWrap
+            }
+            Rectangle {
+                width: 160; height: 40
+
+                color: loginMouseArea.pressed ? "#555555" : "#333333"
+                radius: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Text {
+                    text: qsTr("Войти")
+                    color: "white"
+                    anchors.centerIn: parent
+                    font.bold: true
+                    font.pixelSize: 16
+                }
+
+                MouseArea {
+                    id: loginMouseArea
+                    anchors.fill: parent
+                    onClicked: {
+                        if (typeof root !== "undefined") {
+                            root.switchToTab("Account");
+                        }
+                    }
+                }
+            }
+        }
 
     // Индикатор загрузки (по центру)
     Rectangle {

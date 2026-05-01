@@ -174,7 +174,11 @@ Rectangle {
 
             property int lastIntendedPosition: -1
 
-
+            Rectangle {
+                anchors.fill: parent
+                color: "black"
+                z: -1
+            }
 
             onStarted: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
             onResumed: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }

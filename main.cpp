@@ -21,6 +21,7 @@
 #include "volumekeysobserver.h"
 #include "translationmanager.h"
 #include "localhttpproxy.h"
+//#include <QGLWidget>
 
 int main(int argc, char *argv[])
 {
@@ -54,11 +55,7 @@ int main(int argc, char *argv[])
         QNetworkSession *networkSession = new QNetworkSession(config, &app); // Привязываем к жизни приложения
         networkSession->open();
     }
-    QNetworkProxy proxy;
-        proxy.setType(QNetworkProxy::HttpProxy);
-        proxy.setHostName("192.168.1.183");
-        proxy.setPort(8890);
-        QNetworkProxy::setApplicationProxy(proxy);
+
 
     // 2. Инициализация менеджеров
     Config config;
@@ -84,16 +81,12 @@ int main(int argc, char *argv[])
     view.setStyleSheet("background: black;"); // Дополнительно для QWidget-контейнера
 
     // Оптимизация: не очищать фон каждый раз (ускоряет Symbian)
-    //view.setAttribute(Qt::WA_OpaquePaintEvent);
-    //view.setAttribute(Qt::WA_NoSystemBackground);
-    //view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    view.setAttribute(Qt::WA_OpaquePaintEvent);
+    view.setAttribute(Qt::WA_NoSystemBackground);
+    view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
+    view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
-    // Оптимизации для Symbian
-    //view.setAttribute(Qt::WA_OpaquePaintEvent);
-    //view.setAttribute(Qt::WA_NoSystemBackground);
-    //view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+
 
     // 5. Пробрасываем C++ объекты в QML
     QDeclarativeContext *context = view.rootContext();
@@ -103,7 +96,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("VolumeKeys", &volumeKeys);
     context->setContextProperty("SymbianApp", &app);
     context->setContextProperty("TranslationManager", &translationManager);
-
+  //  view.setViewport(new QGLWidget());
     // 6. Загружаем QML
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));
 
