@@ -43,6 +43,7 @@ public:
     Q_INVOKABLE void rateVideo(const QString &videoId, const QString &rating);
     Q_INVOKABLE void subscribeToChannel(const QString &channelIdentifier);
     Q_INVOKABLE void unsubscribeFromChannel(const QString &channelIdentifier);
+    Q_INVOKABLE void logDebug(const QString &msg);
 
 signals:
     void homeVideosReady(QVariantList videos, QString token);

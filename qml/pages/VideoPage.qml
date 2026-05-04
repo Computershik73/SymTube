@@ -186,8 +186,19 @@ Rectangle {
             onStopped: { videoPage.isPlaying = false; videoPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
 
             onStatusChanged: {
-                if (status === Video.Loaded) {
 
+                var statusStr = "";
+                if (status === Video.Loading) statusStr = "Loading";
+                else if (status === Video.Loaded) statusStr = "Loaded (Ready to play)";
+                else if (status === Video.Stalled) statusStr = "Stalled (Network issue?)";
+                else if (status === Video.Buffering) statusStr = "Buffering";
+                else if (status === Video.EndOfMedia) statusStr = "EndOfMedia";
+                else if (status === Video.InvalidMedia) statusStr = "Invalid Media (Codec/SSL error)";
+
+                ApiManager.logDebug("Player Status: " + statusStr + " | Position: " + position);
+
+                if (status === Video.Loaded) {
+                    ApiManager.logDebug("Success: Player connected to stream. Duration: " + duration);
                     if (typeof VolumeKeys !== "undefined") {
                         VolumeKeys.volume = Config.persistentVolume * 100;
                     }
@@ -208,6 +219,8 @@ Rectangle {
             }
 
             onError: {
+                ApiManager.logDebug("!!! PLAYER ERROR: " + error + " | Message: " + errorString);
+
                 if (errorString.indexOf("-36") !== -1 && videoPage.recoveryAttempts < 3) {
                     videoPage.recoveryAttempts++;
                     videoPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
@@ -218,6 +231,10 @@ Rectangle {
                     videoPage.isPlaying = false;
                     videoPage.recoveryPosition = -1;
                 }
+            }
+
+            onSourceChanged: {
+                ApiManager.logDebug("Player source changed to: " + source);
             }
 
             function performSafeSeek(newPos) {
@@ -259,7 +276,7 @@ Rectangle {
         anchors.top: parent.top
         color: "black"
         z: 5
-
+        clip: true
         Loader {
             id: videoLoader
             anchors.fill: parent
@@ -520,7 +537,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         visible: !root.isFullscreen
-
+        clip: true
         snapMode: ListView.NoSnap
         highlightMoveDuration: 0
         cacheBuffer: 1000

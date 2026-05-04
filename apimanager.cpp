@@ -8,6 +8,12 @@
 #include <QDebug>
 #include <QNetworkProxy>
 
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+
+
+
 // Константы OAuth для получения токена
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
 const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
@@ -21,6 +27,15 @@ ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *par
 }
 
 ApiManager::~ApiManager() {}
+
+void ApiManager::logDebug(const QString &msg) {
+    QFile file("C:/Data/SymTube_debug.txt");
+    if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << QDateTime::currentDateTime().toString("hh:mm:ss") << " : " << msg << "\n";
+        file.close();
+    }
+}
 
 void ApiManager::setImageProvider(QrImageProvider *provider) {
     m_qrProvider = provider;
@@ -233,6 +248,7 @@ void ApiManager::searchVideos(const QString &query) {
 }
 
 void ApiManager::getVideoInfo(const QString &videoId) {
+    logDebug(">>> Requesting VideoInfo for ID: " + videoId);
     // ВАЖНО: Используем ANDROID, чтобы ссылка была совместима с прокси!
     QVariantMap client;
     client["clientName"] = "ANDROID";
@@ -592,6 +608,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         }
     }
     else if (requestType == "VideoInfo") {
+        logDebug("<<< VideoInfo JSON received");
         QVariantMap details;
         QVariantMap root = parsedJson.toMap();
         QVariantMap videoDetails = root.value("videoDetails").toMap();
@@ -611,6 +628,10 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
         }
         details["video_url"] = directUrl;
+        logDebug("Extracted Direct URL: " + directUrl);
+        if (directUrl.isEmpty()) {
+            logDebug("CRITICAL: Direct URL is empty! Check itags or region restrictions.");
+        }
 
         emit videoInfoReady(details);
     }

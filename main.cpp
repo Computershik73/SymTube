@@ -22,9 +22,11 @@
 #include "translationmanager.h"
 #include "localhttpproxy.h"
 //#include <QGLWidget>
+#include <QFile>
 
 int main(int argc, char *argv[])
 {
+    QFile::remove("C:/Data/SymTube_debug.txt");
     QSymbianApplication app(argc, argv);
 
     QApplication::setAttribute(Qt::AA_S60DisablePartialScreenInputMode, false);
@@ -96,7 +98,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("VolumeKeys", &volumeKeys);
     context->setContextProperty("SymbianApp", &app);
     context->setContextProperty("TranslationManager", &translationManager);
-  //  view.setViewport(new QGLWidget());
+    //view.setViewport(new QGLWidget());
     // 6. Загружаем QML
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));
 

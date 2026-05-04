@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import "../components"
 
 Rectangle {
@@ -186,7 +186,7 @@ Rectangle {
             anchors.topMargin: 10
 
             model: videosModel
-
+            clip: true
             // --- ИСПРАВЛЕНИЕ: Увеличили spacing, чтобы текст не лез на следующую карточку ---
             spacing: 1
 
