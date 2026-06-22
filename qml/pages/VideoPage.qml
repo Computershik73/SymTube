@@ -633,39 +633,44 @@ Rectangle {
 
             // Comments preview
             Item {
-                width: parent.width; height: 110
-                visible: videoPage.firstComment !== null
-                Rectangle {
-                    x: 16; width: parent.width - 32; height: 94
-                    color: "#272727"; radius: 12; clip: true
-                    Column {
-                        anchors.fill: parent; anchors.margins: 12; spacing: 6
-                        Row {
-                            spacing: 8
-                            Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 14; font.bold: true }
-                            Text { color: "gray"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter; text: videoPage.firstComment ? videoPage.firstComment.publishedAt : "" }
-                        }
-                        Row {
-                            spacing: 8
+                            width: parent.width; height: 110
+                            visible: videoPage.firstComment !== null
                             Rectangle {
-                                width: 24; height: 24; radius: 12; color: "#333"; clip: true
-                                SafeImage { anchors.fill: parent; source: videoPage.firstComment ? videoPage.firstComment.authorThumbnail : ""; fillMode: Image.PreserveAspectCrop }
-                            }
-                            Column {
-                                width: videoPage.width - 80
-                                Text { color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width; text: videoPage.firstComment ? videoPage.firstComment.author : "" }
-                                Text {
-                                    color: "white"; font.pixelSize: 13;
-                                    elide: Text.ElideRight; wrapMode: Text.WordWrap;
-                                    width: parent.width; height: 32; clip: true
-                                    text: videoPage.firstComment ? videoPage.firstComment.text : ""
+                                x: 16; width: parent.width - 32; height: 94
+                                color: "#272727"; radius: 12; clip: true
+                                Column {
+                                    anchors.fill: parent; anchors.margins: 12; spacing: 6
+                                    Row {
+                                        spacing: 8
+                                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 14; font.bold: true }
+                                        Text { color: "gray"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter; text: videoPage.firstComment ? videoPage.firstComment.publishedAt : "" }
+                                    }
+                                    Row {
+                                        width: parent.width
+                                        spacing: 8
+                                        Rectangle {
+                                            width: 24; height: 24; radius: 12; color: "#333"; clip: true
+                                            Image {
+                                                anchors.fill: parent;
+                                                source: videoPage.firstComment && videoPage.firstComment.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(videoPage.firstComment.authorThumbnail).replace("https://", "http://")) : "";
+                                                fillMode: Image.PreserveAspectCrop; asynchronous: true
+                                            }
+                                        }
+                                        Column {
+                                            width: parent.width - 32
+                                            Text { color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width; text: videoPage.firstComment ? videoPage.firstComment.author : "" }
+                                            Text {
+                                                color: "white"; font.pixelSize: 13;
+                                                elide: Text.ElideRight; wrapMode: Text.Wrap;
+                                                width: parent.width; height: 32; clip: true
+                                                text: videoPage.firstComment ? videoPage.firstComment.text : ""
+                                            }
+                                        }
+                                    }
                                 }
+                                MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" }
                             }
                         }
-                    }
-                    MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" }
-                }
-            }
 
             Item {
                 width: parent.width; height: 40
@@ -785,50 +790,57 @@ Rectangle {
     }
 
     Rectangle {
-        id: commentsSheet
-        anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
-        state: "hidden"
-        states:[
-            State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } },
-            State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } }
-        ]
-        transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
-        MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "hidden" }
+                id: commentsSheet
+                anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 50
+                state: "hidden"
+                states:[ State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } }, State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } } ]
+                transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+                MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "hidden" }
 
-        Rectangle {
-            id: commentsPanel
-            width: parent.width; height: root.height * 0.75
-            anchors.bottom: parent.bottom; color: "#282828"
-            MouseArea { anchors.fill: parent }
+                Rectangle {
+                    id: commentsPanel
+                    width: parent.width; height: root.height * 0.75
+                    anchors.bottom: parent.bottom; color: "#282828"
+                    MouseArea { anchors.fill: parent }
 
-            Column {
-                anchors.fill: parent; anchors.margins: 16; spacing: 10
-                Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
+                    Column {
+                        anchors.fill: parent; anchors.margins: 16; spacing: 10
+                        Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
+                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
 
-                ListView {
-                    width: parent.width; height: parent.height - 40
-                    model: videoPage.commentsModel
-                    clip: true
-                    spacing: 12
-                    delegate: Row {
-                        spacing: 10
-                        Rectangle {
-                            width: 36; height: 36; radius: 18; color: "#333"
+                        ListView {
+                            id: commentsListView
+                            width: parent.width; height: parent.height - 40
+                            model: videoPage.commentsModel
                             clip: true
-                            SafeImage { anchors.fill: parent; source: modelData.authorThumbnail; fillMode: Image.PreserveAspectCrop }
-                        }
-                        Column {
-                            width: parent.width - 46
-                            Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true }
-                            Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; width: parent.width }
-                            Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
+                            spacing: 12
+                            delegate: Item {
+                                width: commentsListView.width
+                                height: Math.max(36, commentCol.height)
+                                Row {
+                                    anchors.fill: parent
+                                    spacing: 10
+                                    Rectangle {
+                                        width: 36; height: 36; radius: 18; color: "#333"; clip: true
+                                        Image {
+                                            anchors.fill: parent;
+                                            source: modelData.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(modelData.authorThumbnail).replace("https://", "http://")) : "";
+                                            fillMode: Image.PreserveAspectCrop; asynchronous: true
+                                        }
+                                    }
+                                    Column {
+                                        id: commentCol
+                                        width: commentsListView.width - 46
+                                        Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width }
+                                        Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.Wrap; width: parent.width }
+                                        Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    }
 
     Rectangle {
         id: shareSheet

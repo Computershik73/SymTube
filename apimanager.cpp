@@ -371,7 +371,9 @@ QString ApiManager::extractTextFromField(const QVariantMap &obj, const QString &
 
 QString ApiManager::extractThumbnailUrl(const QVariantMap &obj, const QString &fieldName) {
     if (!obj.contains(fieldName)) return "";
-    QVariantList thumbs = obj.value(fieldName).toMap().value("thumbnails").toList();
+    QVariantMap photoObj = obj.value(fieldName).toMap();
+    QVariantList thumbs = photoObj.value("thumbnails").toList();
+    if (thumbs.isEmpty()) thumbs = photoObj.value("sources").toList();
     if (!thumbs.isEmpty()) {
         QString url = thumbs.first().toMap().value("url").toString();
         if (url.startsWith("//")) url = "https:" + url;
@@ -428,44 +430,88 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         emit alternativeQualitiesReady(videoId, qualities);
     }
     else if (requestType == "CommentsTokenFetch") {
-        QString token;
-        QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
-        foreach(QVariantMap section, itemSections) {
-            if (section.value("sectionIdentifier").toString() == "comment-item-section") {
-                QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
-                if (!cont.isEmpty()) {
-                    token = cont.first().value("token").toString();
-                    break;
+            QString token;
+            QList<QVariantMap> engagementPanels = enumerateObjectsWithKey(parsedJson, "engagementPanelSectionListRenderer");
+            foreach(QVariantMap panel, engagementPanels) {
+                if (panel.value("panelIdentifier").toString().contains("comments-section")) {
+                    QList<QVariantMap> cont = enumerateObjectsWithKey(panel, "continuationCommand");
+                    if (!cont.isEmpty()) {
+                        token = cont.first().value("token").toString();
+                        break;
+                    }
                 }
             }
+            if (token.isEmpty()) {
+                QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
+                foreach(QVariantMap section, itemSections) {
+                    if (section.value("sectionIdentifier").toString() == "comment-item-section") {
+                        QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
+                        if (!cont.isEmpty()) {
+                            token = cont.first().value("token").toString();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!token.isEmpty()) {
+                QVariantMap payload;
+                payload["context"] = buildContext("WEB", "2.20250101");
+                payload["continuation"] = token;
+                postInnertube("next", payload, "CommentsFetch");
+            } else {
+                emit commentsReady(QVariantList(), "");
+            }
         }
-        if (!token.isEmpty()) {
-            QVariantMap payload;
-            payload["context"] = buildContext("WEB", "2.20250101");
-            payload["continuation"] = token;
-            postInnertube("next", payload, "CommentsFetch");
-        } else {
-            emit commentsReady(QVariantList(), "");
-        }
-    }
     else if (requestType == "CommentsFetch") {
-        QVariantList comments;
-        QString nextToken;
-        QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
-        foreach(QVariantMap renderer, commentRenderers) {
-            QVariantMap c;
-            c["author"] = extractTextFromField(renderer, "authorText");
-            c["text"] = extractTextFromField(renderer, "contentText");
-            c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
-            c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
-            comments.append(c);
-        }
-        QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
-        if (!contCmd.isEmpty()) {
-            nextToken = contCmd.first().value("token").toString();
-        }
-        emit commentsReady(comments, nextToken);
-    }
+           QVariantList comments;
+           QString nextToken;
+
+           QList<QVariantMap> commentEntities = enumerateObjectsWithKey(parsedJson, "commentEntityPayload");
+           foreach(QVariantMap payload, commentEntities) {
+               QVariantMap c;
+               QVariantMap authorData = payload.value("author").toMap();
+               c["author"] = authorData.value("displayName").toString();
+               if (!c["author"].toString().startsWith("@")) c["author"] = "@" + c["author"].toString();
+
+               QVariantMap props = payload.value("properties").toMap();
+               c["publishedAt"] = props.value("publishedTime").toString();
+
+               QVariantMap contentObj = props.value("content").toMap();
+               if (contentObj.contains("content")) {
+                   c["text"] = contentObj.value("content").toString();
+               } else if (contentObj.contains("runs")) {
+                   QString textStr;
+                   foreach(const QVariant &run, contentObj.value("runs").toList()) {
+                       textStr += run.toMap().value("text").toString();
+                   }
+                   c["text"] = textStr;
+               }
+
+               QVariantMap avatarObj = payload.value("avatar").toMap();
+               c["authorThumbnail"] = extractThumbnailUrl(avatarObj, "image");
+
+               comments.append(c);
+           }
+
+           if (comments.isEmpty()) {
+               QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
+               foreach(QVariantMap renderer, commentRenderers) {
+                   QVariantMap c;
+                   c["author"] = extractTextFromField(renderer, "authorText");
+                   c["text"] = extractTextFromField(renderer, "contentText");
+                   c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
+                   c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
+                   comments.append(c);
+               }
+           }
+
+           QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
+           if (!contCmd.isEmpty()) {
+               nextToken = contCmd.first().value("token").toString();
+           }
+           emit commentsReady(comments, nextToken);
+       }
     else if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos" || requestType == "ChannelVideos" || requestType == "History" || requestType == "HomeCategoryVideos") {
         QVariantList outVideos;
         QStringList seenIds;
