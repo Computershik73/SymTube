@@ -4,10 +4,10 @@ import "../components"
 Rectangle {
     id: cardRoot
     width: parent.width
-    height: 300 // Примерная высота
+    height: 300
     color: "black"
 
-    property variant modelData // Данные из модели (QVariantMap)
+    property variant modelData
 
     signal clicked(string videoId)
 
@@ -16,21 +16,20 @@ Rectangle {
         anchors.margins: 8
         spacing: 12
 
-        // Обложка видео
         Rectangle {
             width: parent.width
             height: 202
             color: "#1A1A1A"
+            radius: 8
+            clip: true
 
             SafeImage {
                 anchors.fill: parent
                 source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
-                //asynchronous: true
             }
 
-            // Длительность (если есть)
             Rectangle {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -38,8 +37,9 @@ Rectangle {
                 color: "#CC000000"
                 width: durationText.width + 12
                 height: durationText.height + 4
+                radius: 4
                 visible: modelData && modelData.duration !== undefined && modelData.duration !== ""
-                
+
                 Text {
                     id: durationText
                     anchors.centerIn: parent
@@ -51,12 +51,10 @@ Rectangle {
             }
         }
 
-        // Информация о видео (название, автор, просмотры)
         Row {
             width: parent.width
             spacing: 12
 
-            // Аватарка канала (если включена)
             Rectangle {
                 width: 36
                 height: 36
@@ -64,17 +62,16 @@ Rectangle {
                 color: "#333333"
                 clip: true
                 visible: Config.enableChannelThumbnails && modelData && modelData.channel_thumbnail !== undefined && modelData.channel_thumbnail !== ""
-                
+
                 SafeImage {
                     anchors.fill: parent
                     source: modelData && modelData.channel_thumbnail ? modelData.channel_thumbnail : "../Assets/placeholder.png"
                     fillMode: Image.PreserveAspectCrop
-                    //asynchronous: true
                 }
             }
 
             Column {
-                width: parent.width - (parent.children[0].visible ? 48 : 0) // Вычитаем ширину аватарки
+                width: parent.width - (parent.children[0].visible ? 48 : 0)
                 spacing: 4
 
                 Text {
@@ -84,9 +81,7 @@ Rectangle {
                     width: parent.width
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
-                                        //font.family: "Nokia Pure Text"
-                    // Вместо maximumLineCount в QtQuick 1.0 используем фиксированную высоту
-                    // 16px шрифт + межстрочный интервал = примерно 38-40 пикселей для двух строк
+
                     height: 38
                     clip: true
                 }
@@ -97,13 +92,12 @@ Rectangle {
                     font.pixelSize: 14
                     width: parent.width
                     elide: Text.ElideRight
-                                        //font.family: "Nokia Pure Text"
+
                 }
 
                 Row {
                     spacing: 4
                     Text {
-                        // Для форматирования нужно было бы писать JS функцию, для упрощения выводим как есть
                         text: modelData && modelData.views ? modelData.views : ""
                         color: "#AAAAAA"
                         font.pixelSize: 12
@@ -133,7 +127,6 @@ Rectangle {
         }
     }
 
-    // Разделитель
     Rectangle {
         anchors.bottom: parent.bottom
         width: parent.width

@@ -18,17 +18,13 @@ Rectangle {
     }
 
     function onNavigatedTo() {
-        // Подгружаем текущий URL из C++ при открытии
-        //apiCombo.text = Config.apiBaseUrl;
         langCombo.text = TranslationManager.currentLanguage;
         ApiManager.fetchServerList();
     }
 
-    // Закрытие списка и клавиатуры при клике в пустое место
     MouseArea {
         anchors.fill: parent
         onClicked: {
-
             settingsPage.focus = true;
         }
     }
@@ -58,7 +54,7 @@ Rectangle {
             Column {
                 spacing: 8
                 width: parent.width
-                z: 9 // Обязательно Z-индекс ниже, чем у комбобокса API-URL, чтобы списки не перекрывались!
+                z: 9
 
                 Text {
                     text: qsTr("Язык / Language")
@@ -69,7 +65,6 @@ Rectangle {
                 CustomComboBox {
                     id: langCombo
                     width: parent.width
-                    // Модель автоматически получает список доступных языков из C++
                     model: TranslationManager.availableLanguages
                 }
 
@@ -80,13 +75,12 @@ Rectangle {
                 }
             }
 
-            // Кнопка сохранения
             Rectangle {
                 width: parent.width
                 height: 45
                 color: "#007ACC"
                 radius: 5
-                
+
                 Text {
                     text: qsTr("Сохранить")
                     color: "white"
@@ -94,28 +88,49 @@ Rectangle {
                     font.bold: true
                     font.pixelSize: 16
                 }
-                
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        //apiCombo.isOpen = false;
                         langCombo.isOpen = false;
-                        // Отправляем новый URL в C++
-                        //Config.apiBaseUrl = apiCombo.text;
-
                         TranslationManager.setLanguage(langCombo.text);
-                        
+
+                        saveText.text = qsTr("Настройки сохранены!");
                         saveText.visible = true;
                         saveTimer.start();
                     }
                 }
             }
 
-            // Индикатор успешного сохранения
+            Rectangle {
+                width: parent.width
+                height: 45
+                color: "#333333"
+                radius: 5
+
+                Text {
+                    text: qsTr("Выйти из аккаунта")
+                    color: "white"
+                    anchors.centerIn: parent
+                    font.bold: true
+                    font.pixelSize: 16
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        Config.userToken = "";
+                        saveText.text = qsTr("Вы вышли из аккаунта");
+                        saveText.visible = true;
+                        saveTimer.start();
+                    }
+                }
+            }
+
             Text {
                 id: saveText
                 text: qsTr("Настройки сохранены!")
-                color: "#4CAF50" // Зеленый цвет успеха
+                color: "#4CAF50"
                 font.pixelSize: 16
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: false
@@ -127,10 +142,6 @@ Rectangle {
                 }
             }
 
-            // Блок информации
-            // --- РАЗДЕЛ "О ПРИЛОЖЕНИИ" ---
-
-            // Визуальный разделитель
             Rectangle {
                 width: parent.width; height: 1; color: "#333333"; anchors.horizontalCenter: parent.horizontalCenter
             }
@@ -140,25 +151,22 @@ Rectangle {
                 color: "white"
                 font.pixelSize: 20
                 font.bold: true
-                font.family: "Nokia Pure Text"
+
             }
 
-            // Lorem Ipsum
             Text {
                 width: parent.width
                 text: qsTr("SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.")
                 color: "#AAAAAA"
                 font.pixelSize: 14
                 wrapMode: Text.WordWrap
-                font.family: "Nokia Pure Text"
+
             }
 
-            // --- СПИСОК ССЫЛОК (СТАБИЛЬНЫЙ ВАРИАНТ) ---
             Column {
                 width: parent.width
                 spacing: 10
 
-                // Модель данных для ссылок
                 Repeater {
                     model: [
                         { label: "Разработчик - Computershik", url: "https://4pda.to/forum/index.php?showuser=4458524" },
@@ -174,7 +182,6 @@ Rectangle {
 
                         Text {
                             text: modelData.label
-                            // Если нажато (mouseArea.pressed), цвет меняется
                             color: mouseArea.pressed ? "#007ACC" : "#0099FF"
                             font.pixelSize: 14
                             font.underline: true
@@ -189,8 +196,6 @@ Rectangle {
                     }
                 }
             }
-
-
         }
     }
 }

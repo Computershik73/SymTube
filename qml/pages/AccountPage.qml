@@ -24,8 +24,6 @@ Rectangle {
 
         onAuthImageReady: {
             qrVersion++;
-            // В QML 1.0, чтобы обойти жесткое кэширование,
-            // привязываем счетчик прямо к URL
             qrImage.source = "image://qr/auth?" + qrVersion;
             qrImage.visible = true;
             loadingText.visible = false;
@@ -42,7 +40,7 @@ Rectangle {
 
     Timer {
         id: pollingTimer
-        interval: 5000 // Для проверки лучше ставить 3 сек
+        interval: 5000
         repeat: true
         running: !isAuthenticated
         onTriggered: {
@@ -66,10 +64,9 @@ Rectangle {
 
     function loadAccountInfo() {
         ApiManager.getAccountInfo();
-        ApiManager.getHistory(); // Сразу же запрашиваем историю
+        ApiManager.getHistory();
     }
 
-    // --- СОСТОЯНИЕ: НЕ АВТОРИЗОВАН ---
     Column {
         anchors.centerIn: parent
         spacing: 20
@@ -122,7 +119,6 @@ Rectangle {
     }
 
 
-    // --- СОСТОЯНИЕ: АВТОРИЗОВАН ---
     Flickable {
         anchors.fill: parent
         visible: isAuthenticated
@@ -136,7 +132,6 @@ Rectangle {
             width: parent.width - 32
             spacing: 24
 
-            // 1. ПРОФИЛЬ (Жесткая высота 80, чтобы кнопки не налезли!)
             Item {
                 width: parent.width
                 height: 80
@@ -145,7 +140,6 @@ Rectangle {
                     anchors.fill: parent
                     spacing: 16
 
-                    // Аватарка
                     Rectangle {
                         width: 80; height: 80
                         color: "#333333"
@@ -158,14 +152,12 @@ Rectangle {
                                 if (!accountData || !accountData.google_account || !accountData.google_account.picture) return "";
 
                                 var originalUrl = accountData.google_account.picture;
-                                // Просто энкодим URL и отдаем провайдеру (меняем https на http для стабильности на Symbian)
                                 return "image://rounded/" + encodeURIComponent(originalUrl);
                             }
                             fillMode: Image.PreserveAspectCrop
                         }
                     }
 
-                    // Текстовая информация
                     Column {
                         width: parent.width - 96
                         anchors.verticalCenter: parent.verticalCenter
@@ -178,7 +170,7 @@ Rectangle {
                             font.bold: true
                             width: parent.width
                             elide: Text.ElideRight
-                            font.family: "Nokia Pure Text"
+
                         }
 
                         Text {
@@ -190,10 +182,9 @@ Rectangle {
                 }
             }
 
-            // 2. КНОПКИ УПРАВЛЕНИЯ
             Row {
                 width: parent.width
-                height: 40 // Жесткая высота
+                height: 40
                 spacing: 10
 
                 Rectangle {
@@ -216,7 +207,7 @@ Rectangle {
                         onClicked: {
                             Config.userToken = "";
                             isAuthenticated = false;
-                            historyModel = []; // Очищаем историю при выходе
+                            historyModel = [];
                             accountData = null;
                             pollingTimer.start();
                             ApiManager.checkAuthContent();
@@ -225,7 +216,6 @@ Rectangle {
                 }
             }
 
-            // 3. Заголовок истории
             Text {
                 text: qsTr("История просмотров")
                 color: "white"
@@ -234,16 +224,14 @@ Rectangle {
                 visible: historyModel.length > 0
             }
 
-            // 4. ГОРИЗОНТАЛЬНАЯ ЛЕНТА ИСТОРИИ
             ListView {
                 width: parent.width
-                height: 150 // Фиксированная высота для горизонтального списка
+                height: 150
                 orientation: ListView.Horizontal
                 model: historyModel
                 spacing: 12
-                cacheBuffer: 500 // Для плавного скролла
+                cacheBuffer: 500
 
-                // Делегат для каждого видео в истории
                 delegate: Item {
                     width: 150
                     height: 120
@@ -251,10 +239,11 @@ Rectangle {
                     Column {
                         spacing: 8
 
-                        // Превью видео
                         Rectangle {
                             width: 150; height: 84
                             color: "#1A1A1A"
+                            radius: 8
+                            clip: true
 
                             Image {
                                 anchors.fill: parent
@@ -263,36 +252,26 @@ Rectangle {
                                 asynchronous: true
                                 clip: true
                             }
-
-                            // Закругление углов поверх картинки
-                            Image {
-                                anchors.fill: parent
-                                source: "../Assets/rounding_up.png" // Используем вашу готовую маску
-                            }
                         }
 
-                        // Название видео
                         Text {
                             text: modelData.title || ""
                             color: "white"
                             font.pixelSize: 13
                             width: parent.width
-                            wrapMode: Text.WordWrap // Обязательно, чтобы текст переносился
+                            wrapMode: Text.WordWrap
 
-                            // ИСПРАВЛЕНИЕ: Вместо maximumLineCount используем фиксированную высоту
-                            // 13px шрифт * 2 строки + небольшой запас = примерно 28-30px
                             height: 30
-                            clip: true // Обрезаем текст, который не влез в 30px
+                            clip: true
 
-                            elide: Text.ElideRight // Добавляем многоточие
-                            font.family: "Nokia Pure Text"
+                            elide: Text.ElideRight
+
                         }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            // Переходим на страницу видео
                             root.navigateToVideo(modelData.video_id);
                         }
                     }
@@ -301,4 +280,3 @@ Rectangle {
         }
     }
 }
-

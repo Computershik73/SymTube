@@ -14,6 +14,7 @@ Rectangle {
 
     property variant currentShortInfo: null
     property variant currentVideoDetails: null
+    property variant commentsModel: []
 
     property bool showPlayIcon: false
     property string currentVideoUrl: ""
@@ -34,7 +35,6 @@ Rectangle {
                 var dur = videoLoader.item.duration;
                 shortsPage.uiPosition = pos;
 
-                // Делаем луп здесь (2 раза в секунду), а не 60!
                 if (dur > 0 && pos >= dur - 600) {
                     videoLoader.item.position = 0;
                 }
@@ -42,24 +42,16 @@ Rectangle {
         }
     }
 
-
     Connections {
         target: SymbianApp
         onInBackground: {
             if (videoLoader.item && isPlaying) {
-                console.log("УХОД В ФОН: Уничтожаем плеер...");
                 shortsPage.recoveryPosition = videoLoader.item.position;
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
             }
         }
         onInFocus: {
-            if (videoLoader.item && isPlaying) {
-                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
-                //videoPage.recoveryPosition = videoLoader.item.position;
-                //videoLoader.sourceComponent = undefined;
-                //recreateTimer.start();
-            }
         }
     }
 
@@ -102,13 +94,14 @@ Rectangle {
 
             currentVideoDetails = videoDetailsMap;
             HistoryManager.addToHistory({
-                                        "video_id": currentVideoDetails.video_id,
-                                        "title": currentVideoDetails.title,
-                                        "author": currentVideoDetails.author,
-                                        "thumbnail": currentVideoDetails.thumbnail
-        });
+                "video_id": currentVideoDetails.video_id,
+                "title": currentVideoDetails.title,
+                "author": currentVideoDetails.author,
+                "thumbnail": currentVideoDetails.thumbnail
+            });
 
-            var directUrl = currentVideoDetails.video_url;
+            var base64Url = Qt.btoa(currentVideoDetails.video_url);
+            var directUrl = "http://127.0.0.1:8081/?url=" + base64Url;
 
             if (shortsPage.currentVideoUrl !== directUrl) {
                 shortsPage.currentVideoUrl = directUrl;
@@ -121,6 +114,10 @@ Rectangle {
                     videoLoader.item.play();
                 }
             }
+        }
+
+        onCommentsReady: {
+            shortsPage.commentsModel = comments;
         }
     }
 
@@ -151,6 +148,7 @@ Rectangle {
 
         currentShortInfo = shortsList[currentIndex];
         currentVideoDetails = null;
+        commentsModel = [];
         ApiManager.getVideoInfo(currentShortInfo.video_id);
 
         if (currentIndex >= shortsList.length - 2 && sequenceToken !== "" && !isLoading) {
@@ -159,19 +157,14 @@ Rectangle {
         }
     }
 
-    // --- 1. ШАБЛОН ПЛЕЕРА ---
     Component {
         id: videoComponent
-
-
         Video {
-
             Rectangle {
                 anchors.fill: parent
                 color: "black"
                 z: -1
             }
-
             z: 111
 
             property int lastIntendedPosition: -1
@@ -182,7 +175,7 @@ Rectangle {
 
             onVolumeChanged: {
                 if (Config.persistentVolume !== volume) {
-                    Config.persistentVolume = volume; // 2. Обновляем глобальную громкость
+                    Config.persistentVolume = volume;
                 }
             }
 
@@ -190,9 +183,6 @@ Rectangle {
             onStarted: { shortsPage.isSeeking = false; shortsPage.isPlaying = true; shortsPage.recoveryAttempts = 0; }
             onPaused: shortsPage.isPlaying = false
             onStopped: { shortsPage.isPlaying = false; shortsPage.isSeeking = false; uiOverlay.visible = true; }
-
-
-
 
             onStatusChanged: {
                 if (status === Video.Loaded) {
@@ -217,16 +207,10 @@ Rectangle {
             }
 
             onError: {
-                //if (errorString.indexOf("-36") !== -1 && shortsPage.recoveryAttempts < 3) {
                 shortsPage.recoveryAttempts++;
                 shortsPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
-                /* } else {
-                    //shortsPage.isSeeking = false;
-                    shortsPage.isPlaying = false;
-                    shortsPage.recoveryPosition = -1;
-                }*/
             }
 
             function performSafeSeek(newPos) {
@@ -247,40 +231,31 @@ Rectangle {
         }
     }
 
-    // --- 2. ЗАГРУЗЧИК ПЛЕЕРА (Самый нижний слой) ---
     Loader {
         id: videoLoader
         anchors.fill: parent
-        //z: 0 // Лежит на дне
     }
 
-    // --- 3. ИНТЕРФЕЙС ПОВЕРХ ПЛЕЕРА (Верхний слой) ---
     Item {
         id: uiOverlay
         anchors.fill: parent
-        //z: 10 // Лежит поверх плеера! Никакого моргания.
 
-        // --- ИСПРАВЛЕНИЕ: Спиннер с безопасной проверкой на null ---
         Image {
             id: spinner
             anchors.centerIn: parent
             source: "../Assets/player/reload.png"
             width: 48; height: 48
-            //z: 100
             visible: {
                 if (shortsPage.isLoading) return true;
                 if (videoLoader.item === null) return true;
                 var st = videoLoader.item.status;
-
                 return (st === Video.Loading);
             }
             NumberAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible }
         }
 
-        // Ошибка
         Rectangle {
             anchors.centerIn: parent; color: "#CC000000"; radius: 8;
-            //z: 100
             width: errorText.width + 40; height: errorText.height + 20
             visible: {
                 if (videoLoader.item === null) return false;
@@ -290,7 +265,6 @@ Rectangle {
             Text { id: errorText; anchors.centerIn: parent; color: "white"; font.pixelSize: 18; text: qsTr("Ошибка воспроизведения") }
         }
 
-        // Управление свайпами и паузой
         MouseArea {
             anchors.fill: parent
             property int startY: 0
@@ -316,7 +290,6 @@ Rectangle {
                         currentIndex--; loadCurrentShort();
                     }
                 } else {
-                    // --- ИСПРАВЛЕНИЕ: Клик работает всегда ---
                     if (mouse.x < parent.width - 60 && videoLoader.item !== null) {
                         if (isPlaying) {
                             videoLoader.item.pause();
@@ -338,14 +311,12 @@ Rectangle {
             onTriggered: shortsPage.showPlayIcon = false
         }
 
-        // Иконка Play/Pause по центру
         Image {
             id: playPauseIcon
             anchors.centerIn: parent
             width: 64; height: 64
             source: isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
             opacity: 0.8
-            // ИСПРАВЛЕНИЕ: Безопасное условие видимости
             visible: {
                 if (shortsPage.showPlayIcon) return true;
                 if (videoLoader.item === null) return false;
@@ -357,23 +328,20 @@ Rectangle {
             }
         }
 
-        // Индикатор громкости OSD
-        // --- ИНДИКАТОР ГРОМКОСТИ (iOS Style) ---
         Rectangle {
             id: volumeOsd
             width: 8
             height: 150
-            // Позиционируем слева или справа (выбрал слева для примера)
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             radius: 4
-            color: "#66000000" // Темный полупрозрачный фон
-            opacity: 0 // Скрыт по умолчанию
+            color: "#66000000"
+            opacity: 0
 
             Timer {
                 id: volumeOsdTimer
-                interval: 2000 // Исчезает через 2 секунды
+                interval: 2000
                 onTriggered: volumeFadeOut.start()
             }
 
@@ -393,37 +361,30 @@ Rectangle {
                 NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
             }
 
-            // Белая полоска-индикатор уровня
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
                 radius: 4
                 color: "white"
-                // Вычисляем высоту в зависимости от громкости (0-100)
                 height: typeof VolumeKeys !== "undefined" ? (parent.height * (VolumeKeys.volume / 100.0)) : parent.height
 
-                // Добавляем плавность изменения самого уровня
                 Behavior on height {
                     NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
 
-        // Прогрессбар снизу
         Rectangle {
             anchors.bottom: parent.bottom; width: parent.width; height: 4
             color: "#66FFFFFF";
-            //z: 10
             Rectangle {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
                 color: "white"
-                // ИСПРАВЛЕНИЕ: Безопасный расчет ширины
                 width: (videoLoader.item !== null && videoLoader.item.duration > 0) ? (shortsPage.uiPosition / videoLoader.item.duration) * parent.width : 0
             }
         }
 
-        // Инфо снизу слева (Название, Автор)
         Column {
             anchors.left: parent.left; anchors.bottom: parent.bottom
             anchors.margins: 16; anchors.bottomMargin: 24
@@ -449,24 +410,12 @@ Rectangle {
                                 var parts = originalUrl.split("channel_icon/");
 
                                 if (parts.length < 2) return "";
-
-                                // Базовая часть (меняем https на http для обхода ошибки SSL на Symbian)
                                 var baseUrl = parts[0].replace("https://", "http://") + "channel_icon/";
-
-                                // 1. Декодируем вторую часть ссылки (дважды, чтобы гарантированно снять все наслоения %25)
                                 var cleanTail = decodeURIComponent(decodeURIComponent(parts[1]));
-
-                                // 2. Энкодим её один раз
                                 var encodedTail = encodeURIComponent(cleanTail);
-
-                                // 3. Полученный результат передаем далее как строку
                                 var fullString = baseUrl + encodedTail;
-
-                                // 4. Энкодим ещё раз и передаем в провайдер
                                 return "image://rounded/" + encodeURIComponent(fullString);
                             }
-
-
                             fillMode: Image.PreserveAspectCrop
                         }
                     }
@@ -474,7 +423,7 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         text: currentVideoDetails ? (currentVideoDetails["author"] || "") : ""
                         color: "white"; font.pixelSize: 16; font.bold: true
-                        font.family: "Nokia Pure Text"
+
                     }
                 }
             }
@@ -484,11 +433,10 @@ Rectangle {
                 color: "white"; font.pixelSize: 14; width: parent.width
                 wrapMode: Text.WordWrap; elide: Text.ElideRight; clip: true
                 height: 38
-                font.family: "Nokia Pure Text"
+
             }
         }
 
-        // Кнопки справа (Лайк, Дизлайк, Комменты, Поделиться)
         Column {
             id: rightButtons
             anchors.right: parent.right; anchors.bottom: parent.bottom
@@ -502,17 +450,15 @@ Rectangle {
             Image { source: "../Assets/player/dislike.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter; MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentShortInfo.video_id, "dislike") } }
             Column {
                 spacing: 4; anchors.horizontalCenter: parent.horizontalCenter
-                Image { source: "../Assets/player/comments.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" } }
+                Image { source: "../Assets/player/comments.png"; width: 32; height: 32; MouseArea { anchors.fill: parent; onClicked: { ApiManager.getComments(currentShortInfo.video_id, ""); commentsSheet.state = "visible"; } } }
                 Text { text: currentVideoDetails ? (currentVideoDetails["comment_count"] || "0") : ""; color: "white"; font.pixelSize: 12; anchors.horizontalCenter: parent.horizontalCenter }
             }
-            Image { source: "../Assets/player/send.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter }
+            Image { source: "../Assets/player/send.png"; width: 32; height: 32; anchors.horizontalCenter: parent.horizontalCenter; MouseArea { anchors.fill: parent; onClicked: shareSheet.state = "visible" } }
         }
 
-        // Шторка с комментариями
         Rectangle {
             id: commentsSheet
-            anchors.fill: parent; color: "#E6000000"; visible: state === "visible";
-            //z: 50
+            anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 50
             state: "hidden"
             states:[ State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } }, State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } } ]
             transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
@@ -520,23 +466,74 @@ Rectangle {
 
             Rectangle {
                 id: commentsPanel
-                width: parent.width; height: root.height * 0.65
+                width: parent.width; height: root.height * 0.75
                 anchors.bottom: parent.bottom; color: "#282828"
                 MouseArea { anchors.fill: parent }
 
-                Item {
-                    anchors.fill: parent; anchors.margins: 16
-                    Column {
-                        anchors.fill: parent; spacing: 10
-                        Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
-                        Flickable {
-                            width: parent.width; height: parent.height - 40
-                            contentWidth: width; contentHeight: commentsText.height; clip: true
-                            Text {
-                                id: commentsText; width: parent.width
-                                text: qsTr("Функция комментариев в разработке...")
-                                color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                Column {
+                    anchors.fill: parent; anchors.margins: 16; spacing: 10
+                    Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
+
+                    ListView {
+                        width: parent.width; height: parent.height - 40
+                        model: shortsPage.commentsModel
+                        clip: true
+                        spacing: 12
+                        delegate: Row {
+                            spacing: 10
+                            Rectangle {
+                                width: 36; height: 36; radius: 18; color: "#333"; clip: true
+                                SafeImage { anchors.fill: parent; source: modelData.authorThumbnail; fillMode: Image.PreserveAspectCrop }
+                            }
+                            Column {
+                                width: parent.width - 46
+                                Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true }
+                                Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; width: parent.width }
+                                Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: shareSheet
+            anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 50
+            state: "hidden"
+            states:[
+                State { name: "visible"; PropertyChanges { target: sharePanel; y: root.height - sharePanel.height } },
+                State { name: "hidden"; PropertyChanges { target: sharePanel; y: root.height } }
+            ]
+            transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+            MouseArea { anchors.fill: parent; onClicked: shareSheet.state = "hidden" }
+
+            Rectangle {
+                id: sharePanel
+                width: parent.width; height: 180
+                anchors.bottom: parent.bottom; color: "#282828"
+                MouseArea { anchors.fill: parent }
+
+                Column {
+                    anchors.fill: parent; anchors.margins: 16; spacing: 16
+                    Text { text: qsTr("Поделиться"); color: "white"; font.pixelSize: 18; font.bold: true }
+
+                    Rectangle {
+                        width: parent.width; height: 45; color: "#1F1F1F"; radius: 5
+                        Text { text: currentShortInfo ? "https://youtu.be/" + currentShortInfo.video_id : ""; color: "white"; anchors.centerIn: parent; font.pixelSize: 14 }
+                    }
+
+                    Rectangle {
+                        width: parent.width; height: 45; color: "#007ACC"; radius: 5
+                        Text { text: qsTr("Скопировать ссылку"); color: "white"; anchors.centerIn: parent; font.bold: true }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (currentShortInfo) {
+                                    ApiManager.copyToClipboard("https://youtu.be/" + currentShortInfo.video_id);
+                                }
+                                shareSheet.state = "hidden";
                             }
                         }
                     }

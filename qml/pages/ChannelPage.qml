@@ -53,27 +53,22 @@ Rectangle {
         visible: false
     }
 
-    // --- ГЛАВНЫЙ СПИСОК ---
     ListView {
         id: mainList
         anchors.fill: parent
         model: videosModel
         visible: !loadingIndicator.visible && !errorText.visible
 
-        // Оптимизация для Symbian
         cacheBuffer: 1000
 
-        // Сбрасываем скролл при загрузке нового канала
         onModelChanged: {
             mainList.contentY = 0;
         }
 
-        // --- ВЕРХНЯЯ ЧАСТЬ КАНАЛА (скроллится вместе со списком) ---
         header: Column {
             width: mainList.width
             spacing: 16
 
-            // Баннер канала
             Image {
                 width: parent.width
                 height: 120
@@ -83,7 +78,6 @@ Rectangle {
                 asynchronous: true
             }
 
-            // Инфо (Аватар + Название + Подписчики)
             Item {
                 width: parent.width
                 height: 80
@@ -93,9 +87,6 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.margins: 16
                     spacing: 16
-
-                    // Аватар
-
 
                     Rectangle {
                         width: 80; height: 80; radius: 40; color: "#333"; clip: true
@@ -113,12 +104,10 @@ Rectangle {
                         }
                     }
 
-
-                    // Текст
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 4
-                        width: parent.width - 112 // Ширина родителя минус ширина аватара и отступов
+                        width: parent.width - 112
 
                         Text {
                             text: channelData && channelData.channel_info ? (channelData.channel_info["title"] || "") : ""
@@ -127,23 +116,21 @@ Rectangle {
                             font.bold: true
                             width: parent.width
                             elide: Text.ElideRight
-                            font.family: "Nokia Pure Text"
+
                         }
                         Text {
                             text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0")) : ""
                             color: "gray"
                             font.pixelSize: 14
-                            font.family: "Nokia Pure Text"
+
                         }
                     }
                 }
             }
 
-            // Отступ перед началом видео
             Item { width: parent.width; height: 8 }
         }
 
-        // --- КАРТОЧКИ ВИДЕО ---
         delegate: VideoCard {
             modelData: model.modelData
             onClicked: {

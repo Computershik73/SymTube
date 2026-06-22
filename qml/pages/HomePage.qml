@@ -11,6 +11,7 @@ Rectangle {
     property bool isLoadingMore: false
     property string nextPageToken: ""
     property bool isAuthenticated: Config.userToken !== ""
+    property string currentCategory: ""
 
     property bool showBottomLoading: false
 
@@ -27,7 +28,6 @@ Rectangle {
                 var savedY = mainList.contentY;
                 var temp = homePage.videosModel;
 
-                // Фильтруем межстраничные дубликаты, которые часто выдает YouTube
                 var existingIds = {};
                 for (var j = 0; j < temp.length; j++) {
                     existingIds[temp[j].video_id] = true;
@@ -52,11 +52,11 @@ Rectangle {
         }
 
         onRequestFailed: {
-            if (endpoint === "HomeVideos") {
+            if (endpoint === "HomeVideos" || endpoint === "HomeCategoryVideos") {
                 homePage.isLoading = false;
                 homePage.isLoadingMore = false;
                 loadingIndicator.visible = false;
-                homePage.showBottomLoading = false; // Управляем флагом
+                homePage.showBottomLoading = false;
                 if (homePage.videosModel.length === 0) {
                     errorPanel.visible = true;
                 }
@@ -78,7 +78,11 @@ Rectangle {
         loadingIndicator.visible = true;
         errorPanel.visible = false;
         videosModel = [];
-        ApiManager.getHomeVideos("");
+        if (currentCategory === "") {
+            ApiManager.getHomeVideos("");
+        } else {
+            ApiManager.getHomeCategoryVideos(currentCategory, "");
+        }
     }
 
     Column {
@@ -137,7 +141,6 @@ Rectangle {
             }
         }
 
-    // Индикатор загрузки (по центру)
     Rectangle {
         id: loadingIndicator; anchors.centerIn: parent; width: 150; height: 50;
         color: "#222222"; radius: 8; visible: false; z: 10
@@ -148,7 +151,6 @@ Rectangle {
         }
     }
 
-    // Панель ошибки
     Column {
         id: errorPanel; anchors.centerIn: parent; spacing: 10; visible: false
         Image { source: "../Assets/NoInternet.png"; width: 100; height: 100; anchors.horizontalCenter: parent.horizontalCenter; fillMode: Image.PreserveAspectFit }
@@ -160,17 +162,62 @@ Rectangle {
         }
     }
 
+    ListView {
+        id: categoryList
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: isAuthenticated ? 50 : 0
+        visible: isAuthenticated
+        orientation: ListView.Horizontal
+        model: [
+            { title: "Все", query: "" },
+            { title: "Музыка", query: "Музыка" },
+            { title: "Видеоигры", query: "Видеоигры" },
+            { title: "Новости", query: "Новости" },
+            { title: "Фильмы", query: "Фильмы" },
+            { title: "Спорт", query: "Спорт" }
+        ]
+        delegate: Rectangle {
+            width: categoryText.width + 30
+            height: 36
+            radius: 18
+            color: homePage.currentCategory === modelData.query ? "white" : "#222222"
+            anchors.verticalCenter: parent.verticalCenter
 
+            Item {
+                width: 8; height: 1 // margin filler
+            }
 
-    // Главный список видео
+            Text {
+                id: categoryText
+                text: modelData.title
+                color: homePage.currentCategory === modelData.query ? "black" : "white"
+                font.pixelSize: 14
+                anchors.centerIn: parent
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    if (homePage.currentCategory !== modelData.query) {
+                        homePage.currentCategory = modelData.query;
+                        homePage.refreshData();
+                    }
+                }
+            }
+        }
+    }
+
     ListView {
         id: mainList
-        anchors.fill: parent
+        anchors.top: categoryList.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         model: videosModel
         visible: !isLoading && !errorPanel.visible
         cacheBuffer: 1200
-
-
 
         delegate: VideoCard {
             modelData: model.modelData
@@ -180,8 +227,12 @@ Rectangle {
         onContentYChanged: {
             if (contentY >= (contentHeight - height * 2) && !isLoadingMore && nextPageToken !== "") {
                 isLoadingMore = true;
-                homePage.showBottomLoading = true; // Управляем флагом
-                ApiManager.getHomeVideos(nextPageToken);
+                homePage.showBottomLoading = true;
+                if (currentCategory === "") {
+                    ApiManager.getHomeVideos(nextPageToken);
+                } else {
+                    ApiManager.getHomeCategoryVideos(currentCategory, nextPageToken);
+                }
             }
         }
 
@@ -191,7 +242,6 @@ Rectangle {
             height: 60
             color: "black"
 
-            // --- ИСПРАВЛЕНИЕ: Привязываем visible к свойству-флагу ---
             visible: homePage.showBottomLoading
 
             Row {

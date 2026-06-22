@@ -10,11 +10,12 @@ Rectangle {
     property variant videoDetails: null
     property bool isPlaying: false
     property variant relatedVideos:[]
+    property variant commentsModel:[]
+    property variant firstComment: null
 
     property bool isSeeking: false
     property bool isLandscape: width > height
 
-    // Переменные для фоновой магии и перемотки
     property string currentVideoUrl: ""
     property int recoveryPosition: -1
     property int pendingSeekSeconds: 0
@@ -23,15 +24,12 @@ Rectangle {
     property int recoveryAttempts: 0
     property bool isVideoEnded: false
 
-
-
     property int uiPosition: 0
 
     Timer {
         id: uiTimer
-        interval: 500 // Обновляем интерфейс всего 2 раза в секунду
+        interval: 500
         repeat: true
-        // Таймер работает ТОЛЬКО когда видео играет и панель открыта
         running: videoPage.isPlaying && controlsOverlay.visible
         onTriggered: {
             if (videoLoader.item) {
@@ -52,19 +50,12 @@ Rectangle {
         target: SymbianApp
         onInBackground: {
             if (videoLoader.item && videoPage.isPlaying) {
-                console.log("УХОД В ФОН: Уничтожаем плеер...");
                 videoPage.recoveryPosition = videoLoader.item.position;
                 videoLoader.sourceComponent = undefined;
                 recreateTimer.start();
             }
         }
         onInFocus: {
-            if (videoLoader.item && isPlaying) {
-                console.log("ВОЗВРАТ ИЗ ФОНА: Пересоздаем плеер...");
-                //videoPage.recoveryPosition = videoLoader.item.position;
-                //videoLoader.sourceComponent = undefined;
-                //recreateTimer.start();
-            }
         }
     }
 
@@ -78,12 +69,12 @@ Rectangle {
     }
 
     Timer {
-        interval: 5000 // Каждые 5 секунд
+        interval: 5000
         repeat: true
         running: SymbianApp.foreground()
         onTriggered: {
             if (typeof SymbianApp !== "undefined") {
-                SymbianApp.keepScreenOn(); // Сбрасываем системный таймер гашения экрана
+                SymbianApp.keepScreenOn();
             }
         }
     }
@@ -98,20 +89,54 @@ Rectangle {
             for (var key in videoDetailsMap) {
                 temp[key] = videoDetailsMap[key];
             }
+
+            var initialQualities = [{
+                label: "360p (InnerTube)",
+                url: temp.video_url,
+                hasAudio: true
+            }];
+            temp["qualities"] = initialQualities;
+
             videoDetails = temp;
 
             HistoryManager.addToHistory({
-                                        "video_id": videoDetails.video_id,
-                                        "title": videoDetails.title,
-                                        "author": videoDetails.author,
-                                        "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
-        });
+                "video_id": videoDetails.video_id,
+                "title": videoDetails.title,
+                "author": videoDetails.author,
+                "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
+            });
 
-            videoPage.currentVideoUrl = videoDetails.video_url;
+            var base64Url = Qt.btoa(videoDetails.video_url);
+            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+
+            ApiManager.fetchAlternativeQualities(videoDetails.video_id);
+            ApiManager.getComments(videoDetails.video_id, "");
 
             videoPage.recoveryAttempts = 0;
             videoLoader.sourceComponent = undefined;
             recreateTimer.start();
+        }
+
+        onAlternativeQualitiesReady: {
+            if (videoDetails && videoId === videoDetails.video_id) {
+                var temp = {};
+                for (var k in videoDetails) temp[k] = videoDetails[k];
+                var q = temp["qualities"] || [];
+                for (var i = 0; i < qualities.length; i++) {
+                    q.push(qualities[i]);
+                }
+                temp["qualities"] = q;
+                videoDetails = temp;
+            }
+        }
+
+        onCommentsReady: {
+            videoPage.commentsModel = comments;
+            if (comments.length > 0) {
+                videoPage.firstComment = comments[0];
+            } else {
+                videoPage.firstComment = null;
+            }
         }
 
         onVideoExtraInfoReady: {
@@ -128,15 +153,15 @@ Rectangle {
         onRelatedVideosReady: {
             if (!videoPage.visible) return;
             relatedVideos = videos;
-            // Принудительно сбрасываем скролл
             mainList.contentY = 0;
         }
     }
 
-
-
     function changeQuality(newUrl) {
-        if (!videoDetails || currentVideoUrl === newUrl) return;
+        var base64Url = Qt.btoa(newUrl);
+        var wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+
+        if (!videoDetails || currentVideoUrl === wrappedUrl) return;
 
         var pos = 0;
         if (videoLoader.item) {
@@ -145,7 +170,7 @@ Rectangle {
         }
         videoPage.recoveryPosition = pos;
         videoPage.recoveryAttempts = 0;
-        videoPage.currentVideoUrl = newUrl;
+        videoPage.currentVideoUrl = wrappedUrl;
 
         videoLoader.sourceComponent = undefined;
         recreateTimer.start();
@@ -155,6 +180,8 @@ Rectangle {
         currentVideoId = videoId;
         videoDetails = null;
         relatedVideos =[];
+        commentsModel = [];
+        firstComment = null;
         videoPage.currentVideoUrl = "";
         videoLoader.sourceComponent = undefined;
         isPlaying = false;
@@ -163,7 +190,6 @@ Rectangle {
         ApiManager.getRelatedVideos(videoId, 0);
     }
 
-    // --- ШАБЛОН ПЛЕЕРА ---
     Component {
         id: videoComponent
         Video {
@@ -186,19 +212,7 @@ Rectangle {
             onStopped: { videoPage.isPlaying = false; videoPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
 
             onStatusChanged: {
-
-                var statusStr = "";
-                if (status === Video.Loading) statusStr = "Loading";
-                else if (status === Video.Loaded) statusStr = "Loaded (Ready to play)";
-                else if (status === Video.Stalled) statusStr = "Stalled (Network issue?)";
-                else if (status === Video.Buffering) statusStr = "Buffering";
-                else if (status === Video.EndOfMedia) statusStr = "EndOfMedia";
-                else if (status === Video.InvalidMedia) statusStr = "Invalid Media (Codec/SSL error)";
-
-                ApiManager.logDebug("Player Status: " + statusStr + " | Position: " + position);
-
                 if (status === Video.Loaded) {
-                    ApiManager.logDebug("Success: Player connected to stream. Duration: " + duration);
                     if (typeof VolumeKeys !== "undefined") {
                         VolumeKeys.volume = Config.persistentVolume * 100;
                     }
@@ -219,8 +233,6 @@ Rectangle {
             }
 
             onError: {
-                ApiManager.logDebug("!!! PLAYER ERROR: " + error + " | Message: " + errorString);
-
                 if (errorString.indexOf("-36") !== -1 && videoPage.recoveryAttempts < 3) {
                     videoPage.recoveryAttempts++;
                     videoPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
@@ -231,10 +243,6 @@ Rectangle {
                     videoPage.isPlaying = false;
                     videoPage.recoveryPosition = -1;
                 }
-            }
-
-            onSourceChanged: {
-                ApiManager.logDebug("Player source changed to: " + source);
             }
 
             function performSafeSeek(newPos) {
@@ -250,8 +258,10 @@ Rectangle {
                 position = newPos;
                 play();
 
-
                 if (!wasPlaying) videoPage.isSeeking = false;
+            }
+            Component.onCompleted: {
+                play();
             }
         }
     }
@@ -268,7 +278,6 @@ Rectangle {
         }
     }
 
-    // --- БЛОК КОНТЕЙНЕРА (ВЕРХНЯЯ ЧАСТЬ ЭКРАНА) ---
     Rectangle {
         id: playerContainer
         width: parent.width
@@ -280,11 +289,13 @@ Rectangle {
         Loader {
             id: videoLoader
             anchors.fill: parent
+            onLoaded: {
+                if (item) {
+                    item.play();
+                }
+            }
         }
 
-
-
-        // ИСПРАВЛЕНИЕ: Безопасные проверки на null для visible
         Rectangle {
             anchors.centerIn: parent; color: "#CC000000"; radius: 8; z: 10
             width: errorText.width + 40; height: errorText.height + 20
@@ -362,8 +373,8 @@ Rectangle {
                     id: fullscreenBtnItem
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 50; height: parent.height // Создаем огромную зону для пальца (50x40 пикселей)
-                    z: 10 // Гарантируем, что панель под ней не перехватит клик
+                    width: 50; height: parent.height
+                    z: 10
 
                     Image {
                         id: fullscreenBtn
@@ -379,16 +390,14 @@ Rectangle {
                             if (!videoLoader.item) return;
                             controlsTimer.restart();
 
-                            // Мгновенное переключение! Никаких пауз и черных экранов.
                             if (root.isFullscreen) {
-                                root.forceFullscreen = 1; // Выйти в окно
+                                root.forceFullscreen = 1;
                             } else {
-                                root.forceFullscreen = 2; // В полный экран
+                                root.forceFullscreen = 2;
                             }
                         }
                     }
                 }
-
 
                 MouseArea { anchors.fill: parent; z: -1; onClicked: controlsTimer.restart() }
 
@@ -401,7 +410,6 @@ Rectangle {
 
                 Text {
                     id: totalTimeText
-                    // СТАЛО:
                     anchors.right: fullscreenBtnItem.left; anchors.verticalCenter: parent.verticalCenter; anchors.rightMargin: 5
 
                     color: "white"; font.pixelSize: 14
@@ -456,27 +464,22 @@ Rectangle {
                     }
                 }
             }
-
-
-
         }
-
 
         Rectangle {
             id: volumeOsd
             width: 8
             height: 150
-            // Позиционируем слева или справа (выбрал слева для примера)
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             radius: 4
-            color: "#66000000" // Темный полупрозрачный фон
-            opacity: 0 // Скрыт по умолчанию
+            color: "#66000000"
+            opacity: 0
 
             Timer {
                 id: volumeOsdTimer
-                interval: 2000 // Исчезает через 2 секунды
+                interval: 2000
                 onTriggered: volumeFadeOut.start()
             }
 
@@ -496,24 +499,20 @@ Rectangle {
                 NumberAnimation { target: volumeOsd; property: "opacity"; to: 0.0; duration: 500 }
             }
 
-            // Белая полоска-индикатор уровня
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
                 radius: 4
                 color: "white"
-                // Вычисляем высоту в зависимости от громкости (0-100)
                 height: typeof VolumeKeys !== "undefined" ? (parent.height * (VolumeKeys.volume / 100.0)) : parent.height
 
-                // Добавляем плавность изменения самого уровня
                 Behavior on height {
                     NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
 
-        // ИСПРАВЛЕНИЕ: Безопасные проверки для спиннера
         SafeImage {
             id: spinner
             anchors.centerIn: parent; z: 100
@@ -525,11 +524,9 @@ Rectangle {
                 var st = videoLoader.item.status;
                 return (st === Video.Loading || st === Video.Buffering || st === Video.Stalled);
             }
-            NumberAnimation on rotation { from: 0; to: 360; duration: 1000; loops: Animation.Infinite; running: spinner.visible }
         }
     }
 
-    // --- ОСНОВНОЙ КОНТЕНТ (СПИСОК) ---
     ListView {
         id: mainList
         anchors.top: playerContainer.bottom
@@ -542,27 +539,23 @@ Rectangle {
         highlightMoveDuration: 0
         cacheBuffer: 1000
 
-        // --- ИСПРАВЛЕНИЕ: Четкая структура Header'а, чтобы ListView не путался ---
         header: Column {
             id: contentColumn
             width: mainList.width
             spacing: 0
 
-            // Название
             Item {
                 width: parent.width; height: titleText.height + 32
                 Text {
                     id: titleText; x: 16; y: 16; width: parent.width - 32
                     text: videoDetails ? (videoDetails["title"] || qsTr("Загрузка...")) : ""
                     color: "white"; font.pixelSize: 18; font.bold: true
-                    wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
+                    wrapMode: Text.WordWrap;
                 }
             }
 
-            // Просмотры
             Text { x: 16; text: videoDetails ? ((videoDetails["views"] || "0") + qsTr(" просмотров")) : ""; color: "gray"; font.pixelSize: 14 }
 
-            // Автор
             Item {
                 width: parent.width; height: 60
                 MouseArea {
@@ -583,42 +576,107 @@ Rectangle {
                         width: videoPage.width - 100
                         Text {
                             text: videoDetails ? (videoDetails["author"] || qsTr("Неизвестно")) : ""; color: "white"; font.pixelSize: 16; font.bold: true
-                            font.family: "Nokia Pure Text"; width: parent.width; elide: Text.ElideRight
+                            width: parent.width; elide: Text.ElideRight
                         }
-                        // Изменили логику отрисовки "подписчиков", чтобы не было дубляжей слов. API теперь возвращает готовую строку с текстом.
                         Text { text: videoDetails && videoDetails["subscriberCount"] ? videoDetails["subscriberCount"] : ""; color: "gray"; font.pixelSize: 12 }
                     }
                 }
             }
 
-            // Краткое описание
+            // Buttons (Like, Dislike, Share)
             Item {
-                width: parent.width; height: 96 // Отступы + высота (80 + 16)
+                width: parent.width; height: 60
+                Row {
+                    x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 12
+
+                    Rectangle {
+                        width: 100; height: 40; color: "#272727"; radius: 20
+                        Row {
+                            anchors.centerIn: parent; spacing: 8
+                            Image { source: "../Assets/player/like.png"; width: 20; height: 20 }
+                            Text { text: videoDetails ? (videoDetails["likes"] || qsTr("Лайк")) : qsTr("Лайк"); color: "white"; font.pixelSize: 14 }
+                        }
+                        MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "like") }
+                    }
+
+                    Rectangle {
+                        width: 60; height: 40; color: "#272727"; radius: 20
+                        Image { source: "../Assets/player/dislike.png"; width: 20; height: 20; anchors.centerIn: parent }
+                        MouseArea { anchors.fill: parent; onClicked: ApiManager.rateVideo(currentVideoId, "dislike") }
+                    }
+
+                    Rectangle {
+                        width: 120; height: 40; color: "#272727"; radius: 20
+                        Row {
+                            anchors.centerIn: parent; spacing: 8
+                            Image { source: "../Assets/player/send.png"; width: 20; height: 20 }
+                            Text { text: qsTr("Поделиться"); color: "white"; font.pixelSize: 14 }
+                        }
+                        MouseArea { anchors.fill: parent; onClicked: shareSheet.state = "visible" }
+                    }
+                }
+            }
+
+            Item {
+                width: parent.width; height: 96
                 Rectangle {
                     x: 16; width: parent.width - 32; height: 80
                     color: "#272727"; radius: 12; clip: true
                     Text {
                         x: 12; y: 12; width: parent.width - 24; height: 56
                         text: videoDetails ? (videoDetails["description"] || qsTr("Нет описания")) : ""
-                        color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; elide: Text.ElideRight; font.family: "Nokia Pure Text"
+                        color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; elide: Text.ElideRight;
                     }
                     MouseArea { anchors.fill: parent; onClicked: descriptionSheet.state = "visible" }
                 }
             }
 
-            // Заголовок похожих видео (Обернут в Item для стабильности высоты)
+            // Comments preview
+            Item {
+                width: parent.width; height: 110
+                visible: videoPage.firstComment !== null
+                Rectangle {
+                    x: 16; width: parent.width - 32; height: 94
+                    color: "#272727"; radius: 12; clip: true
+                    Column {
+                        anchors.fill: parent; anchors.margins: 12; spacing: 6
+                        Row {
+                            spacing: 8
+                            Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 14; font.bold: true }
+                            Text { color: "gray"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter; text: videoPage.firstComment ? videoPage.firstComment.publishedAt : "" }
+                        }
+                        Row {
+                            spacing: 8
+                            Rectangle {
+                                width: 24; height: 24; radius: 12; color: "#333"; clip: true
+                                SafeImage { anchors.fill: parent; source: videoPage.firstComment ? videoPage.firstComment.authorThumbnail : ""; fillMode: Image.PreserveAspectCrop }
+                            }
+                            Column {
+                                width: videoPage.width - 80
+                                Text { color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width; text: videoPage.firstComment ? videoPage.firstComment.author : "" }
+                                Text {
+                                    color: "white"; font.pixelSize: 13;
+                                    elide: Text.ElideRight; wrapMode: Text.WordWrap;
+                                    width: parent.width; height: 32; clip: true
+                                    text: videoPage.firstComment ? videoPage.firstComment.text : ""
+                                }
+                            }
+                        }
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" }
+                }
+            }
+
             Item {
                 width: parent.width; height: 40
                 Text {
                     x: 16; y: 8; text: qsTr("Похожие видео")
                     color: "white"; font.pixelSize: 18; font.bold: true
-                    font.family: "Nokia Pure Text"
                     visible: relatedVideos.length > 0
                 }
             }
         }
 
-        // Данные и делегат списка
         model: relatedVideos
         delegate: VideoCard {
             modelData: model.modelData
@@ -628,7 +686,6 @@ Rectangle {
         }
     }
 
-    // --- Шторка описания ---
     Rectangle {
         id: descriptionSheet
         anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
@@ -656,7 +713,7 @@ Rectangle {
                         Text {
                             id: descriptionText; width: parent.width
                             text: videoDetails ? (videoDetails["description"] || qsTr("Нет описания")) : ""
-                            color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap; font.family: "Nokia Pure Text"
+                            color: "white"; font.pixelSize: 16; wrapMode: Text.WordWrap;
                         }
                     }
                 }
@@ -685,13 +742,13 @@ Rectangle {
             id: qualityPanel
             width: parent.width; height: 280
             anchors.bottom: parent.bottom; color: "#282828"
-            MouseArea { anchors.fill: parent } // Блокируем клики сквозь панель
+            MouseArea { anchors.fill: parent }
             Item {
                 anchors.fill: parent; anchors.margins: 16
                 Column {
                     anchors.fill: parent; spacing: 10
                     Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                    Text { text: qsTr("Качество видео"); color: "white"; font.pixelSize: 18; font.bold: true; font.family: "Nokia Pure Text" }
+                    Text { text: qsTr("Качество видео"); color: "white"; font.pixelSize: 18; font.bold: true;  }
 
                     ListView {
                         width: parent.width; height: parent.height - 40
@@ -720,6 +777,93 @@ Rectangle {
                                     if (videoPage.isPlaying) controlsTimer.restart();
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: commentsSheet
+        anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
+        state: "hidden"
+        states:[
+            State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } },
+            State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } }
+        ]
+        transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+        MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "hidden" }
+
+        Rectangle {
+            id: commentsPanel
+            width: parent.width; height: root.height * 0.75
+            anchors.bottom: parent.bottom; color: "#282828"
+            MouseArea { anchors.fill: parent }
+
+            Column {
+                anchors.fill: parent; anchors.margins: 16; spacing: 10
+                Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
+                Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
+
+                ListView {
+                    width: parent.width; height: parent.height - 40
+                    model: videoPage.commentsModel
+                    clip: true
+                    spacing: 12
+                    delegate: Row {
+                        spacing: 10
+                        Rectangle {
+                            width: 36; height: 36; radius: 18; color: "#333"
+                            clip: true
+                            SafeImage { anchors.fill: parent; source: modelData.authorThumbnail; fillMode: Image.PreserveAspectCrop }
+                        }
+                        Column {
+                            width: parent.width - 46
+                            Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true }
+                            Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.WordWrap; width: parent.width }
+                            Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: shareSheet
+        anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 20
+        state: "hidden"
+        states:[
+            State { name: "visible"; PropertyChanges { target: sharePanel; y: root.height - sharePanel.height } },
+            State { name: "hidden"; PropertyChanges { target: sharePanel; y: root.height } }
+        ]
+        transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+        MouseArea { anchors.fill: parent; onClicked: shareSheet.state = "hidden" }
+
+        Rectangle {
+            id: sharePanel
+            width: parent.width; height: 180
+            anchors.bottom: parent.bottom; color: "#282828"
+            MouseArea { anchors.fill: parent }
+
+            Column {
+                anchors.fill: parent; anchors.margins: 16; spacing: 16
+                Text { text: qsTr("Поделиться"); color: "white"; font.pixelSize: 18; font.bold: true }
+
+                Rectangle {
+                    width: parent.width; height: 45; color: "#1F1F1F"; radius: 5
+                    Text { text: "https://youtu.be/" + currentVideoId; color: "white"; anchors.centerIn: parent; font.pixelSize: 14 }
+                }
+
+                Rectangle {
+                    width: parent.width; height: 45; color: "#007ACC"; radius: 5
+                    Text { text: qsTr("Скопировать ссылку"); color: "white"; anchors.centerIn: parent; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            ApiManager.copyToClipboard("https://youtu.be/" + currentVideoId);
+                            shareSheet.state = "hidden";
                         }
                     }
                 }

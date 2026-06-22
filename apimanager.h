@@ -8,6 +8,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDateTime>
+#include <QStringList>
 #include "qrimageprovider.h"
 
 class Config;
@@ -23,11 +24,17 @@ public:
 
     // Основные методы
     Q_INVOKABLE void getHomeVideos(const QString &pageToken = QString());
+    Q_INVOKABLE void getHomeCategoryVideos(const QString &category, const QString &pageToken = QString());
     Q_INVOKABLE void searchVideos(const QString &query);
     Q_INVOKABLE void getVideoInfo(const QString &videoId);
     Q_INVOKABLE void getRelatedVideos(const QString &videoId, int page);
     Q_INVOKABLE void getChannelVideos(const QString &author);
     Q_INVOKABLE void getShorts(const QString &sequenceToken = QString());
+    Q_INVOKABLE void getComments(const QString &videoId, const QString &continuationToken = QString());
+
+    // Работа со сторонними API
+    Q_INVOKABLE void fetchAlternativeQualities(const QString &videoId);
+    Q_INVOKABLE void copyToClipboard(const QString &text);
 
     // Восстановленные методы, работающие напрямую с Google/YouTube API
     Q_INVOKABLE void getSearchSuggestions(const QString &query);
@@ -38,7 +45,7 @@ public:
     Q_INVOKABLE void fetchServerList();
 
     // Действия (Лайки, Подписки)
-    Q_INVOKABLE void checkRating(const QString &videoId) { Q_UNUSED(videoId) } // Заглушка, лайки теперь в VideoInfo
+    Q_INVOKABLE void checkRating(const QString &videoId) { Q_UNUSED(videoId) }
     Q_INVOKABLE void checkSubscription(const QString &channelIdentifier) { Q_UNUSED(channelIdentifier) }
     Q_INVOKABLE void rateVideo(const QString &videoId, const QString &rating);
     Q_INVOKABLE void subscribeToChannel(const QString &channelIdentifier);
@@ -62,6 +69,9 @@ signals:
     void requestFailed(QString endpoint, QString errorMessage);
     void videoExtraInfoReady(QVariantMap extraDetails);
 
+    void alternativeQualitiesReady(QString videoId, QVariantList qualities);
+    void commentsReady(QVariantList comments, QString continuationToken);
+
 private slots:
     void onReplyFinished(QNetworkReply *reply);
 
@@ -69,6 +79,10 @@ private:
     void postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth = false);
     QVariantMap buildContext(const QString &clientName, const QString &clientVersion);
     QString getLocaleParams(bool firstParam = false);
+
+    QStringList m_pipedInstances;
+    QStringList m_yt2009Instances;
+    void requestPipedStreams(const QString &videoId);
 
     // Управление токенами OAuth
     QString getAccessToken();
