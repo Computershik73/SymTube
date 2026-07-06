@@ -13,22 +13,56 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDateTime>
+#include <QScriptEngine>
+#include <QScriptValue>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
+#include <QRegExp>
 
 // Константы OAuth для получения токена
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
 const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
+
+const QByteArray TV_CLIENT_VERSION = "7.20260114.12.00";
+const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
 
 ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent)
     : QObject(parent), m_config(config), m_qrProvider(qrProvider)
 {
     m_networkManager = new QNetworkAccessManager(this);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
+
+    // Загружаем кэшированный адрес и код base.js из настроек и диска
+    QSettings settings("SymTubeApp", "Settings");
+    m_cachedScriptUrl = settings.value("CachedPlayerScriptUrl", "").toString();
+
+    QFile file("C:/Data/SymTube_base_js.js");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        m_cachedScriptContent = in.readAll();
+        file.close();
+        logDebug("Loaded cached base.js from local storage.");
+
+        m_signatureTimestamp = extractSignatureTimestamp(m_cachedScriptContent);
+        if (m_signatureTimestamp > 0)
+            logDebug(QString("Extracted sts from cached base.js: %1").arg(m_signatureTimestamp));
+
+    }
 }
 
 ApiManager::~ApiManager() {}
 
 void ApiManager::copyToClipboard(const QString &text) {
     QApplication::clipboard()->setText(text);
+}
+
+int ApiManager::extractSignatureTimestamp(const QString &script) {
+    if (script.isEmpty()) return 0;
+    QRegExp rx("(?:signatureTimestamp|sts)\\s*:\\s*(\\d{5})");
+    if (rx.indexIn(script) >= 0) return rx.cap(1).toInt();
+    return 0;
 }
 
 void ApiManager::logDebug(const QString &msg) {
@@ -65,11 +99,7 @@ QVariantMap ApiManager::buildContext(const QString &clientName, const QString &c
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
 
     if (clientName == "TVHTML5") {
-        client["platform"] = "TV";
-        client["deviceMake"] = "Samsung";
-        client["deviceModel"] = "SmartTV";
-        client["osName"] = "Tizen";
-        client["osVersion"] = "5.0";
+        client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
     }
 
     QVariantMap context;
@@ -106,7 +136,18 @@ QString ApiManager::getAccessToken() {
 }
 
 void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth) {
-    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint + "?key=" + m_config->apiKey();
+    // Получаем токен ДО формирования URL
+    QString token;
+    if (requiresAuth) {
+        token = getAccessToken();
+    }
+
+    // С OAuth (Bearer) API-ключ передавать нельзя — он конфликтует с авторизацией
+    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint;
+    if (token.isEmpty()) {
+        url += "?key=" + m_config->apiKey();
+    }
+
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
 
@@ -118,18 +159,22 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         request.setRawHeader("x-youtube-client-name", "3");
         request.setRawHeader("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip");
     } else if (clientName == "TVHTML5") {
-        request.setRawHeader("x-youtube-client-name", "85");
-        request.setRawHeader("User-Agent", "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebkit/537.36");
+        request.setRawHeader("x-youtube-client-name", "7");   // было 85 — это другой клиент!
+        request.setRawHeader("x-youtube-client-version", TV_CLIENT_VERSION);
+        request.setRawHeader("User-Agent", TV_USER_AGENT);
     } else {
         request.setRawHeader("x-youtube-client-name", "1");
         request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
-    if (requiresAuth) {
-        QString token = getAccessToken();
-        if (!token.isEmpty()) {
-            request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-        }
+    if (!token.isEmpty()) {
+        request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
+
+    }
+
+    request.setRawHeader("Origin", "https://www.youtube.com");
+    if (!m_visitorData.isEmpty()) {
+        request.setRawHeader("X-Goog-Visitor-Id", m_visitorData.toUtf8());
     }
 
     bool success;
@@ -184,21 +229,21 @@ void ApiManager::getSearchSuggestions(const QString &query) {
 
 void ApiManager::getHistory() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEhistory";
     postInnertube("browse", payload, "History", true);
 }
 
 void ApiManager::getSubscriptions() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEchannels";
     postInnertube("browse", payload, "Subscriptions", true);
 }
 
 void ApiManager::getAccountInfo() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     QVariantMap accountReadMask;
     accountReadMask["returnOwner"] = true;
     payload["accountReadMask"] = accountReadMask;
@@ -259,7 +304,7 @@ void ApiManager::getHomeVideos(const QString &pageToken) {
         emit homeVideosReady(QVariantList(), "");
         return;
     }
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEwhat_to_watch";
     if (!pageToken.isEmpty()) payload["continuation"] = pageToken;
     postInnertube("browse", payload, "HomeVideos", true);
@@ -283,21 +328,53 @@ void ApiManager::searchVideos(const QString &query) {
 
 void ApiManager::getVideoInfo(const QString &videoId) {
     logDebug(">>> Requesting VideoInfo for ID: " + videoId);
+
+    if (m_signatureTimestamp > 0) {
+        // sts есть — можно сразу делать player-запрос
+        requestPlayer(videoId);
+    } else {
+        // base.js нет — СНАЧАЛА добываем его, потом player-запрос
+        logDebug("No sts available. Fetching watch page first...");
+        QUrl watchUrl("https://www.youtube.com/watch?v=" + videoId);
+        QNetworkRequest req(watchUrl);
+        req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+        QNetworkReply *watchReply = m_networkManager->get(req);
+        watchReply->setProperty("RequestType", "WatchPageFetch");
+        watchReply->setProperty("PendingVideoId", videoId);
+    }
+}
+
+void ApiManager::requestPlayer(const QString &videoId) {
+    QSettings settings("SymTubeApp", "Settings");
+    QString lang = settings.value("Language", "en_US").toString();
+    QStringList parts = lang.split("_");
+
     QVariantMap client;
-    client["clientName"] = "ANDROID";
-    client["clientVersion"] = "20.10.38";
-    client["androidSdkVersion"] = 30;
-    client["hl"] = "en";
-    client["gl"] = "US";
+    client["clientName"] = "TVHTML5";
+    client["clientVersion"] = TV_CLIENT_VERSION;
+    client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
+    client["hl"] = parts.size() > 0 ? parts[0] : "en";
+    client["gl"] = parts.size() > 1 ? parts[1] : "US";
+    if (!m_visitorData.isEmpty()) client["visitorData"] = m_visitorData;
 
     QVariantMap context;
     context["client"] = client;
 
+    // ГЛАВНОЕ: контекст воспроизведения с версией плеера
+    QVariantMap contentPlaybackContext;
+    contentPlaybackContext["html5Preference"] = "HTML5_PREF_WANTS";
+    contentPlaybackContext["signatureTimestamp"] = m_signatureTimestamp;
+    QVariantMap playbackContext;
+    playbackContext["contentPlaybackContext"] = contentPlaybackContext;
+
     QVariantMap payload;
     payload["context"] = context;
+    payload["playbackContext"] = playbackContext;
     payload["videoId"] = videoId;
-
-    postInnertube("player", payload, "VideoInfo");
+    payload["contentCheckOk"] = true;
+    payload["racyCheckOk"] = true;
+    m_lastRequestedVideoId = videoId;
+    postInnertube("player", payload, "VideoInfo", true);
 }
 
 void ApiManager::getRelatedVideos(const QString &videoId, int page) {
@@ -430,88 +507,88 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         emit alternativeQualitiesReady(videoId, qualities);
     }
     else if (requestType == "CommentsTokenFetch") {
-            QString token;
-            QList<QVariantMap> engagementPanels = enumerateObjectsWithKey(parsedJson, "engagementPanelSectionListRenderer");
-            foreach(QVariantMap panel, engagementPanels) {
-                if (panel.value("panelIdentifier").toString().contains("comments-section")) {
-                    QList<QVariantMap> cont = enumerateObjectsWithKey(panel, "continuationCommand");
+        QString token;
+        QList<QVariantMap> engagementPanels = enumerateObjectsWithKey(parsedJson, "engagementPanelSectionListRenderer");
+        foreach(QVariantMap panel, engagementPanels) {
+            if (panel.value("panelIdentifier").toString().contains("comments-section")) {
+                QList<QVariantMap> cont = enumerateObjectsWithKey(panel, "continuationCommand");
+                if (!cont.isEmpty()) {
+                    token = cont.first().value("token").toString();
+                    break;
+                }
+            }
+        }
+        if (token.isEmpty()) {
+            QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
+            foreach(QVariantMap section, itemSections) {
+                if (section.value("sectionIdentifier").toString() == "comment-item-section") {
+                    QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
                     if (!cont.isEmpty()) {
                         token = cont.first().value("token").toString();
                         break;
                     }
                 }
             }
-            if (token.isEmpty()) {
-                QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
-                foreach(QVariantMap section, itemSections) {
-                    if (section.value("sectionIdentifier").toString() == "comment-item-section") {
-                        QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
-                        if (!cont.isEmpty()) {
-                            token = cont.first().value("token").toString();
-                            break;
-                        }
-                    }
+        }
+
+        if (!token.isEmpty()) {
+            QVariantMap payload;
+            payload["context"] = buildContext("WEB", "2.20250101");
+            payload["continuation"] = token;
+            postInnertube("next", payload, "CommentsFetch");
+        } else {
+            emit commentsReady(QVariantList(), "");
+        }
+    }
+    else if (requestType == "CommentsFetch") {
+        QVariantList comments;
+        QString nextToken;
+
+        QList<QVariantMap> commentEntities = enumerateObjectsWithKey(parsedJson, "commentEntityPayload");
+        foreach(QVariantMap payload, commentEntities) {
+            QVariantMap c;
+            QVariantMap authorData = payload.value("author").toMap();
+            c["author"] = authorData.value("displayName").toString();
+            if (!c["author"].toString().startsWith("@")) c["author"] = "@" + c["author"].toString();
+
+            QVariantMap props = payload.value("properties").toMap();
+            c["publishedAt"] = props.value("publishedTime").toString();
+
+            QVariantMap contentObj = props.value("content").toMap();
+            if (contentObj.contains("content")) {
+                c["text"] = contentObj.value("content").toString();
+            } else if (contentObj.contains("runs")) {
+                QString textStr;
+                foreach(const QVariant &run, contentObj.value("runs").toList()) {
+                    textStr += run.toMap().value("text").toString();
                 }
+                c["text"] = textStr;
             }
 
-            if (!token.isEmpty()) {
-                QVariantMap payload;
-                payload["context"] = buildContext("WEB", "2.20250101");
-                payload["continuation"] = token;
-                postInnertube("next", payload, "CommentsFetch");
-            } else {
-                emit commentsReady(QVariantList(), "");
+            QVariantMap avatarObj = payload.value("avatar").toMap();
+            c["authorThumbnail"] = extractThumbnailUrl(avatarObj, "image");
+
+            comments.append(c);
+        }
+
+        if (comments.isEmpty()) {
+            QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
+            foreach(QVariantMap renderer, commentRenderers) {
+                QVariantMap c;
+                c["author"] = extractTextFromField(renderer, "authorText");
+                c["text"] = extractTextFromField(renderer, "contentText");
+                c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
+                c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
+                comments.append(c);
             }
         }
-    else if (requestType == "CommentsFetch") {
-           QVariantList comments;
-           QString nextToken;
 
-           QList<QVariantMap> commentEntities = enumerateObjectsWithKey(parsedJson, "commentEntityPayload");
-           foreach(QVariantMap payload, commentEntities) {
-               QVariantMap c;
-               QVariantMap authorData = payload.value("author").toMap();
-               c["author"] = authorData.value("displayName").toString();
-               if (!c["author"].toString().startsWith("@")) c["author"] = "@" + c["author"].toString();
-
-               QVariantMap props = payload.value("properties").toMap();
-               c["publishedAt"] = props.value("publishedTime").toString();
-
-               QVariantMap contentObj = props.value("content").toMap();
-               if (contentObj.contains("content")) {
-                   c["text"] = contentObj.value("content").toString();
-               } else if (contentObj.contains("runs")) {
-                   QString textStr;
-                   foreach(const QVariant &run, contentObj.value("runs").toList()) {
-                       textStr += run.toMap().value("text").toString();
-                   }
-                   c["text"] = textStr;
-               }
-
-               QVariantMap avatarObj = payload.value("avatar").toMap();
-               c["authorThumbnail"] = extractThumbnailUrl(avatarObj, "image");
-
-               comments.append(c);
-           }
-
-           if (comments.isEmpty()) {
-               QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
-               foreach(QVariantMap renderer, commentRenderers) {
-                   QVariantMap c;
-                   c["author"] = extractTextFromField(renderer, "authorText");
-                   c["text"] = extractTextFromField(renderer, "contentText");
-                   c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
-                   c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
-                   comments.append(c);
-               }
-           }
-
-           QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
-           if (!contCmd.isEmpty()) {
-               nextToken = contCmd.first().value("token").toString();
-           }
-           emit commentsReady(comments, nextToken);
-       }
+        QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
+        if (!contCmd.isEmpty()) {
+            nextToken = contCmd.first().value("token").toString();
+        }
+        emit commentsReady(comments, nextToken);
+    }
     else if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos" || requestType == "ChannelVideos" || requestType == "History" || requestType == "HomeCategoryVideos") {
         QVariantList outVideos;
         QStringList seenIds;
@@ -717,26 +794,208 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         }
     }
     else if (requestType == "VideoInfo") {
-        QVariantMap details;
+        logDebug("======================= [YOUTUBE RESPONSE] VIDEO INFO =======================");
+        logDebug("Raw Server JSON Response:\n" + QString::fromUtf8(responseData));
+        logDebug("============================================================================");
+
+
         QVariantMap root = parsedJson.toMap();
+
+        // Запоминаем visitorData для последующих запросов
+        QString vd = root.value("responseContext").toMap().value("visitorData").toString();
+        if (!vd.isEmpty()) m_visitorData = vd;
+
+        // Протух base.js/sts? Сервер просит "перезагрузить страницу" —
+        // обновляем base.js и повторяем запрос (один раз на видео)
+        QVariantMap playability = root.value("playabilityStatus").toMap();
+        QString status = playability.value("status").toString();
+
+
+
+        QVariantMap details;
+
         QVariantMap videoDetails = root.value("videoDetails").toMap();
+
+        QString vid = videoDetails.value("videoId").toString();
+        if (vid.isEmpty()) vid = m_lastRequestedVideoId;
+
+        if (status == "UNPLAYABLE" && m_stsRetriedFor != vid) {
+            m_stsRetriedFor = vid;
+            logDebug("UNPLAYABLE received. Refreshing base.js/sts and retrying...");
+            m_cachedScriptContent.clear();
+            m_signatureTimestamp = 0;
+            getVideoInfo(vid);   // уйдёт по ветке WatchPageFetch
+            reply->deleteLater();
+            return;
+        }
+
         details["video_id"] = videoDetails.value("videoId").toString();
         details["title"] = videoDetails.value("title").toString();
         details["author"] = videoDetails.value("author").toString();
         details["views"] = videoDetails.value("viewCount").toString();
 
+        logDebug(QString("Parsed Metadata -> ID: %1 | Title: %2")
+                 .arg(details["video_id"].toString())
+                 .arg(details["title"].toString()));
+
         QString directUrl = "";
         QVariantMap streamingData = root.value("streamingData").toMap();
         QVariantList formats = streamingData.value("formats").toList();
-        foreach (const QVariant &f, formats) {
-            QVariantMap format = f.toMap();
-            if (format.value("itag").toInt() == 18) {
-                directUrl = format.value("url").toString();
+
+        for (int i = 0; i < formats.size(); ++i) {
+            QVariantMap fmt = formats[i].toMap();
+            int itag = fmt.value("itag").toInt();
+            if (itag == 18) { // Ищем 360p
+                directUrl = fmt.value("url").toString();
                 break;
             }
         }
+
+        if (directUrl.isEmpty()) {
+            logDebug("WARNING: Direct streaming URL for itag 18 was NOT found in formats.");
+            emit requestFailed("VideoInfo", "Empty stream URL");
+            reply->deleteLater();
+            return;
+        }
+
         details["video_url"] = directUrl;
-        emit videoInfoReady(details);
+        m_pendingVideoDetails = details; // локальный бэкап
+
+        // Попытка дешифрации n-параметра через уже имеющийся локальный кэш base.js
+        bool decryptedOk = false;
+        if (!m_cachedScriptContent.isEmpty()) {
+            QString decryptedUrl = decryptNParameter(directUrl);
+            if (decryptedUrl != directUrl) {
+                logDebug("Decryption success using cached base.js.");
+                m_pendingVideoDetails["video_url"] = decryptedUrl;
+                decryptedOk = true;
+            }
+        }
+
+        if (decryptedOk) {
+            // Кэш сработал — запускаем видео мгновенно
+            m_stsRetriedFor.clear();
+            emit videoInfoReady(m_pendingVideoDetails);
+        } else {
+            // Кэша нет или он устарел: скачиваем watch-страницу для поиска актуального base.js
+            logDebug("Local cache is empty or outdated. Fetching watch page to locate base.js...");
+            QUrl watchUrl("https://www.youtube.com/watch?v=" + details["video_id"].toString());
+            QNetworkRequest req(watchUrl);
+            req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+            QNetworkReply *watchReply = m_networkManager->get(req);
+            watchReply->setProperty("RequestType", "WatchPageFetch");
+
+            // КРИТИЧЕСКИ ВАЖНО: Привязываем детали видео к конкретному сетевому запросу
+            watchReply->setProperty("PendingVideoDetails", details);
+        }
+    }
+    else if (requestType == "WatchPageFetch") {
+        logDebug("Watch page downloaded. Parsing HTML to locate player script...");
+        QString html = QString::fromUtf8(responseData);
+
+        // Полностью очищаем HTML-код от экранирующих слэшей JSON (\/ -> /)
+        html.replace("\\/", "/");
+
+        // Ищем путь начала скрипта и его окончание через строковый поиск
+        int index = html.indexOf("/s/player/");
+        if (index >= 0) {
+            int end = html.indexOf("base.js", index);
+            if (end >= 0) {
+                QString jsPath = html.mid(index, end - index + 7);
+                // jsPath вида: /s/player/4918c89a/player_es6.vflset/ru_RU/base.js
+                // QScriptEngine (Qt 4.7) не понимает ES6 — берём ES5-сборку того же плеера
+                QString jsUrl;
+                QRegExp idRx("/s/player/([0-9a-fA-F]+)/");
+                if (idRx.indexIn(jsPath) >= 0) {
+                    jsUrl = "https://www.youtube.com/s/player/" + idRx.cap(1)
+                            + "/player_es5.vflset/en_US/base.js";
+                } else {
+                    jsUrl = "https://www.youtube.com" + jsPath; // fallback как раньше
+                }
+                logDebug("Located player script URL (es5 variant): " + jsUrl);
+
+                // Начинаем скачивание самого скрипта
+                QNetworkRequest req(jsUrl);
+                req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+                QNetworkReply *scriptReply = m_networkManager->get(req);
+                scriptReply->setProperty("RequestType", "PlayerScriptDownload");
+                scriptReply->setProperty("JsUrl", jsUrl);
+
+                // Передаем привязанные детали видео дальше по цепочке асинхронных запросов
+                scriptReply->setProperty("PendingVideoDetails", reply->property("PendingVideoDetails"));
+
+                scriptReply->setProperty("PendingVideoId", reply->property("PendingVideoId"));
+            } else {
+                logDebug("Error: 'base.js' string not found after '/s/player/' index!");
+                QString pendingId = reply->property("PendingVideoId").toString();
+                if (!pendingId.isEmpty()) {
+                    // preflight провалился — честно сообщаем об ошибке
+                    emit requestFailed("VideoInfo", "base.js not found");
+                } else {
+                    emit videoInfoReady(reply->property("PendingVideoDetails").toMap());
+                }
+            }
+        } else {
+            logDebug("Error: '/s/player/' string not found in watch page HTML!");
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                emit requestFailed("VideoInfo", "player script not found");
+            } else {
+                emit videoInfoReady(reply->property("PendingVideoDetails").toMap());
+            }
+        }
+    }
+    else if (requestType == "PlayerScriptDownload") {
+        QString jsUrl = reply->property("JsUrl").toString();
+
+        // Потокобезопасно извлекаем привязанные детали именно этого видео
+        QVariantMap pendingDetails = reply->property("PendingVideoDetails").toMap();
+
+        if (reply->error() == QNetworkReply::NoError && !responseData.isEmpty()) {
+            m_cachedScriptContent = QString::fromUtf8(responseData);
+            m_cachedScriptUrl = jsUrl;
+
+            // Сохраняем на диск C:
+            QDir dir;
+            dir.mkpath("C:/Data");
+            QFile file("C:/Data/SymTube_base_js.js");
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&file);
+                out << m_cachedScriptContent;
+                file.close();
+            }
+
+            QSettings settings("SymTubeApp", "Settings");
+            settings.setValue("CachedPlayerScriptUrl", jsUrl);
+            logDebug("base.js cached successfully.");
+
+            m_signatureTimestamp = extractSignatureTimestamp(m_cachedScriptContent);
+            logDebug(QString("Fresh sts extracted: %1").arg(m_signatureTimestamp));
+
+            // Если это был preflight перед player-запросом — выполняем его теперь
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                requestPlayer(pendingId);
+                reply->deleteLater();
+                return;
+            }
+
+            // Расшифровываем отложенное видео
+            QString directUrl = pendingDetails["video_url"].toString();
+            QString decryptedUrl = decryptNParameter(directUrl);
+            pendingDetails["video_url"] = decryptedUrl;
+            m_stsRetriedFor.clear();
+            emit videoInfoReady(pendingDetails);
+        } else {
+            logDebug("Failed to download player script: " + reply->errorString());
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                emit requestFailed("VideoInfo", "Failed to download player script");
+            } else {
+                m_stsRetriedFor.clear();
+                emit videoInfoReady(pendingDetails);
+            }
+        }
     }
     else if (requestType == "Shorts") {
         QVariantList outShorts;
@@ -937,4 +1196,159 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 void ApiManager::setProxyPort(quint16 port)
 {
     m_proxyPort = port;
+}
+
+QString ApiManager::extractNFunctionExpression(const QString &playerScript) {
+    if (playerScript.isEmpty()) return "";
+
+    // Шаблон 1
+    QRegExp rx1("\\.get\\(\"n\"\\)\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    if (rx1.indexIn(playerScript) >= 0) {
+        QString name = rx1.cap(1);
+        QString idx = rx1.cap(2);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 2
+    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    if (rx2.indexIn(playerScript) >= 0) {
+        QString name = rx2.cap(1);
+        QString idx = rx2.cap(2);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 3 (с обратной ссылкой \\1 на имя переменной)
+    QRegExp rx3("\\b([a-zA-Z_\\$][\\w\\$]*)&&\\(\\1=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(\\1\\)");
+    if (rx3.indexIn(playerScript) >= 0) {
+        QString name = rx3.cap(2);
+        QString idx = rx3.cap(3);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 4 (оптимизированный под QRegExp поиск внутри функции)
+    QRegExp rx4("([a-zA-Z_\\$][\\w\\$]*)=function\\([a-zA-Z_\\$][\\w\\$]*\\)\\{(?=[^\\}]*\\.split\\(\"\"\\))(?=[^\\}]*\\.join\\(\"\"\\))");
+    if (rx4.indexIn(playerScript) >= 0) {
+        return rx4.cap(1);
+    }
+
+    return "";
+}
+
+QString ApiManager::buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression) {
+    // Внедряем глобальную функцию-обертку __yt_nsig во внешний скоуп base.js
+    QString exportScript = QString(";__yt_nsig=function(n){return %1(n);};").arg(nFunctionExpression);
+
+    int closingIndex = playerScript.lastIndexOf(";})(_yt_player);");
+    if (closingIndex >= 0) {
+        return QString(playerScript).insert(closingIndex, exportScript);
+    }
+
+    closingIndex = playerScript.lastIndexOf("})(_yt_player);");
+    if (closingIndex >= 0) {
+        return QString(playerScript).insert(closingIndex, exportScript);
+    }
+
+    return playerScript + exportScript;
+}
+
+
+
+QString ApiManager::decryptNParameter(const QString &rawUrl) {
+    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
+    logDebug("Input URL: " + rawUrl);
+
+    QUrl qurl(rawUrl);
+    QList<QPair<QString, QString> > queryItems = qurl.queryItems();
+
+    QString originalN;
+    int nIndex = -1;
+    for (int i = 0; i < queryItems.size(); ++i) {
+        if (queryItems[i].first == "n") {
+            originalN = queryItems[i].second;
+            nIndex = i;
+            break;
+        }
+    }
+
+    if (originalN.isEmpty()) {
+        logDebug("Result: No 'n' parameter found in query items. Decryption skipped.");
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+
+    logDebug("Extracted original 'n' value: " + originalN);
+
+    if (m_cachedScriptContent.isEmpty()) {
+        logDebug("Error: Cached player script content (base.js) is empty!");
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+    logDebug(QString("Player script available in cache (size: %1 characters)").arg(m_cachedScriptContent.length()));
+
+    QString nFunctionExpression = extractNFunctionExpression(m_cachedScriptContent);
+    if (nFunctionExpression.isEmpty()) {
+        logDebug("Error: Failed to find n-scramble function name in player script via regex.");
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+    logDebug("Regex match: Found n-scramble function expression -> " + nFunctionExpression);
+
+    logDebug("Injecting '__yt_nsig' wrapper function into base.js...");
+    QString compiledScript = buildPlayerScriptWithNExport(m_cachedScriptContent, nFunctionExpression);
+
+    logDebug("Evaluating script via QScriptEngine...");
+    QScriptEngine engine;
+    engine.evaluate(compiledScript);
+    if (engine.hasUncaughtException()) {
+        logDebug("QScriptEngine Compilation Failure: " + engine.uncaughtException().toString());
+        logDebug("Uncaught exception at line: " + QString::number(engine.uncaughtExceptionLineNumber()));
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+    logDebug("QScriptEngine: Compilation successful.");
+
+    QScriptValue nSigFunc = engine.globalObject().property("__yt_nsig");
+    if (!nSigFunc.isFunction()) {
+        logDebug("QScriptEngine Error: '__yt_nsig' is not defined as a valid function in global scope.");
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+
+    logDebug("Calling __yt_nsig(" + originalN + ")...");
+    QScriptValueList args;
+    args << originalN;
+    QScriptValue result = nSigFunc.call(QScriptValue(), args);
+
+    if (engine.hasUncaughtException()) {
+        logDebug("QScriptEngine Runtime Failure: " + engine.uncaughtException().toString());
+        logDebug("Uncaught exception at line: " + QString::number(engine.uncaughtExceptionLineNumber()));
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+
+    QString decryptedN = result.toString();
+    if (decryptedN.isEmpty() || decryptedN == originalN) {
+        logDebug(QString("N-Decrypt Failure: Returned value is %1")
+                 .arg(decryptedN.isEmpty() ? "empty" : "identical to original"));
+        logDebug("------------------------------------------------------------------------");
+        return rawUrl;
+    }
+
+    logDebug(QString("N-Decrypt Success: Transformed '%1' -> '%2'").arg(originalN).arg(decryptedN));
+
+    // Заменяем оригинальное значение
+    if (nIndex >= 0) {
+        queryItems[nIndex].second = decryptedN;
+    } else {
+        queryItems.append(qMakePair(QString("n"), decryptedN));
+    }
+    qurl.setQueryItems(queryItems);
+
+    QString finalUrl = qurl.toEncoded();
+    logDebug("Reconstructed final URL: " + finalUrl);
+    logDebug("------------------------------------------------------------------------");
+    return finalUrl;
 }

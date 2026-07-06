@@ -5,6 +5,10 @@
 #include <QDebug>
 #include <QStringList>
 
+const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
+
+
 LocalHttpProxy::~LocalHttpProxy()
 {
 }
@@ -70,9 +74,8 @@ void LocalHttpProxy::onClientReadyRead()
 
     // СТРОГОЕ СООТВЕТСТВИЕ ИДЕАЛЬНОМУ КЛИЕНТУ (UWP / NSPlayer)
     proxyRequest.setRawHeader("Host", targetUrl.host().toUtf8());
-    proxyRequest.setRawHeader("User-Agent", "NSPlayer/12.00.15254.0603 WMFSDK/12.00.15254.0603");
+    proxyRequest.setRawHeader("User-Agent", TV_USER_AGENT);
     proxyRequest.setRawHeader("Accept", "*/*");
-    proxyRequest.setRawHeader("GetContentFeatures.DLNA.ORG", "1");
     proxyRequest.setRawHeader("Accept-Language", "ru-RU,en,*");
     proxyRequest.setRawHeader("Connection", "Keep-Alive");
 

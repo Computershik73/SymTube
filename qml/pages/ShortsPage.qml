@@ -24,6 +24,12 @@ Rectangle {
 
     property int uiPosition: 0
 
+    Binding {
+        target: CompositorFix
+        property: "active"
+        value: shortsPage.isPlaying
+    }
+
     Timer {
         id: uiTimer
         interval: 500

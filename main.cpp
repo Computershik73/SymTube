@@ -18,6 +18,8 @@
 #include "roundedimageprovider.h"
 #include "translationmanager.h"
 #include <QFile>
+#include "compositornudger.h"
+#include "volumekeysobserver.h"
 
 #if defined(SYMBIAN) || defined(Q_OS_SYMBIAN)
 #include <e32std.h>
@@ -67,8 +69,10 @@ int main(int argc, char *argv[])
     ApiManager apiManager(&config, qrProvider);
     HistoryManager historyManager;
     TranslationManager translationManager;
+    VolumeKeysObserver volumeKeys;
 
     QmlApplicationViewer view;
+    CompositorNudger *nudger = new CompositorNudger(view.viewport(), &app);
 
     view.engine()->addImageProvider(QLatin1String("qr"), qrProvider);
     view.engine()->addImageProvider(QLatin1String("rounded"), new RoundedImageProvider());
@@ -84,11 +88,13 @@ int main(int argc, char *argv[])
     view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
     QDeclarativeContext *context = view.rootContext();
+    context->setContextProperty("CompositorFix", nudger);
     context->setContextProperty("Config", &config);
     context->setContextProperty("ApiManager", &apiManager);
     context->setContextProperty("HistoryManager", &historyManager);
     context->setContextProperty("SymbianApp", &app);
     context->setContextProperty("TranslationManager", &translationManager);
+    context->setContextProperty("VolumeKeys", &volumeKeys);
 
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));
 

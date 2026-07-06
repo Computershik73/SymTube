@@ -8,6 +8,7 @@
 #include <QEventLoop>
 #include <QDebug>
 #include <QMutex>
+#include <QTimer>
 
 // Глобальный мьютекс для сериализации сетевых запросов.
 // Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
@@ -39,32 +40,35 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
     // 2. Скачивание изображения (в фоновом потоке от QML)
     if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
 
-        // ВАЖНО: Блокируем остальные потоки.
-        // Пока скачивается одна картинка, другие ждут в очереди, не ломая OpenSSL.
         s_networkMutex.lock();
 
-        // Создаем менеджер на стеке. Он будет безопасно уничтожен в конце блока.
-        QNetworkAccessManager manager;
-        manager.setParent(0);
-        QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
-        QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
-        reply->ignoreSslErrors();
+            QNetworkAccessManager manager;
+            manager.setParent(0);
+            QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
+            QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
+            reply->ignoreSslErrors();
 
-        // Ждем завершения скачивания именно этой картинки
-        QEventLoop loop;
-        QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-        loop.exec();
+            // Предохранитель: прерываем ожидание, если картинка не скачалась за 5 секунд
+            QEventLoop loop;
+            QTimer timeoutTimer;
+            timeoutTimer.setSingleShot(true);
+            QObject::connect(&timeoutTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
+            QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+            timeoutTimer.start(5000);
 
-        if (reply->error() == QNetworkReply::NoError) {
-            originalImage.loadFromData(reply->readAll());
-        }
+            loop.exec();
 
-        // ЖЕСТКОЕ удаление: отключаем сигналы и удаляем объект ответа
-        // Это предотвращает накопление "мусора" в памяти потока при быстром скролле
-        reply->disconnect();
-        delete reply;
+            if (reply->isRunning()) {
+                reply->abort();
+            } else if (reply->error() == QNetworkReply::NoError) {
+                originalImage.loadFromData(reply->readAll());
+            }
 
-        s_networkMutex.unlock(); // Освобождаем очередь для следующей картинки
+            reply->disconnect();
+            delete reply;
+
+            s_networkMutex.unlock();
+
 
     } else if (decodedId.startsWith("qrc:/")) {
         originalImage.load(":" + decodedId.mid(4));

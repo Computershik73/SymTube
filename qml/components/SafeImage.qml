@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 
 Image {
     id: root
@@ -7,7 +7,7 @@ Image {
     property string targetSource: ""
     property int retryCount: 0
     property int maxRetries: 3
-    
+    asynchronous: true
     source: targetSource
     
     // Используем таймер для задержки повторного запроса

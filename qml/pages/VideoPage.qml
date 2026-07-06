@@ -26,6 +26,12 @@ Rectangle {
 
     property int uiPosition: 0
 
+    Binding {
+        target: CompositorFix
+        property: "active"
+        value: videoPage.isPlaying
+    }
+
     Timer {
         id: uiTimer
         interval: 500

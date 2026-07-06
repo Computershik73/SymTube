@@ -99,6 +99,22 @@ private:
     QNetworkAccessManager *m_networkManager;
     Config *m_config;
     QrImageProvider *m_qrProvider;
+
+    QString m_cachedScriptUrl;
+        QString m_cachedScriptContent;
+        QVariantMap m_pendingVideoDetails;
+
+        // Вспомогательные методы дешифрации n-параметра
+        QString extractNFunctionExpression(const QString &playerScript);
+        QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
+        QString decryptNParameter(const QString &rawUrl);
+
+        void requestPlayer(const QString &videoId);
+            int extractSignatureTimestamp(const QString &script);
+            int m_signatureTimestamp;
+            QString m_visitorData;
+            QString m_stsRetriedFor; // защита от зацикливания ретрая
+            QString m_lastRequestedVideoId;
 };
 
 #endif // APIMANAGER_H

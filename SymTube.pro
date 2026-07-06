@@ -2,7 +2,7 @@
 folder_01.source = qml
 folder_01.target = .
 DEPLOYMENTFOLDERS = folder_01
-QT += core gui network declarative
+QT += core gui network declarative script
 CONFIG += mobility
 MOBILITY += multimedia
 
@@ -71,7 +71,8 @@ HEADERS += \
     volumekeysobserver.h \
     qsymbianapplication.h \
     translationmanager.h \
-    localhttpproxy.h
+    localhttpproxy.h \
+    compositornudger.h
 
 SOURCES += \
     main.cpp \
@@ -84,7 +85,8 @@ SOURCES += \
     volumekeysobserver.cpp \
     qsymbianapplication.cpp \
     translationmanager.cpp \
-    localhttpproxy.cpp
+    localhttpproxy.cpp \
+    compositornudger.cpp
 
 TRANSLATIONS += \
     lang/SymTube_ru_RU.ts \
