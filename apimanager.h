@@ -115,6 +115,11 @@ private:
             QString m_visitorData;
             QString m_stsRetriedFor; // защита от зацикливания ретрая
             QString m_lastRequestedVideoId;
+
+            QString extractFunctionSource(const QString &script, const QString &name);
+                QString extractGlobalDefinition(const QString &script, const QString &name);
+                QString resolveDependency(const QString &script, const QString &name);
+                void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
 };
 
 #endif // APIMANAGER_H

@@ -160,6 +160,29 @@ volumekeysobserver.h
 <files>
 This section contains the contents of the repository's files.
 
+<file path=".gitattributes">
+# Auto detect text files and perform LF normalization
+* text=auto
+</file>
+
+<file path="ABLD.BAT">
+@ECHO OFF
+
+REM Bldmake-generated batch file - ABLD.BAT
+REM ** DO NOT EDIT **
+
+perl -S ABLD.PL "\Users\User\Documents\GitHub\SymTube\\" %1 %2 %3 %4 %5 %6 %7 %8 %9
+if errorlevel==1 goto CheckPerl
+goto End
+
+:CheckPerl
+perl -v >NUL
+if errorlevel==1 echo Is Perl, version 5.003_07 or later, installed?
+goto End
+
+:End
+</file>
+
 <file path="compositornudger.cpp">
 #include "compositornudger.h"
 #include <QWidget>
@@ -248,29 +271,6 @@ private:
 };
 
 #endif // COMPOSITORNUDGER_H
-</file>
-
-<file path=".gitattributes">
-# Auto detect text files and perform LF normalization
-* text=auto
-</file>
-
-<file path="ABLD.BAT">
-@ECHO OFF
-
-REM Bldmake-generated batch file - ABLD.BAT
-REM ** DO NOT EDIT **
-
-perl -S ABLD.PL "\Users\User\Documents\GitHub\SymTube\\" %1 %2 %3 %4 %5 %6 %7 %8 %9
-if errorlevel==1 goto CheckPerl
-goto End
-
-:CheckPerl
-perl -v >NUL
-if errorlevel==1 echo Is Perl, version 5.003_07 or later, installed?
-goto End
-
-:End
 </file>
 
 <file path="historymanager.h">
@@ -3168,171 +3168,6 @@ void HistoryManager::clearHistory()
 }
 </file>
 
-<file path="localhttpproxy.cpp">
-#include "localhttpproxy.h"
-#include <QNetworkRequest>
-#include <QNetworkProxy>
-#include <QUrl>
-#include <QDebug>
-#include <QStringList>
-
-LocalHttpProxy::~LocalHttpProxy()
-{
-}
-
-LocalHttpProxy::LocalHttpProxy(QObject *parent) : QObject(parent)
-{
-    m_server = new QTcpServer(this);
-    m_networkManager = new QNetworkAccessManager(this);
-
-    // 1. НАСТРАИВАЕМ ВНЕШНИЙ ПРОКСИ (Чтобы прокси на телефоне мог обойти блокировку)
-   /* QNetworkProxy extProxy;
-    extProxy.setType(QNetworkProxy::HttpProxy);
-    extProxy.setHostName("192.168.1.183"); // IP вашего ПК
-    extProxy.setPort(8890);                // Порт вашего прокси*/
-    //m_networkManager->setProxy(extProxy);
-}
-
-bool LocalHttpProxy::start()
-{
-    connect(m_server, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
-
-    // 2. СЛУШАЕМ НА ВСЕХ АДРЕСАХ (Иногда 127.0.0.1 на Symbian глючит)
-    // Попробуем порт 8080 или 0 для автовыбора
-    return m_server->listen(QHostAddress::Any, 8080);
-}
-
-void LocalHttpProxy::onNewConnection()
-{
-    qDebug() << "Proxy: New connection incoming!";
-    QTcpSocket *clientSocket = m_server->nextPendingConnection();
-    if (clientSocket) {
-        connect(clientSocket, SIGNAL(readyRead()), this, SLOT(onClientReadyRead()));
-        connect(clientSocket, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
-    }
-}
-
-void LocalHttpProxy::onClientReadyRead()
-{
-    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!clientSocket || m_connections.contains(clientSocket)) return;
-
-    QByteArray requestData = clientSocket->readAll();
-    QString requestString(requestData);
-
-    // Ищем наш параметр b64url
-    int b64Index = requestString.indexOf("b64url=");
-    if (b64Index == -1) return;
-
-    int spaceIndex = requestString.indexOf(" ", b64Index);
-    QByteArray encodedUrl = requestString.mid(b64Index + 7, spaceIndex - (b64Index + 7)).toUtf8();
-
-    // Декодируем обратно в чистую ссылку Google
-    QByteArray rawUrl = QByteArray::fromBase64(encodedUrl);
-    QString realUrl = QString::fromUtf8(rawUrl);
-
-    if (realUrl.isEmpty()) return;
-
-    qDebug() << "Proxy fixing URL and forwarding to Google Video...";
-
-    // Используем fromEncoded, чтобы Qt не пытался "умничать" с процентами
-    QUrl targetUrl = QUrl::fromEncoded(rawUrl);
-    QNetworkRequest proxyRequest(targetUrl);
-
-    // СТРОГОЕ СООТВЕТСТВИЕ ИДЕАЛЬНОМУ КЛИЕНТУ (UWP / NSPlayer)
-    proxyRequest.setRawHeader("Host", targetUrl.host().toUtf8());
-    proxyRequest.setRawHeader("User-Agent", "NSPlayer/12.00.15254.0603 WMFSDK/12.00.15254.0603");
-    proxyRequest.setRawHeader("Accept", "*/*");
-    proxyRequest.setRawHeader("GetContentFeatures.DLNA.ORG", "1");
-    proxyRequest.setRawHeader("Accept-Language", "ru-RU,en,*");
-    proxyRequest.setRawHeader("Connection", "Keep-Alive");
-
-    // Копируем Range или ставим по умолчанию
-    bool rangeFound = false;
-    QStringList lines = requestString.split("\r\n");
-    foreach (const QString &line, lines) {
-        if (line.startsWith("Range:", Qt::CaseInsensitive)) {
-            proxyRequest.setRawHeader("Range", line.mid(6).trimmed().toUtf8());
-            rangeFound = true;
-            break;
-        }
-    }
-    if (!rangeFound) {
-        proxyRequest.setRawHeader("Range", "bytes=0-");
-    }
-
-    QNetworkReply *proxyReply = m_networkManager->get(proxyRequest);
-    m_connections.insert(clientSocket, proxyReply);
-
-    connect(proxyReply, SIGNAL(finished()), this, SLOT(onProxyReplyFinished()));
-    connect(proxyReply, SIGNAL(readyRead()), this, SLOT(onProxyReadyRead()));
-    connect(proxyReply, SIGNAL(metaDataChanged()), this, SLOT(onProxyHeadersReceived()));
-}
-
-
-
-void LocalHttpProxy::onProxyHeadersReceived()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (!clientSocket) return;
-
-    QByteArray headers;
-    int statusCode = proxyReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    QString reason = proxyReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-
-    headers.append(QString("HTTP/1.1 %1 %2\r\n").arg(statusCode).arg(reason).toUtf8());
-
-    foreach(const QNetworkReply::RawHeaderPair& pair, proxyReply->rawHeaderPairs()) {
-        QString hName = QString(pair.first).toLower();
-        // Пропускаем специфичные заголовки Google, отдаем только нужные для медиа
-        if (hName == "content-type" || hName == "content-length" || hName == "content-range" || hName == "accept-ranges") {
-            headers.append(pair.first + ": " + pair.second + "\r\n");
-        }
-    }
-    headers.append("\r\n");
-    clientSocket->write(headers);
-}
-
-void LocalHttpProxy::onProxyReadyRead()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (clientSocket && clientSocket->isOpen()) {
-        clientSocket->write(proxyReply->readAll());
-    }
-}
-
-void LocalHttpProxy::onProxyReplyFinished()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (clientSocket) {
-        clientSocket->disconnectFromHost();
-    }
-    proxyReply->deleteLater();
-}
-
-void LocalHttpProxy::onClientDisconnected()
-{
-    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!clientSocket) return;
-
-    QNetworkReply *proxyReply = m_connections.take(clientSocket);
-    if (proxyReply) {
-        proxyReply->abort();
-        proxyReply->deleteLater();
-    }
-    clientSocket->deleteLater();
-}
-</file>
-
 <file path="qml/components/CustomComboBox.qml">
 import QtQuick 1.0
 
@@ -3457,47 +3292,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-}
-</file>
-
-<file path="qml/components/SafeImage.qml">
-import QtQuick 1.0
-
-Image {
-    id: root
-    
-    // Свойство для хранения "реального" URL, который мы хотим загрузить
-    property string targetSource: ""
-    property int retryCount: 0
-    property int maxRetries: 3
-    
-    source: targetSource
-    
-    // Используем таймер для задержки повторного запроса
-    Timer {
-        id: retryTimer
-        interval: 2000 // 2 секунды перед повтором
-        repeat: false
-        onTriggered: {
-            // "Передергиваем" source, чтобы QML снова полез в сеть
-            root.source = "";
-            root.source = root.targetSource;
-        }
-    }
-    
-    onStatusChanged: {
-        if (status === Image.Error) {
-            if (retryCount < maxRetries) {
-                retryCount++;
-                console.log("[SafeImage] Ошибка загрузки, попытка " + retryCount + "...");
-                retryTimer.start();
-            } else {
-                console.log("[SafeImage] Исчерпаны все попытки загрузки.");
-            }
-        } else if (status === Image.Ready) {
-            retryCount = 0; // Сбрасываем счетчик при успехе
         }
     }
 }
@@ -4003,6 +3797,215 @@ private:
 </TS>
 </file>
 
+<file path="localhttpproxy.cpp">
+#include "localhttpproxy.h"
+#include <QNetworkRequest>
+#include <QNetworkProxy>
+#include <QUrl>
+#include <QDebug>
+#include <QStringList>
+
+const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
+
+
+LocalHttpProxy::~LocalHttpProxy()
+{
+}
+
+LocalHttpProxy::LocalHttpProxy(QObject *parent) : QObject(parent)
+{
+    m_server = new QTcpServer(this);
+    m_networkManager = new QNetworkAccessManager(this);
+
+    // 1. НАСТРАИВАЕМ ВНЕШНИЙ ПРОКСИ (Чтобы прокси на телефоне мог обойти блокировку)
+   /* QNetworkProxy extProxy;
+    extProxy.setType(QNetworkProxy::HttpProxy);
+    extProxy.setHostName("192.168.1.183"); // IP вашего ПК
+    extProxy.setPort(8890);                // Порт вашего прокси*/
+    //m_networkManager->setProxy(extProxy);
+}
+
+bool LocalHttpProxy::start()
+{
+    connect(m_server, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
+
+    // 2. СЛУШАЕМ НА ВСЕХ АДРЕСАХ (Иногда 127.0.0.1 на Symbian глючит)
+    // Попробуем порт 8080 или 0 для автовыбора
+    return m_server->listen(QHostAddress::Any, 8080);
+}
+
+void LocalHttpProxy::onNewConnection()
+{
+    qDebug() << "Proxy: New connection incoming!";
+    QTcpSocket *clientSocket = m_server->nextPendingConnection();
+    if (clientSocket) {
+        connect(clientSocket, SIGNAL(readyRead()), this, SLOT(onClientReadyRead()));
+        connect(clientSocket, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
+    }
+}
+
+void LocalHttpProxy::onClientReadyRead()
+{
+    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
+    if (!clientSocket || m_connections.contains(clientSocket)) return;
+
+    QByteArray requestData = clientSocket->readAll();
+    QString requestString(requestData);
+
+    // Ищем наш параметр b64url
+    int b64Index = requestString.indexOf("b64url=");
+    if (b64Index == -1) return;
+
+    int spaceIndex = requestString.indexOf(" ", b64Index);
+    QByteArray encodedUrl = requestString.mid(b64Index + 7, spaceIndex - (b64Index + 7)).toUtf8();
+
+    // Декодируем обратно в чистую ссылку Google
+    QByteArray rawUrl = QByteArray::fromBase64(encodedUrl);
+    QString realUrl = QString::fromUtf8(rawUrl);
+
+    if (realUrl.isEmpty()) return;
+
+    qDebug() << "Proxy fixing URL and forwarding to Google Video...";
+
+    // Используем fromEncoded, чтобы Qt не пытался "умничать" с процентами
+    QUrl targetUrl = QUrl::fromEncoded(rawUrl);
+    QNetworkRequest proxyRequest(targetUrl);
+
+    // СТРОГОЕ СООТВЕТСТВИЕ ИДЕАЛЬНОМУ КЛИЕНТУ (UWP / NSPlayer)
+    proxyRequest.setRawHeader("Host", targetUrl.host().toUtf8());
+    proxyRequest.setRawHeader("User-Agent", TV_USER_AGENT);
+    proxyRequest.setRawHeader("Accept", "*/*");
+    proxyRequest.setRawHeader("Accept-Language", "ru-RU,en,*");
+    proxyRequest.setRawHeader("Connection", "Keep-Alive");
+
+    // Копируем Range или ставим по умолчанию
+    bool rangeFound = false;
+    QStringList lines = requestString.split("\r\n");
+    foreach (const QString &line, lines) {
+        if (line.startsWith("Range:", Qt::CaseInsensitive)) {
+            proxyRequest.setRawHeader("Range", line.mid(6).trimmed().toUtf8());
+            rangeFound = true;
+            break;
+        }
+    }
+    if (!rangeFound) {
+        proxyRequest.setRawHeader("Range", "bytes=0-");
+    }
+
+    QNetworkReply *proxyReply = m_networkManager->get(proxyRequest);
+    m_connections.insert(clientSocket, proxyReply);
+
+    connect(proxyReply, SIGNAL(finished()), this, SLOT(onProxyReplyFinished()));
+    connect(proxyReply, SIGNAL(readyRead()), this, SLOT(onProxyReadyRead()));
+    connect(proxyReply, SIGNAL(metaDataChanged()), this, SLOT(onProxyHeadersReceived()));
+}
+
+
+
+void LocalHttpProxy::onProxyHeadersReceived()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (!clientSocket) return;
+
+    QByteArray headers;
+    int statusCode = proxyReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    QString reason = proxyReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+
+    headers.append(QString("HTTP/1.1 %1 %2\r\n").arg(statusCode).arg(reason).toUtf8());
+
+    foreach(const QNetworkReply::RawHeaderPair& pair, proxyReply->rawHeaderPairs()) {
+        QString hName = QString(pair.first).toLower();
+        // Пропускаем специфичные заголовки Google, отдаем только нужные для медиа
+        if (hName == "content-type" || hName == "content-length" || hName == "content-range" || hName == "accept-ranges") {
+            headers.append(pair.first + ": " + pair.second + "\r\n");
+        }
+    }
+    headers.append("\r\n");
+    clientSocket->write(headers);
+}
+
+void LocalHttpProxy::onProxyReadyRead()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (clientSocket && clientSocket->isOpen()) {
+        clientSocket->write(proxyReply->readAll());
+    }
+}
+
+void LocalHttpProxy::onProxyReplyFinished()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (clientSocket) {
+        clientSocket->disconnectFromHost();
+    }
+    proxyReply->deleteLater();
+}
+
+void LocalHttpProxy::onClientDisconnected()
+{
+    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
+    if (!clientSocket) return;
+
+    QNetworkReply *proxyReply = m_connections.take(clientSocket);
+    if (proxyReply) {
+        proxyReply->abort();
+        proxyReply->deleteLater();
+    }
+    clientSocket->deleteLater();
+}
+</file>
+
+<file path="qml/components/SafeImage.qml">
+import QtQuick 1.0
+
+Image {
+    id: root
+    
+    // Свойство для хранения "реального" URL, который мы хотим загрузить
+    property string targetSource: ""
+    property int retryCount: 0
+    property int maxRetries: 3
+    asynchronous: true
+    source: targetSource
+    
+    // Используем таймер для задержки повторного запроса
+    Timer {
+        id: retryTimer
+        interval: 2000 // 2 секунды перед повтором
+        repeat: false
+        onTriggered: {
+            // "Передергиваем" source, чтобы QML снова полез в сеть
+            root.source = "";
+            root.source = root.targetSource;
+        }
+    }
+    
+    onStatusChanged: {
+        if (status === Image.Error) {
+            if (retryCount < maxRetries) {
+                retryCount++;
+                console.log("[SafeImage] Ошибка загрузки, попытка " + retryCount + "...");
+                retryTimer.start();
+            } else {
+                console.log("[SafeImage] Исчерпаны все попытки загрузки.");
+            }
+        } else if (status === Image.Ready) {
+            retryCount = 0; // Сбрасываем счетчик при успехе
+        }
+    }
+}
+</file>
+
 <file path="qml/pages/HistoryPage.qml">
 import QtQuick 1.0
 import "../components"
@@ -4132,138 +4135,6 @@ Rectangle {
             }
         }
     }
-}
-</file>
-
-<file path="roundedimageprovider.cpp">
-#include "roundedimageprovider.h"
-#include <QPainter>
-#include <QPainterPath>
-#include <QUrl>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QEventLoop>
-#include <QDebug>
-#include <QMutex>
-
-// Глобальный мьютекс для сериализации сетевых запросов.
-// Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
-static QMutex s_networkMutex;
-
-RoundedImageProvider::RoundedImageProvider()
-    : QDeclarativeImageProvider(QDeclarativeImageProvider::Image)
-{
-    // Выделяем 10 МБ памяти под кэш изображений
-    m_cache.setMaxCost(4 * 1024 * 1024);
-}
-
-QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
-{
-    QString decodedId = QUrl::fromPercentEncoding(id.toUtf8());
-
-    // 1. БЕЗОПАСНО проверяем кэш
-    m_mutex.lock();
-    if (QImage *cachedImg = m_cache.object(decodedId)) {
-        QImage result = *cachedImg;
-        if (size) *size = result.size();
-        m_mutex.unlock();
-        return result;
-    }
-    m_mutex.unlock();
-
-    QImage originalImage;
-
-    // 2. Скачивание изображения (в фоновом потоке от QML)
-    if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
-
-        // ВАЖНО: Блокируем остальные потоки.
-        // Пока скачивается одна картинка, другие ждут в очереди, не ломая OpenSSL.
-        s_networkMutex.lock();
-
-        // Создаем менеджер на стеке. Он будет безопасно уничтожен в конце блока.
-        QNetworkAccessManager manager;
-        manager.setParent(0);
-        QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
-        QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
-        reply->ignoreSslErrors();
-
-        // Ждем завершения скачивания именно этой картинки
-        QEventLoop loop;
-        QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-        loop.exec();
-
-        if (reply->error() == QNetworkReply::NoError) {
-            originalImage.loadFromData(reply->readAll());
-        }
-
-        // ЖЕСТКОЕ удаление: отключаем сигналы и удаляем объект ответа
-        // Это предотвращает накопление "мусора" в памяти потока при быстром скролле
-        reply->disconnect();
-        delete reply;
-
-        s_networkMutex.unlock(); // Освобождаем очередь для следующей картинки
-
-    } else if (decodedId.startsWith("qrc:/")) {
-        originalImage.load(":" + decodedId.mid(4));
-    } else {
-        originalImage.load(decodedId);
-    }
-
-    // Заглушка: если картинка не загрузилась (нет сети), возвращаем прозрачный фон
-    if (originalImage.isNull()) {
-        int w = requestedSize.isValid() ? requestedSize.width() : 64;
-        int h = requestedSize.isValid() ? requestedSize.height() : 64;
-        QImage empty(w, h, QImage::Format_ARGB32_Premultiplied);
-        empty.fill(Qt::transparent);
-        return empty;
-    }
-
-    // 3. Скругляем (сглаживание Antialiasing применяется внутри roundImage)
-    QImage rounded = roundImage(originalImage);
-
-    // Масштабируем до требуемого размера (запрошенного QML)
-    if (requestedSize.isValid()) {
-        rounded = rounded.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
-
-    if (size) *size = rounded.size();
-
-    // 4. БЕЗОПАСНО сохраняем готовую круглую картинку в кэш
-    m_mutex.lock();
-    m_cache.insert(decodedId, new QImage(rounded), rounded.byteCount());
-    m_mutex.unlock();
-
-    return rounded;
-}
-
-QImage RoundedImageProvider::roundImage(const QImage &img)
-{
-    // Обрезаем по центру, чтобы картинка была квадратной
-    int squareSize = qMin(img.width(), img.height());
-    QRect targetRect(0, 0, squareSize, squareSize);
-    QImage squareImg = img.copy((img.width() - squareSize) / 2,
-                                (img.height() - squareSize) / 2,
-                                squareSize, squareSize);
-
-    // Создаем пустой холст с прозрачным фоном (Alpha Channel)
-    QImage roundedImg(squareSize, squareSize, QImage::Format_ARGB32_Premultiplied);
-    roundedImg.fill(Qt::transparent);
-
-    QPainter painter(&roundedImg);
-    // Включаем самое качественное сглаживание краев
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-    // Накладываем круглую маску
-    QPainterPath path;
-    path.addEllipse(targetRect);
-    painter.setClipPath(path);
-
-    // Рисуем картинку
-    painter.drawImage(targetRect, squareImg);
-
-    return roundedImg;
 }
 </file>
 
@@ -5009,6 +4880,142 @@ bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
     return QApplication::symbianEventFilter(event);
 
 
+}
+</file>
+
+<file path="roundedimageprovider.cpp">
+#include "roundedimageprovider.h"
+#include <QPainter>
+#include <QPainterPath>
+#include <QUrl>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QEventLoop>
+#include <QDebug>
+#include <QMutex>
+#include <QTimer>
+
+// Глобальный мьютекс для сериализации сетевых запросов.
+// Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
+static QMutex s_networkMutex;
+
+RoundedImageProvider::RoundedImageProvider()
+    : QDeclarativeImageProvider(QDeclarativeImageProvider::Image)
+{
+    // Выделяем 10 МБ памяти под кэш изображений
+    m_cache.setMaxCost(4 * 1024 * 1024);
+}
+
+QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
+{
+    QString decodedId = QUrl::fromPercentEncoding(id.toUtf8());
+
+    // 1. БЕЗОПАСНО проверяем кэш
+    m_mutex.lock();
+    if (QImage *cachedImg = m_cache.object(decodedId)) {
+        QImage result = *cachedImg;
+        if (size) *size = result.size();
+        m_mutex.unlock();
+        return result;
+    }
+    m_mutex.unlock();
+
+    QImage originalImage;
+
+    // 2. Скачивание изображения (в фоновом потоке от QML)
+    if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
+
+        s_networkMutex.lock();
+
+            QNetworkAccessManager manager;
+            manager.setParent(0);
+            QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
+            QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
+            reply->ignoreSslErrors();
+
+            // Предохранитель: прерываем ожидание, если картинка не скачалась за 5 секунд
+            QEventLoop loop;
+            QTimer timeoutTimer;
+            timeoutTimer.setSingleShot(true);
+            QObject::connect(&timeoutTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
+            QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+            timeoutTimer.start(5000);
+
+            loop.exec();
+
+            if (reply->isRunning()) {
+                reply->abort();
+            } else if (reply->error() == QNetworkReply::NoError) {
+                originalImage.loadFromData(reply->readAll());
+            }
+
+            reply->disconnect();
+            delete reply;
+
+            s_networkMutex.unlock();
+
+
+    } else if (decodedId.startsWith("qrc:/")) {
+        originalImage.load(":" + decodedId.mid(4));
+    } else {
+        originalImage.load(decodedId);
+    }
+
+    // Заглушка: если картинка не загрузилась (нет сети), возвращаем прозрачный фон
+    if (originalImage.isNull()) {
+        int w = requestedSize.isValid() ? requestedSize.width() : 64;
+        int h = requestedSize.isValid() ? requestedSize.height() : 64;
+        QImage empty(w, h, QImage::Format_ARGB32_Premultiplied);
+        empty.fill(Qt::transparent);
+        return empty;
+    }
+
+    // 3. Скругляем (сглаживание Antialiasing применяется внутри roundImage)
+    QImage rounded = roundImage(originalImage);
+
+    // Масштабируем до требуемого размера (запрошенного QML)
+    if (requestedSize.isValid()) {
+        rounded = rounded.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+
+    if (size) *size = rounded.size();
+
+    // 4. БЕЗОПАСНО сохраняем готовую круглую картинку в кэш
+    m_mutex.lock();
+    m_cache.insert(decodedId, new QImage(rounded), rounded.byteCount());
+    m_mutex.unlock();
+
+    return rounded;
+}
+
+QImage RoundedImageProvider::roundImage(const QImage &img)
+{
+    // Обрезаем по центру, чтобы картинка была квадратной
+    int squareSize = qMin(img.width(), img.height());
+    QRect targetRect(0, 0, squareSize, squareSize);
+    QImage squareImg = img.copy((img.width() - squareSize) / 2,
+                                (img.height() - squareSize) / 2,
+                                squareSize, squareSize);
+
+    // Создаем пустой холст с прозрачным фоном (Alpha Channel)
+    QImage roundedImg(squareSize, squareSize, QImage::Format_ARGB32_Premultiplied);
+    roundedImg.fill(Qt::transparent);
+
+    QPainter painter(&roundedImg);
+    // Включаем самое качественное сглаживание краев
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    // Накладываем круглую маску
+    QPainterPath path;
+    path.addEllipse(targetRect);
+    painter.setClipPath(path);
+
+    // Рисуем картинку
+    painter.drawImage(targetRect, squareImg);
+
+    return roundedImg;
 }
 </file>
 
@@ -6980,6 +6987,27 @@ private:
     QNetworkAccessManager *m_networkManager;
     Config *m_config;
     QrImageProvider *m_qrProvider;
+
+    QString m_cachedScriptUrl;
+        QString m_cachedScriptContent;
+        QVariantMap m_pendingVideoDetails;
+
+        // Вспомогательные методы дешифрации n-параметра
+        QString extractNFunctionExpression(const QString &playerScript);
+        QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
+        QString decryptNParameter(const QString &rawUrl);
+
+        void requestPlayer(const QString &videoId);
+            int extractSignatureTimestamp(const QString &script);
+            int m_signatureTimestamp;
+            QString m_visitorData;
+            QString m_stsRetriedFor; // защита от зацикливания ретрая
+            QString m_lastRequestedVideoId;
+
+            QString extractFunctionSource(const QString &script, const QString &name);
+                QString extractGlobalDefinition(const QString &script, const QString &name);
+                QString resolveDependency(const QString &script, const QString &name);
+                void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
 };
 
 #endif // APIMANAGER_H
@@ -6990,7 +7018,7 @@ private:
 folder_01.source = qml
 folder_01.target = .
 DEPLOYMENTFOLDERS = folder_01
-QT += core gui network declarative
+QT += core gui network declarative script
 CONFIG += mobility
 MOBILITY += multimedia
 
@@ -7672,22 +7700,56 @@ Rectangle {
 #include <QFile>
 #include <QTextStream>
 #include <QDateTime>
+#include <QScriptEngine>
+#include <QScriptValue>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
+#include <QRegExp>
 
 // Константы OAuth для получения токена
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
 const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
+
+const QByteArray TV_CLIENT_VERSION = "7.20260114.12.00";
+const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
 
 ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent)
     : QObject(parent), m_config(config), m_qrProvider(qrProvider)
 {
     m_networkManager = new QNetworkAccessManager(this);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
+
+    // Загружаем кэшированный адрес и код base.js из настроек и диска
+    QSettings settings("SymTubeApp", "Settings");
+    m_cachedScriptUrl = settings.value("CachedPlayerScriptUrl", "").toString();
+
+    QFile file("C:/Data/SymTube_base_js.js");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        m_cachedScriptContent = in.readAll();
+        file.close();
+        logDebug("Loaded cached base.js from local storage.");
+
+        m_signatureTimestamp = extractSignatureTimestamp(m_cachedScriptContent);
+        if (m_signatureTimestamp > 0)
+            logDebug(QString("Extracted sts from cached base.js: %1").arg(m_signatureTimestamp));
+
+    }
 }
 
 ApiManager::~ApiManager() {}
 
 void ApiManager::copyToClipboard(const QString &text) {
     QApplication::clipboard()->setText(text);
+}
+
+int ApiManager::extractSignatureTimestamp(const QString &script) {
+    if (script.isEmpty()) return 0;
+    QRegExp rx("(?:signatureTimestamp|sts)\\s*:\\s*(\\d{5})");
+    if (rx.indexIn(script) >= 0) return rx.cap(1).toInt();
+    return 0;
 }
 
 void ApiManager::logDebug(const QString &msg) {
@@ -7724,11 +7786,7 @@ QVariantMap ApiManager::buildContext(const QString &clientName, const QString &c
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
 
     if (clientName == "TVHTML5") {
-        client["platform"] = "TV";
-        client["deviceMake"] = "Samsung";
-        client["deviceModel"] = "SmartTV";
-        client["osName"] = "Tizen";
-        client["osVersion"] = "5.0";
+        client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
     }
 
     QVariantMap context;
@@ -7765,7 +7823,18 @@ QString ApiManager::getAccessToken() {
 }
 
 void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth) {
-    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint + "?key=" + m_config->apiKey();
+    // Получаем токен ДО формирования URL
+    QString token;
+    if (requiresAuth) {
+        token = getAccessToken();
+    }
+
+    // С OAuth (Bearer) API-ключ передавать нельзя — он конфликтует с авторизацией
+    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint;
+    if (token.isEmpty()) {
+        url += "?key=" + m_config->apiKey();
+    }
+
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
 
@@ -7777,18 +7846,22 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         request.setRawHeader("x-youtube-client-name", "3");
         request.setRawHeader("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip");
     } else if (clientName == "TVHTML5") {
-        request.setRawHeader("x-youtube-client-name", "85");
-        request.setRawHeader("User-Agent", "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebkit/537.36");
+        request.setRawHeader("x-youtube-client-name", "7");   // было 85 — это другой клиент!
+        request.setRawHeader("x-youtube-client-version", TV_CLIENT_VERSION);
+        request.setRawHeader("User-Agent", TV_USER_AGENT);
     } else {
         request.setRawHeader("x-youtube-client-name", "1");
         request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
-    if (requiresAuth) {
-        QString token = getAccessToken();
-        if (!token.isEmpty()) {
-            request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-        }
+    if (!token.isEmpty()) {
+        request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
+
+    }
+
+    request.setRawHeader("Origin", "https://www.youtube.com");
+    if (!m_visitorData.isEmpty()) {
+        request.setRawHeader("X-Goog-Visitor-Id", m_visitorData.toUtf8());
     }
 
     bool success;
@@ -7843,21 +7916,21 @@ void ApiManager::getSearchSuggestions(const QString &query) {
 
 void ApiManager::getHistory() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEhistory";
     postInnertube("browse", payload, "History", true);
 }
 
 void ApiManager::getSubscriptions() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEchannels";
     postInnertube("browse", payload, "Subscriptions", true);
 }
 
 void ApiManager::getAccountInfo() {
     QVariantMap payload;
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     QVariantMap accountReadMask;
     accountReadMask["returnOwner"] = true;
     payload["accountReadMask"] = accountReadMask;
@@ -7918,7 +7991,7 @@ void ApiManager::getHomeVideos(const QString &pageToken) {
         emit homeVideosReady(QVariantList(), "");
         return;
     }
-    payload["context"] = buildContext("TVHTML5", "7.20250209.19.00");
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
     payload["browseId"] = "FEwhat_to_watch";
     if (!pageToken.isEmpty()) payload["continuation"] = pageToken;
     postInnertube("browse", payload, "HomeVideos", true);
@@ -7942,21 +8015,53 @@ void ApiManager::searchVideos(const QString &query) {
 
 void ApiManager::getVideoInfo(const QString &videoId) {
     logDebug(">>> Requesting VideoInfo for ID: " + videoId);
+
+    if (m_signatureTimestamp > 0) {
+        // sts есть — можно сразу делать player-запрос
+        requestPlayer(videoId);
+    } else {
+        // base.js нет — СНАЧАЛА добываем его, потом player-запрос
+        logDebug("No sts available. Fetching watch page first...");
+        QUrl watchUrl("https://www.youtube.com/watch?v=" + videoId);
+        QNetworkRequest req(watchUrl);
+        req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+        QNetworkReply *watchReply = m_networkManager->get(req);
+        watchReply->setProperty("RequestType", "WatchPageFetch");
+        watchReply->setProperty("PendingVideoId", videoId);
+    }
+}
+
+void ApiManager::requestPlayer(const QString &videoId) {
+    QSettings settings("SymTubeApp", "Settings");
+    QString lang = settings.value("Language", "en_US").toString();
+    QStringList parts = lang.split("_");
+
     QVariantMap client;
-    client["clientName"] = "ANDROID";
-    client["clientVersion"] = "20.10.38";
-    client["androidSdkVersion"] = 30;
-    client["hl"] = "en";
-    client["gl"] = "US";
+    client["clientName"] = "TVHTML5";
+    client["clientVersion"] = TV_CLIENT_VERSION;
+    client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
+    client["hl"] = parts.size() > 0 ? parts[0] : "en";
+    client["gl"] = parts.size() > 1 ? parts[1] : "US";
+    if (!m_visitorData.isEmpty()) client["visitorData"] = m_visitorData;
 
     QVariantMap context;
     context["client"] = client;
 
+    // ГЛАВНОЕ: контекст воспроизведения с версией плеера
+    QVariantMap contentPlaybackContext;
+    contentPlaybackContext["html5Preference"] = "HTML5_PREF_WANTS";
+    contentPlaybackContext["signatureTimestamp"] = m_signatureTimestamp;
+    QVariantMap playbackContext;
+    playbackContext["contentPlaybackContext"] = contentPlaybackContext;
+
     QVariantMap payload;
     payload["context"] = context;
+    payload["playbackContext"] = playbackContext;
     payload["videoId"] = videoId;
-
-    postInnertube("player", payload, "VideoInfo");
+    payload["contentCheckOk"] = true;
+    payload["racyCheckOk"] = true;
+    m_lastRequestedVideoId = videoId;
+    postInnertube("player", payload, "VideoInfo", true);
 }
 
 void ApiManager::getRelatedVideos(const QString &videoId, int page) {
@@ -8089,88 +8194,88 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         emit alternativeQualitiesReady(videoId, qualities);
     }
     else if (requestType == "CommentsTokenFetch") {
-            QString token;
-            QList<QVariantMap> engagementPanels = enumerateObjectsWithKey(parsedJson, "engagementPanelSectionListRenderer");
-            foreach(QVariantMap panel, engagementPanels) {
-                if (panel.value("panelIdentifier").toString().contains("comments-section")) {
-                    QList<QVariantMap> cont = enumerateObjectsWithKey(panel, "continuationCommand");
+        QString token;
+        QList<QVariantMap> engagementPanels = enumerateObjectsWithKey(parsedJson, "engagementPanelSectionListRenderer");
+        foreach(QVariantMap panel, engagementPanels) {
+            if (panel.value("panelIdentifier").toString().contains("comments-section")) {
+                QList<QVariantMap> cont = enumerateObjectsWithKey(panel, "continuationCommand");
+                if (!cont.isEmpty()) {
+                    token = cont.first().value("token").toString();
+                    break;
+                }
+            }
+        }
+        if (token.isEmpty()) {
+            QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
+            foreach(QVariantMap section, itemSections) {
+                if (section.value("sectionIdentifier").toString() == "comment-item-section") {
+                    QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
                     if (!cont.isEmpty()) {
                         token = cont.first().value("token").toString();
                         break;
                     }
                 }
             }
-            if (token.isEmpty()) {
-                QList<QVariantMap> itemSections = enumerateObjectsWithKey(parsedJson, "itemSectionRenderer");
-                foreach(QVariantMap section, itemSections) {
-                    if (section.value("sectionIdentifier").toString() == "comment-item-section") {
-                        QList<QVariantMap> cont = enumerateObjectsWithKey(section, "continuationCommand");
-                        if (!cont.isEmpty()) {
-                            token = cont.first().value("token").toString();
-                            break;
-                        }
-                    }
+        }
+
+        if (!token.isEmpty()) {
+            QVariantMap payload;
+            payload["context"] = buildContext("WEB", "2.20250101");
+            payload["continuation"] = token;
+            postInnertube("next", payload, "CommentsFetch");
+        } else {
+            emit commentsReady(QVariantList(), "");
+        }
+    }
+    else if (requestType == "CommentsFetch") {
+        QVariantList comments;
+        QString nextToken;
+
+        QList<QVariantMap> commentEntities = enumerateObjectsWithKey(parsedJson, "commentEntityPayload");
+        foreach(QVariantMap payload, commentEntities) {
+            QVariantMap c;
+            QVariantMap authorData = payload.value("author").toMap();
+            c["author"] = authorData.value("displayName").toString();
+            if (!c["author"].toString().startsWith("@")) c["author"] = "@" + c["author"].toString();
+
+            QVariantMap props = payload.value("properties").toMap();
+            c["publishedAt"] = props.value("publishedTime").toString();
+
+            QVariantMap contentObj = props.value("content").toMap();
+            if (contentObj.contains("content")) {
+                c["text"] = contentObj.value("content").toString();
+            } else if (contentObj.contains("runs")) {
+                QString textStr;
+                foreach(const QVariant &run, contentObj.value("runs").toList()) {
+                    textStr += run.toMap().value("text").toString();
                 }
+                c["text"] = textStr;
             }
 
-            if (!token.isEmpty()) {
-                QVariantMap payload;
-                payload["context"] = buildContext("WEB", "2.20250101");
-                payload["continuation"] = token;
-                postInnertube("next", payload, "CommentsFetch");
-            } else {
-                emit commentsReady(QVariantList(), "");
+            QVariantMap avatarObj = payload.value("avatar").toMap();
+            c["authorThumbnail"] = extractThumbnailUrl(avatarObj, "image");
+
+            comments.append(c);
+        }
+
+        if (comments.isEmpty()) {
+            QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
+            foreach(QVariantMap renderer, commentRenderers) {
+                QVariantMap c;
+                c["author"] = extractTextFromField(renderer, "authorText");
+                c["text"] = extractTextFromField(renderer, "contentText");
+                c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
+                c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
+                comments.append(c);
             }
         }
-    else if (requestType == "CommentsFetch") {
-           QVariantList comments;
-           QString nextToken;
 
-           QList<QVariantMap> commentEntities = enumerateObjectsWithKey(parsedJson, "commentEntityPayload");
-           foreach(QVariantMap payload, commentEntities) {
-               QVariantMap c;
-               QVariantMap authorData = payload.value("author").toMap();
-               c["author"] = authorData.value("displayName").toString();
-               if (!c["author"].toString().startsWith("@")) c["author"] = "@" + c["author"].toString();
-
-               QVariantMap props = payload.value("properties").toMap();
-               c["publishedAt"] = props.value("publishedTime").toString();
-
-               QVariantMap contentObj = props.value("content").toMap();
-               if (contentObj.contains("content")) {
-                   c["text"] = contentObj.value("content").toString();
-               } else if (contentObj.contains("runs")) {
-                   QString textStr;
-                   foreach(const QVariant &run, contentObj.value("runs").toList()) {
-                       textStr += run.toMap().value("text").toString();
-                   }
-                   c["text"] = textStr;
-               }
-
-               QVariantMap avatarObj = payload.value("avatar").toMap();
-               c["authorThumbnail"] = extractThumbnailUrl(avatarObj, "image");
-
-               comments.append(c);
-           }
-
-           if (comments.isEmpty()) {
-               QList<QVariantMap> commentRenderers = enumerateObjectsWithKey(parsedJson, "commentRenderer");
-               foreach(QVariantMap renderer, commentRenderers) {
-                   QVariantMap c;
-                   c["author"] = extractTextFromField(renderer, "authorText");
-                   c["text"] = extractTextFromField(renderer, "contentText");
-                   c["publishedAt"] = extractTextFromField(renderer, "publishedTimeText");
-                   c["authorThumbnail"] = extractThumbnailUrl(renderer, "authorThumbnail");
-                   comments.append(c);
-               }
-           }
-
-           QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
-           if (!contCmd.isEmpty()) {
-               nextToken = contCmd.first().value("token").toString();
-           }
-           emit commentsReady(comments, nextToken);
-       }
+        QList<QVariantMap> contCmd = enumerateObjectsWithKey(parsedJson, "continuationCommand");
+        if (!contCmd.isEmpty()) {
+            nextToken = contCmd.first().value("token").toString();
+        }
+        emit commentsReady(comments, nextToken);
+    }
     else if (requestType == "HomeVideos" || requestType == "SearchVideos" || requestType == "RelatedVideos" || requestType == "ChannelVideos" || requestType == "History" || requestType == "HomeCategoryVideos") {
         QVariantList outVideos;
         QStringList seenIds;
@@ -8376,26 +8481,204 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         }
     }
     else if (requestType == "VideoInfo") {
-        QVariantMap details;
+        logDebug("======================= [YOUTUBE RESPONSE] VIDEO INFO =======================");
+        logDebug("Raw Server JSON Response:\n" + QString::fromUtf8(responseData));
+        logDebug("============================================================================");
+
+
         QVariantMap root = parsedJson.toMap();
+
+        // Запоминаем visitorData для последующих запросов
+        QString vd = root.value("responseContext").toMap().value("visitorData").toString();
+        if (!vd.isEmpty()) m_visitorData = vd;
+
+        // Протух base.js/sts? Сервер просит "перезагрузить страницу" —
+        // обновляем base.js и повторяем запрос (один раз на видео)
+        QVariantMap playability = root.value("playabilityStatus").toMap();
+        QString status = playability.value("status").toString();
+
+
+
+        QVariantMap details;
+
         QVariantMap videoDetails = root.value("videoDetails").toMap();
+
+        QString vid = videoDetails.value("videoId").toString();
+        if (vid.isEmpty()) vid = m_lastRequestedVideoId;
+
+        if (status == "UNPLAYABLE" && m_stsRetriedFor != vid) {
+            m_stsRetriedFor = vid;
+            logDebug("UNPLAYABLE received. Refreshing base.js/sts and retrying...");
+            m_cachedScriptContent.clear();
+            m_signatureTimestamp = 0;
+            getVideoInfo(vid);   // уйдёт по ветке WatchPageFetch
+            reply->deleteLater();
+            return;
+        }
+
         details["video_id"] = videoDetails.value("videoId").toString();
         details["title"] = videoDetails.value("title").toString();
         details["author"] = videoDetails.value("author").toString();
         details["views"] = videoDetails.value("viewCount").toString();
 
+        logDebug(QString("Parsed Metadata -> ID: %1 | Title: %2")
+                 .arg(details["video_id"].toString())
+                 .arg(details["title"].toString()));
+
         QString directUrl = "";
         QVariantMap streamingData = root.value("streamingData").toMap();
         QVariantList formats = streamingData.value("formats").toList();
-        foreach (const QVariant &f, formats) {
-            QVariantMap format = f.toMap();
-            if (format.value("itag").toInt() == 18) {
-                directUrl = format.value("url").toString();
+
+        for (int i = 0; i < formats.size(); ++i) {
+            QVariantMap fmt = formats[i].toMap();
+            int itag = fmt.value("itag").toInt();
+            if (itag == 18) { // Ищем 360p
+                directUrl = fmt.value("url").toString();
                 break;
             }
         }
+
+        if (directUrl.isEmpty()) {
+            logDebug("WARNING: Direct streaming URL for itag 18 was NOT found in formats.");
+            emit requestFailed("VideoInfo", "Empty stream URL");
+            reply->deleteLater();
+            return;
+        }
+
         details["video_url"] = directUrl;
-        emit videoInfoReady(details);
+        m_pendingVideoDetails = details; // локальный бэкап
+
+        // Попытка дешифрации n-параметра через уже имеющийся локальный кэш base.js
+        bool decryptedOk = false;
+        if (!m_cachedScriptContent.isEmpty()) {
+            QString decryptedUrl = decryptNParameter(directUrl);
+            if (decryptedUrl != directUrl) {
+                logDebug("Decryption success using cached base.js.");
+                m_pendingVideoDetails["video_url"] = decryptedUrl;
+                decryptedOk = true;
+            }
+        }
+
+        if (decryptedOk) {
+            // Кэш сработал — запускаем видео мгновенно
+            m_stsRetriedFor.clear();
+            emit videoInfoReady(m_pendingVideoDetails);
+        } else {
+            // Кэша нет или он устарел: скачиваем watch-страницу для поиска актуального base.js
+            logDebug("Local cache is empty or outdated. Fetching watch page to locate base.js...");
+            QUrl watchUrl("https://www.youtube.com/watch?v=" + details["video_id"].toString());
+            QNetworkRequest req(watchUrl);
+            req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+            QNetworkReply *watchReply = m_networkManager->get(req);
+            watchReply->setProperty("RequestType", "WatchPageFetch");
+
+            // КРИТИЧЕСКИ ВАЖНО: Привязываем детали видео к конкретному сетевому запросу
+            watchReply->setProperty("PendingVideoDetails", details);
+        }
+    }
+    else if (requestType == "WatchPageFetch") {
+        logDebug("Watch page downloaded. Parsing HTML to locate player script...");
+        QString html = QString::fromUtf8(responseData);
+
+        // Полностью очищаем HTML-код от экранирующих слэшей JSON (\/ -> /)
+        html.replace("\\/", "/");
+
+        // Ищем путь начала скрипта и его окончание через строковый поиск
+        int index = html.indexOf("/s/player/");
+        if (index >= 0) {
+            int end = html.indexOf("base.js", index);
+            if (end >= 0) {
+                QString jsPath = html.mid(index, end - index + 7);
+                // jsPath вида: /s/player/4918c89a/player_es6.vflset/ru_RU/base.js
+                // QScriptEngine (Qt 4.7) не понимает ES6 — берём ES5-сборку того же плеера
+                QString jsUrl;
+                QRegExp idRx("/s/player/([0-9a-fA-F]+)/");
+                if (idRx.indexIn(jsPath) >= 0) {
+                    jsUrl = "https://www.youtube.com/s/player/" + idRx.cap(1)
+                            + "/tv-player-ias.vflset/tv-player-ias.js";
+                } else {
+                    jsUrl = "https://www.youtube.com" + jsPath;
+                }
+                logDebug("Located player script URL (tv variant): " + jsUrl);
+                QUrl jsUrll(jsUrl);
+                QNetworkRequest req(jsUrll);
+                req.setRawHeader("User-Agent", TV_USER_AGENT); // качаем TV-плеер с TV UA
+                QNetworkReply *scriptReply = m_networkManager->get(req);
+                scriptReply->setProperty("RequestType", "PlayerScriptDownload");
+                scriptReply->setProperty("JsUrl", jsUrl);
+                scriptReply->setProperty("PendingVideoDetails", reply->property("PendingVideoDetails"));
+                scriptReply->setProperty("PendingVideoId", reply->property("PendingVideoId"));
+            } else {
+                logDebug("Error: 'tv-player-ias.js' string not found!");
+                QString pendingId = reply->property("PendingVideoId").toString();
+                if (!pendingId.isEmpty()) {
+                    // preflight провалился — честно сообщаем об ошибке
+                    emit requestFailed("VideoInfo", "base.js not found");
+                } else {
+                    emit videoInfoReady(reply->property("PendingVideoDetails").toMap());
+                }
+            }
+        } else {
+            logDebug("Error: '/s/player/' string not found in watch page HTML!");
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                emit requestFailed("VideoInfo", "player script not found");
+            } else {
+                emit videoInfoReady(reply->property("PendingVideoDetails").toMap());
+            }
+        }
+    }
+    else if (requestType == "PlayerScriptDownload") {
+        QString jsUrl = reply->property("JsUrl").toString();
+
+        // Потокобезопасно извлекаем привязанные детали именно этого видео
+        QVariantMap pendingDetails = reply->property("PendingVideoDetails").toMap();
+
+        if (reply->error() == QNetworkReply::NoError && !responseData.isEmpty()) {
+            m_cachedScriptContent = QString::fromUtf8(responseData);
+            m_cachedScriptUrl = jsUrl;
+
+            // Сохраняем на диск C:
+            QDir dir;
+            dir.mkpath("C:/Data");
+            QFile file("C:/Data/SymTube_base_js.js");
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&file);
+                out << m_cachedScriptContent;
+                file.close();
+            }
+
+            QSettings settings("SymTubeApp", "Settings");
+            settings.setValue("CachedPlayerScriptUrl", jsUrl);
+            logDebug("base.js cached successfully.");
+
+            m_signatureTimestamp = extractSignatureTimestamp(m_cachedScriptContent);
+            logDebug(QString("Fresh sts extracted: %1").arg(m_signatureTimestamp));
+
+            // Если это был preflight перед player-запросом — выполняем его теперь
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                requestPlayer(pendingId);
+                reply->deleteLater();
+                return;
+            }
+
+            // Расшифровываем отложенное видео
+            QString directUrl = pendingDetails["video_url"].toString();
+            QString decryptedUrl = decryptNParameter(directUrl);
+            pendingDetails["video_url"] = decryptedUrl;
+            m_stsRetriedFor.clear();
+            emit videoInfoReady(pendingDetails);
+        } else {
+            logDebug("Failed to download player script: " + reply->errorString());
+            QString pendingId = reply->property("PendingVideoId").toString();
+            if (!pendingId.isEmpty()) {
+                emit requestFailed("VideoInfo", "Failed to download player script");
+            } else {
+                m_stsRetriedFor.clear();
+                emit videoInfoReady(pendingDetails);
+            }
+        }
     }
     else if (requestType == "Shorts") {
         QVariantList outShorts;
@@ -8597,6 +8880,314 @@ void ApiManager::setProxyPort(quint16 port)
 {
     m_proxyPort = port;
 }
+
+QString ApiManager::extractNFunctionExpression(const QString &playerScript) {
+    if (playerScript.isEmpty()) return "";
+
+    // Шаблон 1
+    QRegExp rx1("\\.get\\(\"n\"\\)\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    if (rx1.indexIn(playerScript) >= 0) {
+        QString name = rx1.cap(1);
+        QString idx = rx1.cap(2);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 2
+    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    if (rx2.indexIn(playerScript) >= 0) {
+        QString name = rx2.cap(1);
+        QString idx = rx2.cap(2);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 3 (с обратной ссылкой \\1 на имя переменной)
+    QRegExp rx3("\\b([a-zA-Z_\\$][\\w\\$]*)&&\\(\\1=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(\\1\\)");
+    if (rx3.indexIn(playerScript) >= 0) {
+        QString name = rx3.cap(2);
+        QString idx = rx3.cap(3);
+        if (!idx.isEmpty()) return name + "[" + idx + "]";
+        return name;
+    }
+
+    // Шаблон 4 (оптимизированный под QRegExp поиск внутри функции)
+    QRegExp rx4("([a-zA-Z_\\$][\\w\\$]*)=function\\([a-zA-Z_\\$][\\w\\$]*\\)\\{(?=[^\\}]*\\.split\\(\"\"\\))(?=[^\\}]*\\.join\\(\"\"\\))");
+    if (rx4.indexIn(playerScript) >= 0) {
+        return rx4.cap(1);
+    }
+
+    return "";
+}
+
+QString ApiManager::buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression) {
+    // Внедряем глобальную функцию-обертку __yt_nsig во внешний скоуп base.js
+    QString exportScript = QString(";__yt_nsig=function(n){return %1(n);};").arg(nFunctionExpression);
+
+    int closingIndex = playerScript.lastIndexOf(";})(_yt_player);");
+    if (closingIndex >= 0) {
+        return QString(playerScript).insert(closingIndex, exportScript);
+    }
+
+    closingIndex = playerScript.lastIndexOf("})(_yt_player);");
+    if (closingIndex >= 0) {
+        return QString(playerScript).insert(closingIndex, exportScript);
+    }
+
+    return playerScript + exportScript;
+}
+
+
+
+QString ApiManager::decryptNParameter(const QString &url)
+{
+    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
+    logDebug("Input URL: " + url);
+
+    // --- 1. Достаём исходное значение n из query ---
+    QRegExp nRx("[?&]n=([^&]+)");
+    if (nRx.indexIn(url) < 0) {
+        logDebug("No 'n' parameter found in URL. Returning as-is.");
+        return url;
+    }
+    QString originalN = nRx.cap(1);
+    logDebug("Extracted original 'n' value: " + originalN);
+
+    // --- 2. Проверяем наличие скрипта плеера ---
+    if (m_cachedScriptContent.isEmpty()) {
+        logDebug("No player script in cache. Cannot decrypt 'n'. Returning as-is.");
+        return url;
+    }
+    logDebug(QString("Player script available in cache (size: %1 characters)")
+             .arg(m_cachedScriptContent.length()));
+
+    // --- 3. Имя n-функции (ваши существующие шаблоны) ---
+    QString funcName = extractNFunctionExpression(m_cachedScriptContent);
+    if (funcName.isEmpty()) {
+        logDebug("Failed to find n-scramble function via known patterns. Returning as-is.");
+        return url;
+    }
+    logDebug("Regex match: Found n-scramble function expression -> " + funcName);
+
+    // --- 4. Вырезаем исходник самой функции (а не весь 2МБ скрипт!) ---
+    QString snippet = extractFunctionSource(m_cachedScriptContent, funcName);
+    if (snippet.isEmpty()) {
+        logDebug("Failed to extract n-function source for '" + funcName + "'. Returning as-is.");
+        return url;
+    }
+    logDebug(QString("Extracted n-function source: %1 chars").arg(snippet.length()));
+
+    // --- 5. Заранее разрешаем typeof-guard зависимости ---
+    // Внутри бывает: if(typeof Xyz==="undefined")return M; — typeof не бросает
+    // ReferenceError, функция молча вернёт вход. Поэтому ищем такие имена заранее.
+    logDebug("Snippet body: " + snippet);   // 53 символа — влезет целиком
+
+    QStringList deps;
+    QStringList resolvedNames;
+    collectTypeofDeps(snippet, deps, resolvedNames);
+
+    // --- 6. Исполняем сниппет, доразрешая зависимости по ReferenceError ---
+    QString browserStubs =
+            "var window=this;"
+            "var document={};"
+            "var navigator={userAgent:''};"
+            "var location={hostname:'www.youtube.com',protocol:'https:',"
+            "href:'https://www.youtube.com/'};";
+
+
+    QString transformedN;
+    for (int attempt = 0; attempt < 10; ++attempt) {
+        QScriptEngine engine;
+        QString program = browserStubs + "\n" + deps.join("\n")
+                + "\nvar __yt_nsig=" + snippet + ";";
+
+        logDebug(QString("[Attempt %1] Program size: %2 chars, deps: %3")
+                 .arg(attempt).arg(program.length()).arg(deps.count()));
+
+        // Дамп для ручного анализа
+        QFile dbg("C:/Data/SymTube_nsig_debug.js");
+        if (dbg.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            dbg.write(program.toUtf8());
+            dbg.close();
+        }
+
+        engine.evaluate(program, "nsig_snippet.js");
+        if (engine.hasUncaughtException()) {
+            logDebug("Snippet compile error: " + engine.uncaughtException().toString()
+                     + " at line " + QString::number(engine.uncaughtExceptionLineNumber()));
+            break;
+        }
+
+        QScriptValue fn = engine.globalObject().property("__yt_nsig");
+        if (!fn.isFunction()) {
+            logDebug("__yt_nsig is not a function after evaluation. Aborting.");
+            break;
+        }
+
+        QScriptValue result = fn.call(QScriptValue(), QScriptValueList() << originalN);
+        if (engine.hasUncaughtException()) {
+            QString err = engine.uncaughtException().toString();
+            // QScriptEngine: "ReferenceError: Can't find variable: gW"
+            // Имя переменной — после ПОСЛЕДНЕГО двоеточия
+            QString depName;
+            QRegExp refRx("Can't find variable:\\s*([A-Za-z0-9_$]+)");
+            if (refRx.indexIn(err) >= 0) {
+                depName = refRx.cap(1);
+            } else if (err.contains("ReferenceError")) {
+                int lastColon = err.lastIndexOf(':');
+                QString tail = err.mid(lastColon + 1).trimmed();
+                QRegExp identRx("^([A-Za-z0-9_$]+)");
+                if (identRx.indexIn(tail) >= 0) depName = identRx.cap(1);
+            }
+
+            if (!depName.isEmpty()) {
+                QString dep = resolveDependency(m_cachedScriptContent, depName);
+                if (!dep.isEmpty()) {
+                    logDebug(QString("Resolving runtime dependency: %1 (%2 chars, head: %3)")
+                             .arg(depName).arg(dep.length()).arg(dep.left(80)));
+                    deps.prepend(dep);
+                    collectTypeofDeps(dep, deps, resolvedNames);  // <<< НОВОЕ
+                    continue;
+                }
+                logDebug("Dependency '" + depName + "' not found in script. Aborting.");
+            } else {
+                logDebug("Snippet runtime error: " + err);
+            }
+            break;
+        }
+
+        logDebug(QString("Raw call result: isNull=%1 isUndefined=%2 isString=%3 -> '%4'")
+                 .arg(result.isNull()).arg(result.isUndefined())
+                 .arg(result.isString()).arg(result.toString()));
+        transformedN = result.toString();
+        break;
+    }
+
+    // --- 7. Валидация результата ---
+    if (transformedN.isEmpty() || transformedN == "undefined" || transformedN == "null") {
+        logDebug("N-Decrypt FAILED: no usable result. Returning URL as-is.");
+        return url;
+    }
+    if (transformedN == originalN) {
+        logDebug("N-Decrypt FAILED: function returned input unchanged (anti-tamper guard?). Returning URL as-is.");
+        return url;
+    }
+    // Известный маркер сработавшего анти-вмешательства:
+    // результат вида "enhanced_except_..." или начинающийся с имени функции
+    if (transformedN.startsWith("enhanced_except_") || transformedN.endsWith("_w8_" + originalN)) {
+        logDebug("N-Decrypt FAILED: anti-tamper marker in result: " + transformedN);
+        return url;
+    }
+    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + transformedN + "'");
+
+    // --- 8. Подставляем новое значение в URL ---
+    QString encodedN = QString::fromLatin1(
+                QUrl::toPercentEncoding(transformedN));
+    QString resultUrl = url;
+    resultUrl.replace(nRx.cap(0),                       // "?n=..." или "&n=..."
+                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
+    logDebug("Output URL: " + resultUrl);
+    logDebug("-------------------------------------------------------------------------");
+    return resultUrl;
+}
+
+
+// Поиск закрывающей '}' с учётом строковых литералов
+static int findMatchingBrace(const QString &s, int openPos) {
+    int depth = 0;
+    QChar quote('\0');
+    bool escaped = false;
+    for (int i = openPos; i < s.length(); ++i) {
+        QChar c = s.at(i);
+        if (quote != QChar('\0')) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == quote) quote = QChar('\0');
+            continue;
+        }
+        if (c == '"' || c == '\'') { quote = c; continue; }
+        if (c == '{') depth++;
+        else if (c == '}') { if (--depth == 0) return i; }
+    }
+    return -1;
+}
+
+// Вырезает "function(...){...}" по имени: name=function(...) или function name(...)
+QString ApiManager::extractFunctionSource(const QString &script, const QString &name) {
+    QRegExp rx("(?:function\\s+" + QRegExp::escape(name) + "\\s*\\(|"
+               "[^A-Za-z0-9_$]" + QRegExp::escape(name) + "\\s*=\\s*function\\s*\\()");
+    int pos = rx.indexIn(script);
+    if (pos < 0) return QString();
+    int fnKw = script.indexOf("function", pos);      // начало ключевого слова
+    int open = script.indexOf('{', fnKw);
+    if (open < 0) return QString();
+    int close = findMatchingBrace(script, open);
+    if (close < 0) return QString();
+    return script.mid(fnKw, close - fnKw + 1);       // "function(M){...}"
+}
+
+// Вырезает "var name=<значение>;" для глобальной зависимости
+QString ApiManager::extractGlobalDefinition(const QString &script, const QString &name) {
+    QRegExp rx("(?:var\\s+|[;,\\n])" + QRegExp::escape(name) + "\\s*=");
+    int pos = rx.indexIn(script);
+    if (pos < 0) return QString();
+    int eq = script.indexOf('=', pos);
+    int depth = 0;
+    QChar quote('\0');
+    bool escaped = false;
+    int i = eq + 1;
+    for (; i < script.length(); ++i) {
+        QChar c = script.at(i);
+        if (quote != QChar('\0')) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == quote) quote = QChar('\0');
+            continue;
+        }
+        if (c == '"' || c == '\'') { quote = c; continue; }
+        if (c == '(' || c == '[' || c == '{') depth++;
+        else if (c == ')' || c == ']' || c == '}') depth--;
+        else if (c == ';' && depth == 0) break;
+    }
+    return "var " + name + "=" + script.mid(eq + 1, i - (eq + 1)) + ";";
+}
+
+// Универсальное разрешение зависимости: функция-объявление,
+// функция-присваивание или глобальная переменная с данными
+QString ApiManager::resolveDependency(const QString &script, const QString &name)
+{
+    // 1. Форма "function lI(M,W){...}" или "lI=function(M,W){...}"
+    QString fnSrc = extractFunctionSource(script, name);
+    if (!fnSrc.isEmpty()) {
+        if (fnSrc.startsWith("function " + name) || fnSrc.startsWith("function  " + name)) {
+            return fnSrc + ";";                    // декларация — годится как есть
+        }
+        return "var " + name + "=" + fnSrc + ";";  // анонимная — присваиваем имени
+    }
+    // 2. Форма "var lI=..." / ",lI=..." (данные: массивы, строки, объекты)
+    return extractGlobalDefinition(script, name);
+}
+
+void ApiManager::collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames)
+{
+    QRegExp typeofRx("typeof\\s+([A-Za-z0-9_$]{2,})");
+    int tp = 0;
+    while ((tp = typeofRx.indexIn(code, tp)) >= 0) {
+        QString depName = typeofRx.cap(1);
+        tp += typeofRx.matchedLength();
+        if (depName == "undefined" || resolvedNames.contains(depName)) continue;
+        resolvedNames << depName;
+        QString dep = resolveDependency(m_cachedScriptContent, depName);
+        if (!dep.isEmpty()) {
+            logDebug(QString("  [typeof-dep] '%1' resolved, %2 chars, head: %3")
+                     .arg(depName).arg(dep.length()).arg(dep.left(80)));
+            deps << dep;
+            collectTypeofDeps(dep, deps, resolvedNames);  // гарды внутри гардов
+        } else {
+            logDebug("  [typeof-dep] '" + depName + "' not in script (browser global?)");
+        }
+    }
+}
 </file>
 
 <file path="main.cpp">
@@ -8621,6 +9212,7 @@ void ApiManager::setProxyPort(quint16 port)
 #include "translationmanager.h"
 #include <QFile>
 #include "compositornudger.h"
+#include "volumekeysobserver.h"
 
 #if defined(SYMBIAN) || defined(Q_OS_SYMBIAN)
 #include <e32std.h>
@@ -8670,6 +9262,7 @@ int main(int argc, char *argv[])
     ApiManager apiManager(&config, qrProvider);
     HistoryManager historyManager;
     TranslationManager translationManager;
+    VolumeKeysObserver volumeKeys;
 
     QmlApplicationViewer view;
     CompositorNudger *nudger = new CompositorNudger(view.viewport(), &app);
@@ -8694,6 +9287,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("HistoryManager", &historyManager);
     context->setContextProperty("SymbianApp", &app);
     context->setContextProperty("TranslationManager", &translationManager);
+    context->setContextProperty("VolumeKeys", &volumeKeys);
 
     view.setSource(QUrl::fromLocalFile("qml/main.qml"));
 
@@ -9606,10 +10200,10 @@ Rectangle {
 <file path="Makefile">
 #############################################################################
 # Makefile for building: SymTube
-# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 6. ??? 11:53:44 2026
+# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 6. ??? 18:40:57 2026
 # Project:  SymTube.pro
 # Template: app
-# Command: c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc -o bld.inf SymTube.pro
+# Command: c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc -o bld.inf SymTube.pro
 #############################################################################
 
 MAKEFILE          = Makefile
@@ -9624,96 +10218,96 @@ RELEASE_PLATFORMS = gcce armv5 armv6
 MAKE              = make
 SBS               = sbs
 
-DEFINES	 = -DSYMBIAN -DUNICODE -DQT_KEYPAD_NAVIGATION -DQT_SOFTKEYS_ENABLED -DQT_USE_MATH_H_FLOATS -DQT_NO_DEBUG -DQT_DECLARATIVE_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
-INCPATH	 =  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/mkspecs/common/symbian"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/sys"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/qmlapplicationviewer"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc/sc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc/sc"  -I"C:/QtMobility"  -I"C:/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/stlportv5"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/moc"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/ui" 
+DEFINES	 = -DSYMBIAN -DUNICODE -DQT_KEYPAD_NAVIGATION -DQT_SOFTKEYS_ENABLED -DQT_USE_MATH_H_FLOATS -DQT_NO_DEBUG -DQT_DECLARATIVE_LIB -DQT_SCRIPT_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
+INCPATH	 =  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtScript"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/mkspecs/common/symbian"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/sys"  -I"C:/Users/User/Documents/GitHub/SymTube/qmlapplicationviewer"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc/sc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc/sc"  -I"C:/QtMobility"  -I"C:/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/stlportv5"  -I"C:/Users/User/Documents/GitHub/SymTube/moc"  -I"C:/Users/User/Documents/GitHub/SymTube"  -I"C:/Users/User/Documents/GitHub/SymTube/ui" 
 first: default
 
 all: debug release
 
 default: debug-winscw
 qmake:
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-bld.inf: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+bld.inf: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc: 
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+c:\Users\User\Documents\GitHub\SymTube\SymTube.loc: 
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-debug: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
 clean-debug: bld.inf
 	$(SBS) reallyclean --toolcheck=off -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
 freeze-debug: bld.inf
 	$(SBS) freeze -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
-release: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 clean-release: bld.inf
 	$(SBS) reallyclean --toolcheck=off -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 freeze-release: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 
-debug-winscw: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-winscw: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c winscw_udeb.mwccinc
 clean-debug-winscw: bld.inf
 	$(SBS) reallyclean -c winscw_udeb.mwccinc
 freeze-debug-winscw: bld.inf
 	$(SBS) freeze -c winscw_udeb.mwccinc
-debug-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-gcce: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.udeb.gcce4_4_1
 clean-debug-gcce: bld.inf
 	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
 freeze-debug-gcce: bld.inf
 	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-debug-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-armv5: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c armv5_udeb
 clean-debug-armv5: bld.inf
 	$(SBS) reallyclean -c armv5_udeb
 freeze-debug-armv5: bld.inf
 	$(SBS) freeze -c armv5_udeb
-debug-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-armv6: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c armv6_udeb
 clean-debug-armv6: bld.inf
 	$(SBS) reallyclean -c armv6_udeb
 freeze-debug-armv6: bld.inf
 	$(SBS) freeze -c armv6_udeb
-release-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release-gcce: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1
 clean-release-gcce: bld.inf
 	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
 freeze-release-gcce: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-release-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release-armv5: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c armv5_urel
 clean-release-armv5: bld.inf
 	$(SBS) reallyclean -c armv5_urel
 freeze-release-armv5: bld.inf
 	$(SBS) freeze -c armv5_urel
-release-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release-armv6: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c armv6_urel
 clean-release-armv6: bld.inf
 	$(SBS) reallyclean -c armv6_urel
 freeze-release-armv6: bld.inf
 	$(SBS) freeze -c armv6_urel
-debug-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.udeb.gcce4_4_1
 clean-debug-armv5-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
 freeze-debug-armv5-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-release-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1
 clean-release-armv5-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
 freeze-release-armv5-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-debug-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+debug-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v6.udeb.gcce4_4_1
 clean-debug-armv6-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v6.udeb.gcce4_4_1
 freeze-debug-armv6-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v6.udeb.gcce4_4_1
-release-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
+release-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
 	$(SBS) -c arm.v6.urel.gcce4_4_1
 clean-release-armv6-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v6.urel.gcce4_4_1
@@ -9736,13 +10330,13 @@ run:
 runonphone: sis
 	runonphone $(QT_RUN_ON_PHONE_OPTIONS) --sis SymTube.sis SymTube.exe $(QT_RUN_OPTIONS)
 
-SymTube_template.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
+SymTube_template.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
-SymTube_installer.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
+SymTube_installer.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
-SymTube_stub.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
+SymTube_stub.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
 sis: SymTube_template.pkg
@@ -9792,32 +10386,32 @@ compiler_moc_header_make_all: moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_historymanager.cpp moc\moc_volumekeysobserver.cpp moc\moc_qsymbianapplication.cpp moc\moc_translationmanager.cpp moc\moc_localhttpproxy.cpp moc\moc_compositornudger.cpp moc\moc_qmlapplicationviewer.cpp
 moc\moc_config.cpp: config.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\config.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_config.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\config.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_config.cpp
 
 moc\moc_apimanager.cpp: qrimageprovider.h \
 		apimanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\apimanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_apimanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\apimanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_apimanager.cpp
 
 moc\moc_historymanager.cpp: historymanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\historymanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_historymanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\historymanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_historymanager.cpp
 
 moc\moc_volumekeysobserver.cpp: volumekeysobserver.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\volumekeysobserver.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_volumekeysobserver.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\volumekeysobserver.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_volumekeysobserver.cpp
 
 moc\moc_qsymbianapplication.cpp: qsymbianapplication.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qsymbianapplication.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qsymbianapplication.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\qsymbianapplication.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_qsymbianapplication.cpp
 
 moc\moc_translationmanager.cpp: translationmanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\translationmanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_translationmanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\translationmanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_translationmanager.cpp
 
 moc\moc_localhttpproxy.cpp: localhttpproxy.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\localhttpproxy.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_localhttpproxy.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\localhttpproxy.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_localhttpproxy.cpp
 
 moc\moc_compositornudger.cpp: compositornudger.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\compositornudger.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_compositornudger.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\compositornudger.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_compositornudger.cpp
 
 moc\moc_qmlapplicationviewer.cpp: qmlapplicationviewer\qmlapplicationviewer.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qmlapplicationviewer\qmlapplicationviewer.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qmlapplicationviewer.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\qmlapplicationviewer\qmlapplicationviewer.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_qmlapplicationviewer.cpp
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
@@ -9837,15 +10431,15 @@ compiler_lex_clean:
 compiler_clean: compiler_moc_header_clean 
 
 dodistclean:
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_template.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_template.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_stub.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_stub.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_installer.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_installer.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\Makefile" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\Makefile"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_exe.mmp" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_exe.mmp"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_reg.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_reg.rss"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube.rss"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube.loc" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube.loc"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\bld.inf" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\bld.inf"
 
 distclean: clean dodistclean
 
@@ -9855,7 +10449,7 @@ clean: bld.inf
 
 <file path="SymTube_exe.mmp">
 // ==============================================================================
-// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T11:53:44
+// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
 // This file is generated by qmake and should not be modified by the
 // user.
 //  Name        : SymTube_exe.mmp
@@ -9891,6 +10485,7 @@ MACRO		QT_SOFTKEYS_ENABLED
 MACRO		QT_USE_MATH_H_FLOATS
 MACRO		QT_NO_DEBUG
 MACRO		QT_DECLARATIVE_LIB
+MACRO		QT_SCRIPT_LIB
 MACRO		QT_OPENGL_LIB
 MACRO		QT_GUI_LIB
 MACRO		QT_NETWORK_LIB
@@ -9900,6 +10495,7 @@ SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL
+SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtScript
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include
 SYSTEMINCLUDE		../../../../../QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit
@@ -9958,6 +10554,7 @@ LIBRARY		cone.lib
 LIBRARY		QtMultimediaKit.lib
 LIBRARY		libstdcppv5.lib
 LIBRARY		QtDeclarative.lib
+LIBRARY		QtScript.lib
 LIBRARY		QtOpenGL.lib
 LIBRARY		QtGui.lib
 LIBRARY		QtNetwork.lib
@@ -9995,7 +10592,7 @@ STDCPP
 
 <file path="SymTube_reg.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T11:53:44
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10016,7 +10613,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.loc">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T11:53:44
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10032,7 +10629,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T11:53:44
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================

@@ -908,25 +908,21 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 QRegExp idRx("/s/player/([0-9a-fA-F]+)/");
                 if (idRx.indexIn(jsPath) >= 0) {
                     jsUrl = "https://www.youtube.com/s/player/" + idRx.cap(1)
-                            + "/player_es5.vflset/en_US/base.js";
+                            + "/tv-player-ias.vflset/tv-player-ias.js";
                 } else {
-                    jsUrl = "https://www.youtube.com" + jsPath; // fallback как раньше
+                    jsUrl = "https://www.youtube.com" + jsPath;
                 }
-                logDebug("Located player script URL (es5 variant): " + jsUrl);
-
-                // Начинаем скачивание самого скрипта
-                QNetworkRequest req(jsUrl);
-                req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+                logDebug("Located player script URL (tv variant): " + jsUrl);
+                QUrl jsUrll(jsUrl);
+                QNetworkRequest req(jsUrll);
+                req.setRawHeader("User-Agent", TV_USER_AGENT); // качаем TV-плеер с TV UA
                 QNetworkReply *scriptReply = m_networkManager->get(req);
                 scriptReply->setProperty("RequestType", "PlayerScriptDownload");
                 scriptReply->setProperty("JsUrl", jsUrl);
-
-                // Передаем привязанные детали видео дальше по цепочке асинхронных запросов
                 scriptReply->setProperty("PendingVideoDetails", reply->property("PendingVideoDetails"));
-
                 scriptReply->setProperty("PendingVideoId", reply->property("PendingVideoId"));
             } else {
-                logDebug("Error: 'base.js' string not found after '/s/player/' index!");
+                logDebug("Error: 'tv-player-ias.js' string not found!");
                 QString pendingId = reply->property("PendingVideoId").toString();
                 if (!pendingId.isEmpty()) {
                     // preflight провалился — честно сообщаем об ошибке
@@ -1256,99 +1252,252 @@ QString ApiManager::buildPlayerScriptWithNExport(const QString &playerScript, co
 
 
 
-QString ApiManager::decryptNParameter(const QString &rawUrl) {
+QString ApiManager::decryptNParameter(const QString &url)
+{
     logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
-    logDebug("Input URL: " + rawUrl);
+    logDebug("Input URL: " + url);
 
-    QUrl qurl(rawUrl);
-    QList<QPair<QString, QString> > queryItems = qurl.queryItems();
-
-    QString originalN;
-    int nIndex = -1;
-    for (int i = 0; i < queryItems.size(); ++i) {
-        if (queryItems[i].first == "n") {
-            originalN = queryItems[i].second;
-            nIndex = i;
-            break;
-        }
+    // --- 1. Достаём исходное значение n из query ---
+    QRegExp nRx("[?&]n=([^&]+)");
+    if (nRx.indexIn(url) < 0) {
+        logDebug("No 'n' parameter found in URL. Returning as-is.");
+        return url;
     }
-
-    if (originalN.isEmpty()) {
-        logDebug("Result: No 'n' parameter found in query items. Decryption skipped.");
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
-    }
-
+    QString originalN = nRx.cap(1);
     logDebug("Extracted original 'n' value: " + originalN);
 
+    // --- 2. Проверяем наличие скрипта плеера ---
     if (m_cachedScriptContent.isEmpty()) {
-        logDebug("Error: Cached player script content (base.js) is empty!");
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+        logDebug("No player script in cache. Cannot decrypt 'n'. Returning as-is.");
+        return url;
     }
-    logDebug(QString("Player script available in cache (size: %1 characters)").arg(m_cachedScriptContent.length()));
+    logDebug(QString("Player script available in cache (size: %1 characters)")
+             .arg(m_cachedScriptContent.length()));
 
-    QString nFunctionExpression = extractNFunctionExpression(m_cachedScriptContent);
-    if (nFunctionExpression.isEmpty()) {
-        logDebug("Error: Failed to find n-scramble function name in player script via regex.");
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+    // --- 3. Имя n-функции (ваши существующие шаблоны) ---
+    QString funcName = extractNFunctionExpression(m_cachedScriptContent);
+    if (funcName.isEmpty()) {
+        logDebug("Failed to find n-scramble function via known patterns. Returning as-is.");
+        return url;
     }
-    logDebug("Regex match: Found n-scramble function expression -> " + nFunctionExpression);
+    logDebug("Regex match: Found n-scramble function expression -> " + funcName);
 
-    logDebug("Injecting '__yt_nsig' wrapper function into base.js...");
-    QString compiledScript = buildPlayerScriptWithNExport(m_cachedScriptContent, nFunctionExpression);
-
-    logDebug("Evaluating script via QScriptEngine...");
-    QScriptEngine engine;
-    engine.evaluate(compiledScript);
-    if (engine.hasUncaughtException()) {
-        logDebug("QScriptEngine Compilation Failure: " + engine.uncaughtException().toString());
-        logDebug("Uncaught exception at line: " + QString::number(engine.uncaughtExceptionLineNumber()));
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+    // --- 4. Вырезаем исходник самой функции (а не весь 2МБ скрипт!) ---
+    QString snippet = extractFunctionSource(m_cachedScriptContent, funcName);
+    if (snippet.isEmpty()) {
+        logDebug("Failed to extract n-function source for '" + funcName + "'. Returning as-is.");
+        return url;
     }
-    logDebug("QScriptEngine: Compilation successful.");
+    logDebug(QString("Extracted n-function source: %1 chars").arg(snippet.length()));
 
-    QScriptValue nSigFunc = engine.globalObject().property("__yt_nsig");
-    if (!nSigFunc.isFunction()) {
-        logDebug("QScriptEngine Error: '__yt_nsig' is not defined as a valid function in global scope.");
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+    // --- 5. Заранее разрешаем typeof-guard зависимости ---
+    // Внутри бывает: if(typeof Xyz==="undefined")return M; — typeof не бросает
+    // ReferenceError, функция молча вернёт вход. Поэтому ищем такие имена заранее.
+    logDebug("Snippet body: " + snippet);   // 53 символа — влезет целиком
+
+    QStringList deps;
+    QStringList resolvedNames;
+    collectTypeofDeps(snippet, deps, resolvedNames);
+
+    // --- 6. Исполняем сниппет, доразрешая зависимости по ReferenceError ---
+    QString browserStubs =
+            "var window=this;"
+            "var document={};"
+            "var navigator={userAgent:''};"
+            "var location={hostname:'www.youtube.com',protocol:'https:',"
+            "href:'https://www.youtube.com/'};";
+
+
+    QString transformedN;
+    for (int attempt = 0; attempt < 10; ++attempt) {
+        QScriptEngine engine;
+        QString program = browserStubs + "\n" + deps.join("\n")
+                + "\nvar __yt_nsig=" + snippet + ";";
+
+        logDebug(QString("[Attempt %1] Program size: %2 chars, deps: %3")
+                 .arg(attempt).arg(program.length()).arg(deps.count()));
+
+        // Дамп для ручного анализа
+        QFile dbg("C:/Data/SymTube_nsig_debug.js");
+        if (dbg.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            dbg.write(program.toUtf8());
+            dbg.close();
+        }
+
+        engine.evaluate(program, "nsig_snippet.js");
+        if (engine.hasUncaughtException()) {
+            logDebug("Snippet compile error: " + engine.uncaughtException().toString()
+                     + " at line " + QString::number(engine.uncaughtExceptionLineNumber()));
+            break;
+        }
+
+        QScriptValue fn = engine.globalObject().property("__yt_nsig");
+        if (!fn.isFunction()) {
+            logDebug("__yt_nsig is not a function after evaluation. Aborting.");
+            break;
+        }
+
+        QScriptValue result = fn.call(QScriptValue(), QScriptValueList() << originalN);
+        if (engine.hasUncaughtException()) {
+            QString err = engine.uncaughtException().toString();
+            // QScriptEngine: "ReferenceError: Can't find variable: gW"
+            // Имя переменной — после ПОСЛЕДНЕГО двоеточия
+            QString depName;
+            QRegExp refRx("Can't find variable:\\s*([A-Za-z0-9_$]+)");
+            if (refRx.indexIn(err) >= 0) {
+                depName = refRx.cap(1);
+            } else if (err.contains("ReferenceError")) {
+                int lastColon = err.lastIndexOf(':');
+                QString tail = err.mid(lastColon + 1).trimmed();
+                QRegExp identRx("^([A-Za-z0-9_$]+)");
+                if (identRx.indexIn(tail) >= 0) depName = identRx.cap(1);
+            }
+
+            if (!depName.isEmpty()) {
+                QString dep = resolveDependency(m_cachedScriptContent, depName);
+                if (!dep.isEmpty()) {
+                    logDebug(QString("Resolving runtime dependency: %1 (%2 chars, head: %3)")
+                             .arg(depName).arg(dep.length()).arg(dep.left(80)));
+                    deps.prepend(dep);
+                    collectTypeofDeps(dep, deps, resolvedNames);  // <<< НОВОЕ
+                    continue;
+                }
+                logDebug("Dependency '" + depName + "' not found in script. Aborting.");
+            } else {
+                logDebug("Snippet runtime error: " + err);
+            }
+            break;
+        }
+
+        logDebug(QString("Raw call result: isNull=%1 isUndefined=%2 isString=%3 -> '%4'")
+                 .arg(result.isNull()).arg(result.isUndefined())
+                 .arg(result.isString()).arg(result.toString()));
+        transformedN = result.toString();
+        break;
     }
 
-    logDebug("Calling __yt_nsig(" + originalN + ")...");
-    QScriptValueList args;
-    args << originalN;
-    QScriptValue result = nSigFunc.call(QScriptValue(), args);
-
-    if (engine.hasUncaughtException()) {
-        logDebug("QScriptEngine Runtime Failure: " + engine.uncaughtException().toString());
-        logDebug("Uncaught exception at line: " + QString::number(engine.uncaughtExceptionLineNumber()));
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+    // --- 7. Валидация результата ---
+    if (transformedN.isEmpty() || transformedN == "undefined" || transformedN == "null") {
+        logDebug("N-Decrypt FAILED: no usable result. Returning URL as-is.");
+        return url;
     }
-
-    QString decryptedN = result.toString();
-    if (decryptedN.isEmpty() || decryptedN == originalN) {
-        logDebug(QString("N-Decrypt Failure: Returned value is %1")
-                 .arg(decryptedN.isEmpty() ? "empty" : "identical to original"));
-        logDebug("------------------------------------------------------------------------");
-        return rawUrl;
+    if (transformedN == originalN) {
+        logDebug("N-Decrypt FAILED: function returned input unchanged (anti-tamper guard?). Returning URL as-is.");
+        return url;
     }
-
-    logDebug(QString("N-Decrypt Success: Transformed '%1' -> '%2'").arg(originalN).arg(decryptedN));
-
-    // Заменяем оригинальное значение
-    if (nIndex >= 0) {
-        queryItems[nIndex].second = decryptedN;
-    } else {
-        queryItems.append(qMakePair(QString("n"), decryptedN));
+    // Известный маркер сработавшего анти-вмешательства:
+    // результат вида "enhanced_except_..." или начинающийся с имени функции
+    if (transformedN.startsWith("enhanced_except_") || transformedN.endsWith("_w8_" + originalN)) {
+        logDebug("N-Decrypt FAILED: anti-tamper marker in result: " + transformedN);
+        return url;
     }
-    qurl.setQueryItems(queryItems);
+    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + transformedN + "'");
 
-    QString finalUrl = qurl.toEncoded();
-    logDebug("Reconstructed final URL: " + finalUrl);
-    logDebug("------------------------------------------------------------------------");
-    return finalUrl;
+    // --- 8. Подставляем новое значение в URL ---
+    QString encodedN = QString::fromLatin1(
+                QUrl::toPercentEncoding(transformedN));
+    QString resultUrl = url;
+    resultUrl.replace(nRx.cap(0),                       // "?n=..." или "&n=..."
+                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
+    logDebug("Output URL: " + resultUrl);
+    logDebug("-------------------------------------------------------------------------");
+    return resultUrl;
+}
+
+
+// Поиск закрывающей '}' с учётом строковых литералов
+static int findMatchingBrace(const QString &s, int openPos) {
+    int depth = 0;
+    QChar quote('\0');
+    bool escaped = false;
+    for (int i = openPos; i < s.length(); ++i) {
+        QChar c = s.at(i);
+        if (quote != QChar('\0')) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == quote) quote = QChar('\0');
+            continue;
+        }
+        if (c == '"' || c == '\'') { quote = c; continue; }
+        if (c == '{') depth++;
+        else if (c == '}') { if (--depth == 0) return i; }
+    }
+    return -1;
+}
+
+// Вырезает "function(...){...}" по имени: name=function(...) или function name(...)
+QString ApiManager::extractFunctionSource(const QString &script, const QString &name) {
+    QRegExp rx("(?:function\\s+" + QRegExp::escape(name) + "\\s*\\(|"
+               "[^A-Za-z0-9_$]" + QRegExp::escape(name) + "\\s*=\\s*function\\s*\\()");
+    int pos = rx.indexIn(script);
+    if (pos < 0) return QString();
+    int fnKw = script.indexOf("function", pos);      // начало ключевого слова
+    int open = script.indexOf('{', fnKw);
+    if (open < 0) return QString();
+    int close = findMatchingBrace(script, open);
+    if (close < 0) return QString();
+    return script.mid(fnKw, close - fnKw + 1);       // "function(M){...}"
+}
+
+// Вырезает "var name=<значение>;" для глобальной зависимости
+QString ApiManager::extractGlobalDefinition(const QString &script, const QString &name) {
+    QRegExp rx("(?:var\\s+|[;,\\n])" + QRegExp::escape(name) + "\\s*=");
+    int pos = rx.indexIn(script);
+    if (pos < 0) return QString();
+    int eq = script.indexOf('=', pos);
+    int depth = 0;
+    QChar quote('\0');
+    bool escaped = false;
+    int i = eq + 1;
+    for (; i < script.length(); ++i) {
+        QChar c = script.at(i);
+        if (quote != QChar('\0')) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == quote) quote = QChar('\0');
+            continue;
+        }
+        if (c == '"' || c == '\'') { quote = c; continue; }
+        if (c == '(' || c == '[' || c == '{') depth++;
+        else if (c == ')' || c == ']' || c == '}') depth--;
+        else if (c == ';' && depth == 0) break;
+    }
+    return "var " + name + "=" + script.mid(eq + 1, i - (eq + 1)) + ";";
+}
+
+// Универсальное разрешение зависимости: функция-объявление,
+// функция-присваивание или глобальная переменная с данными
+QString ApiManager::resolveDependency(const QString &script, const QString &name)
+{
+    // 1. Форма "function lI(M,W){...}" или "lI=function(M,W){...}"
+    QString fnSrc = extractFunctionSource(script, name);
+    if (!fnSrc.isEmpty()) {
+        if (fnSrc.startsWith("function " + name) || fnSrc.startsWith("function  " + name)) {
+            return fnSrc + ";";                    // декларация — годится как есть
+        }
+        return "var " + name + "=" + fnSrc + ";";  // анонимная — присваиваем имени
+    }
+    // 2. Форма "var lI=..." / ",lI=..." (данные: массивы, строки, объекты)
+    return extractGlobalDefinition(script, name);
+}
+
+void ApiManager::collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames)
+{
+    QRegExp typeofRx("typeof\\s+([A-Za-z0-9_$]{2,})");
+    int tp = 0;
+    while ((tp = typeofRx.indexIn(code, tp)) >= 0) {
+        QString depName = typeofRx.cap(1);
+        tp += typeofRx.matchedLength();
+        if (depName == "undefined" || resolvedNames.contains(depName)) continue;
+        resolvedNames << depName;
+        QString dep = resolveDependency(m_cachedScriptContent, depName);
+        if (!dep.isEmpty()) {
+            logDebug(QString("  [typeof-dep] '%1' resolved, %2 chars, head: %3")
+                     .arg(depName).arg(dep.length()).arg(dep.left(80)));
+            deps << dep;
+            collectTypeofDeps(dep, deps, resolvedNames);  // гарды внутри гардов
+        } else {
+            logDebug("  [typeof-dep] '" + depName + "' not in script (browser global?)");
+        }
+    }
 }
