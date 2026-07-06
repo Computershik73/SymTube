@@ -20,6 +20,9 @@
 #include <QDir>
 #include <QRegExp>
 
+const QByteArray VR_CLIENT_VERSION = "1.65.10";
+const QByteArray VR_USER_AGENT = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
+
 // Константы OAuth для получения токена
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
 const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
@@ -98,7 +101,13 @@ QVariantMap ApiManager::buildContext(const QString &clientName, const QString &c
     client["hl"] = parts.size() > 0 ? parts[0] : "en";
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
 
-    if (clientName == "TVHTML5") {
+    if (clientName == "ANDROID_VR") {
+        client["deviceMake"] = "Oculus";
+        client["deviceModel"] = "Quest 3";
+        client["androidSdkVersion"] = 32;
+        client["userAgent"] = QString::fromLatin1(VR_USER_AGENT);
+    } else if (clientName == "TVHTML5") {
+        // Оставляем для совместимости
         client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
     }
 
@@ -142,24 +151,31 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         token = getAccessToken();
     }
 
-    // С OAuth (Bearer) API-ключ передавать нельзя — он конфликтует с авторизацией
-    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint;
-    if (token.isEmpty()) {
-        url += "?key=" + m_config->apiKey();
-    }
-
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
-
     QVariantMap context = payload.value("context").toMap();
     QVariantMap client = context.value("client").toMap();
     QString clientName = client.value("clientName").toString();
 
+    // Определяем правильный API-ключ в зависимости от клиента
+    QString apiKey = m_config->apiKey();
+    if (clientName == "ANDROID_VR") {
+        apiKey = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"; // Родной ключ ANDROID_VR
+    }
+
+    // Собираем финальный URL
+    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint + "?key=" + apiKey;
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
+
     if (clientName == "ANDROID") {
         request.setRawHeader("x-youtube-client-name", "3");
         request.setRawHeader("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip");
+    } else if (clientName == "ANDROID_VR") {
+        request.setRawHeader("x-youtube-client-name", "28");
+        request.setRawHeader("x-youtube-client-version", VR_CLIENT_VERSION);
+        request.setRawHeader("User-Agent", VR_USER_AGENT);
     } else if (clientName == "TVHTML5") {
-        request.setRawHeader("x-youtube-client-name", "7");   // было 85 — это другой клиент!
+        request.setRawHeader("x-youtube-client-name", "7");
         request.setRawHeader("x-youtube-client-version", TV_CLIENT_VERSION);
         request.setRawHeader("User-Agent", TV_USER_AGENT);
     } else {
@@ -167,9 +183,8 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
-    if (!token.isEmpty()) {
+    if (!token.isEmpty() && clientName != "ANDROID_VR") {
         request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-
     }
 
     request.setRawHeader("Origin", "https://www.youtube.com");
@@ -350,9 +365,15 @@ void ApiManager::requestPlayer(const QString &videoId) {
     QStringList parts = lang.split("_");
 
     QVariantMap client;
-    client["clientName"] = "TVHTML5";
-    client["clientVersion"] = TV_CLIENT_VERSION;
-    client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
+    client["clientName"] = "ANDROID_VR";
+    client["clientVersion"] = VR_CLIENT_VERSION;
+    client["deviceMake"] = "Meta";
+    client["deviceModel"] = "Quest 3";
+    client["androidSdkVersion"] = 32; // Передаем как число
+    client["osName"] = "Android";
+    client["osVersion"] = "12L";
+    client["platform"] = "MOBILE";
+    client["userAgent"] = QString::fromLatin1(VR_USER_AGENT);
     client["hl"] = parts.size() > 0 ? parts[0] : "en";
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
     if (!m_visitorData.isEmpty()) client["visitorData"] = m_visitorData;
@@ -360,21 +381,17 @@ void ApiManager::requestPlayer(const QString &videoId) {
     QVariantMap context;
     context["client"] = client;
 
-    // ГЛАВНОЕ: контекст воспроизведения с версией плеера
-    QVariantMap contentPlaybackContext;
-    contentPlaybackContext["html5Preference"] = "HTML5_PREF_WANTS";
-    contentPlaybackContext["signatureTimestamp"] = m_signatureTimestamp;
-    QVariantMap playbackContext;
-    playbackContext["contentPlaybackContext"] = contentPlaybackContext;
-
     QVariantMap payload;
     payload["context"] = context;
-    payload["playbackContext"] = playbackContext;
     payload["videoId"] = videoId;
     payload["contentCheckOk"] = true;
     payload["racyCheckOk"] = true;
+
     m_lastRequestedVideoId = videoId;
-    postInnertube("player", payload, "VideoInfo", true);
+    logDebug("[ANDROID_VR] Sending player request for: " + videoId);
+
+    // Передаем false в параметр requiresAuth, чтобы не отправлять ТВ-токены
+    postInnertube("player", payload, "VideoInfo", false);
 }
 
 void ApiManager::getRelatedVideos(const QString &videoId, int page) {
@@ -465,6 +482,11 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QByteArray responseData = reply->readAll();
 
     if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson") {
+        logDebug(QString("[Network Error] Request '%1' failed with error: %2 (HTTP Code: %3)")
+                 .arg(requestType)
+                 .arg(reply->errorString())
+                 .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
+
         emit requestFailed(requestType, reply->errorString());
         reply->deleteLater();
         return;
@@ -808,6 +830,11 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         // Протух base.js/sts? Сервер просит "перезагрузить страницу" —
         // обновляем base.js и повторяем запрос (один раз на видео)
         QVariantMap playability = root.value("playabilityStatus").toMap();
+
+        if (playability.contains("reason")) {
+                   logDebug("Reason of unavailability: " + playability.value("reason").toString());
+               }
+
         QString status = playability.value("status").toString();
 
 
@@ -1194,42 +1221,176 @@ void ApiManager::setProxyPort(quint16 port)
     m_proxyPort = port;
 }
 
+// Находит имя или выражение функции дешифрации n-параметра
+// Находит имя или выражение функции дешифрации n-параметра
 QString ApiManager::extractNFunctionExpression(const QString &playerScript) {
     if (playerScript.isEmpty()) return "";
 
-    // Шаблон 1
-    QRegExp rx1("\\.get\\(\"n\"\\)\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    logDebug("[N-Extract] Starting robust n-function extraction...");
+
+    // 1. Поиск через точные регулярные выражения
+    QRegExp rx1("\\.get\\([\"']n[\"']\\)\\s*\\)?\\s*&&\\s*\\(?[a-zA-Z_\\$][\\w\\$]*\\s*=\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\s*\\)?\\s*&&\\s*\\(?[a-zA-Z_\\$][\\w\\$]*\\s*=\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    QRegExp rx3("\\.get\\([\"']n[\"']\\)\\s*\\)?\\s*&&\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+
+    QStringList exactCandidates;
+    QStringList exactIndices;
+
     if (rx1.indexIn(playerScript) >= 0) {
-        QString name = rx1.cap(1);
-        QString idx = rx1.cap(2);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx1.cap(1);
+        exactIndices << rx1.cap(2);
+        logDebug("[N-Extract] Precise match rx1: " + rx1.cap(1));
     }
-
-    // Шаблон 2
-    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
     if (rx2.indexIn(playerScript) >= 0) {
-        QString name = rx2.cap(1);
-        QString idx = rx2.cap(2);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx2.cap(1);
+        exactIndices << rx2.cap(2);
+        logDebug("[N-Extract] Precise match rx2: " + rx2.cap(1));
     }
-
-    // Шаблон 3 (с обратной ссылкой \\1 на имя переменной)
-    QRegExp rx3("\\b([a-zA-Z_\\$][\\w\\$]*)&&\\(\\1=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(\\1\\)");
     if (rx3.indexIn(playerScript) >= 0) {
-        QString name = rx3.cap(2);
-        QString idx = rx3.cap(3);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx3.cap(1);
+        exactIndices << rx3.cap(2);
+        logDebug("[N-Extract] Precise match rx3: " + rx3.cap(1));
     }
 
-    // Шаблон 4 (оптимизированный под QRegExp поиск внутри функции)
-    QRegExp rx4("([a-zA-Z_\\$][\\w\\$]*)=function\\([a-zA-Z_\\$][\\w\\$]*\\)\\{(?=[^\\}]*\\.split\\(\"\"\\))(?=[^\\}]*\\.join\\(\"\"\\))");
-    if (rx4.indexIn(playerScript) >= 0) {
-        return rx4.cap(1);
+    for (int i = 0; i < exactCandidates.size(); ++i) {
+        QString nfunc = exactCandidates[i];
+        QString idx = exactIndices[i];
+
+        // Имя функции-дешифратора обфусцировано и строго ограничено длиной 2-4 символа
+        if (nfunc.length() < 2 || nfunc.length() > 4 || nfunc == "get" || nfunc == "set" || nfunc == "fromCharCode" ||
+                nfunc == "split" || nfunc == "join" || nfunc == "indexOf" || nfunc == "replace" ||
+                nfunc == "if" || nfunc == "match" || nfunc == "catch" || nfunc == "sz" || nfunc == "call") {
+            continue;
+        }
+
+        QString resolvedFuncName = nfunc;
+        if (!idx.isEmpty()) {
+            QRegExp arrayRx("(?:var\\s+|[^\\w\\$])" + QRegExp::escape(nfunc) + "\\s*=\\s*\\[\\s*([\\w\\$,\\s]+)\\s*\\]");
+            if (arrayRx.indexIn(playerScript) >= 0) {
+                QString arrayContent = arrayRx.cap(1);
+                QStringList elements = arrayContent.split(",", QString::SkipEmptyParts);
+                int indexVal = idx.toInt();
+                if (indexVal >= 0 && indexVal < elements.size()) {
+                    resolvedFuncName = elements[indexVal].trimmed();
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+        }
+
+        QString fnSource = extractFunctionSource(playerScript, resolvedFuncName);
+        if (!fnSource.isEmpty()) {
+            if (fnSource.contains("split") && fnSource.contains("join")) {
+                logDebug("[N-Extract] SUCCESS (Precise Regex): Found scramble function -> " + resolvedFuncName);
+                return resolvedFuncName;
+            }
+        }
     }
 
+    // 2. Сканирование всех вхождений ключевых точек (если точные шаблоны не сработали)
+    logDebug("[N-Extract] Precise regexes failed. Scanning all entry point occurrences...");
+
+    QStringList entryPoints;
+    entryPoints << ".get(\"n\")" << "get('n')" << "fromCharCode(110)" << "nn\"[+";
+
+    foreach (const QString &ep, entryPoints) {
+        int findPos = -1;
+        // Перебираем абсолютно все вхождения ключевой строки в файле
+        while ((findPos = playerScript.indexOf(ep, findPos + 1)) >= 0) {
+            QString surrounding = playerScript.mid(findPos, 200);
+            if (surrounding.contains(".replace(") || surrounding.contains("replace(\"/n/\"") || surrounding.contains("match(///n///")) {
+                continue; // Надежно пропускаем URL-хелпер замены и идем к следующему вхождению
+            }
+
+            logDebug("[N-Extract] Testing entry point: " + ep + " at position " + QString::number(findPos));
+
+            QString searchArea = playerScript.mid(findPos, 400);
+            QRegExp rx("([\\w\\$]+)(?:\\[(\\d+)\\])?\\s*\\(");
+            int scanPos = 0;
+            while ((scanPos = rx.indexIn(searchArea, scanPos)) >= 0) {
+                QString nfunc = rx.cap(1);
+                QString idx = rx.cap(2);
+                scanPos += rx.matchedLength();
+
+                if (nfunc.length() < 2 || nfunc.length() > 4 || nfunc == "get" || nfunc == "set" || nfunc == "fromCharCode" ||
+                        nfunc == "split" || nfunc == "join" || nfunc == "indexOf" || nfunc == "replace" ||
+                        nfunc == "if" || nfunc == "match" || nfunc == "catch" || nfunc == "sz" || nfunc == "call" ||
+                        nfunc == "var" || nfunc == "function" || nfunc == "return" || nfunc == "for" || nfunc == "while" ||
+                        nfunc == "try" || nfunc == "new" || nfunc == "null" || nfunc == "true" || nfunc == "false" ||
+                        nfunc == "this" || nfunc == "typeof" || nfunc == "instanceof") {
+                    continue;
+                }
+
+                QString resolvedFuncName = nfunc;
+                if (!idx.isEmpty()) {
+                    QRegExp arrayRx("(?:var\\s+|[^\\w\\$])" + QRegExp::escape(nfunc) + "\\s*=\\s*\\[\\s*([\\w\\$,\\s]+)\\s*\\]");
+                    if (arrayRx.indexIn(playerScript) >= 0) {
+                        QString arrayContent = arrayRx.cap(1);
+                        QStringList elements = arrayContent.split(",", QString::SkipEmptyParts);
+                        int indexVal = idx.toInt();
+                        if (indexVal >= 0 && indexVal < elements.size()) {
+                            resolvedFuncName = elements[indexVal].trimmed();
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
+                if (resolvedFuncName.length() < 2 || resolvedFuncName.length() > 4 ||
+                        resolvedFuncName == "if" || resolvedFuncName == "for" || resolvedFuncName == "while" ||
+                        resolvedFuncName == "catch" || resolvedFuncName == "try" || resolvedFuncName == "return" ||
+                        resolvedFuncName == "var" || resolvedFuncName == "function" || resolvedFuncName == "new") {
+                    continue;
+                }
+
+                QString fnSource = extractFunctionSource(playerScript, resolvedFuncName);
+                if (!fnSource.isEmpty()) {
+                    if (fnSource.contains("split") && fnSource.contains("join")) {
+                        logDebug("[N-Extract] SUCCESS (Fallback Scan): Found scramble function -> " + resolvedFuncName);
+                        return resolvedFuncName;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Глобальный резервный поиск (если по точкам входа ничего не подтвердилось)
+    logDebug("[N-Extract] Entry points failed. Falling back to global search...");
+
+    QRegExp fnGlobalRx("(?:function\\s+([\\w\\$]+)\\s*\\(|([\\w\\$]+)\\s*=\\s*function\\s*\\()");
+    int scanPos = 0;
+    while ((scanPos = fnGlobalRx.indexIn(playerScript, scanPos)) >= 0) {
+        QString fnName = fnGlobalRx.cap(1);
+        if (fnName.isEmpty()) fnName = fnGlobalRx.cap(2);
+        scanPos += fnGlobalRx.matchedLength();
+
+        // Строгое отсечение длинных библиотечных имён (resolve, clone) на этапе глобального поиска
+        if (fnName.length() < 2 || fnName.length() > 4 || fnName == "get" || fnName == "set" || fnName == "F" ||
+                fnName == "if" || fnName == "match" || fnName == "replace" || fnName == "catch" ||
+                fnName == "while" || fnName == "for" || fnName == "try" || fnName == "return") continue;
+
+        int openBracePos = playerScript.indexOf('{', scanPos);
+        if (openBracePos >= 0) {
+            QString peekBody = playerScript.mid(openBracePos, 4000);
+            if (!peekBody.contains("split") || !peekBody.contains("join")) {
+                continue;
+            }
+        }
+
+        QString fnSource = extractFunctionSource(playerScript, fnName);
+        if (fnSource.length() > 600 && fnSource.length() < 6000) {
+            if (fnSource.contains("split") && fnSource.contains("join")) {
+                logDebug("[N-Extract] SUCCESS (Global Fallback): Found scramble function: " + fnName);
+                return fnName;
+            }
+        }
+    }
+
+    logDebug("[N-Extract] CRITICAL: No n-scramble function found in script!");
     return "";
 }
 
@@ -1252,157 +1413,7 @@ QString ApiManager::buildPlayerScriptWithNExport(const QString &playerScript, co
 
 
 
-QString ApiManager::decryptNParameter(const QString &url)
-{
-    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
-    logDebug("Input URL: " + url);
 
-    // --- 1. Достаём исходное значение n из query ---
-    QRegExp nRx("[?&]n=([^&]+)");
-    if (nRx.indexIn(url) < 0) {
-        logDebug("No 'n' parameter found in URL. Returning as-is.");
-        return url;
-    }
-    QString originalN = nRx.cap(1);
-    logDebug("Extracted original 'n' value: " + originalN);
-
-    // --- 2. Проверяем наличие скрипта плеера ---
-    if (m_cachedScriptContent.isEmpty()) {
-        logDebug("No player script in cache. Cannot decrypt 'n'. Returning as-is.");
-        return url;
-    }
-    logDebug(QString("Player script available in cache (size: %1 characters)")
-             .arg(m_cachedScriptContent.length()));
-
-    // --- 3. Имя n-функции (ваши существующие шаблоны) ---
-    QString funcName = extractNFunctionExpression(m_cachedScriptContent);
-    if (funcName.isEmpty()) {
-        logDebug("Failed to find n-scramble function via known patterns. Returning as-is.");
-        return url;
-    }
-    logDebug("Regex match: Found n-scramble function expression -> " + funcName);
-
-    // --- 4. Вырезаем исходник самой функции (а не весь 2МБ скрипт!) ---
-    QString snippet = extractFunctionSource(m_cachedScriptContent, funcName);
-    if (snippet.isEmpty()) {
-        logDebug("Failed to extract n-function source for '" + funcName + "'. Returning as-is.");
-        return url;
-    }
-    logDebug(QString("Extracted n-function source: %1 chars").arg(snippet.length()));
-
-    // --- 5. Заранее разрешаем typeof-guard зависимости ---
-    // Внутри бывает: if(typeof Xyz==="undefined")return M; — typeof не бросает
-    // ReferenceError, функция молча вернёт вход. Поэтому ищем такие имена заранее.
-    logDebug("Snippet body: " + snippet);   // 53 символа — влезет целиком
-
-    QStringList deps;
-    QStringList resolvedNames;
-    collectTypeofDeps(snippet, deps, resolvedNames);
-
-    // --- 6. Исполняем сниппет, доразрешая зависимости по ReferenceError ---
-    QString browserStubs =
-            "var window=this;"
-            "var document={};"
-            "var navigator={userAgent:''};"
-            "var location={hostname:'www.youtube.com',protocol:'https:',"
-            "href:'https://www.youtube.com/'};";
-
-
-    QString transformedN;
-    for (int attempt = 0; attempt < 10; ++attempt) {
-        QScriptEngine engine;
-        QString program = browserStubs + "\n" + deps.join("\n")
-                + "\nvar __yt_nsig=" + snippet + ";";
-
-        logDebug(QString("[Attempt %1] Program size: %2 chars, deps: %3")
-                 .arg(attempt).arg(program.length()).arg(deps.count()));
-
-        // Дамп для ручного анализа
-        QFile dbg("C:/Data/SymTube_nsig_debug.js");
-        if (dbg.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            dbg.write(program.toUtf8());
-            dbg.close();
-        }
-
-        engine.evaluate(program, "nsig_snippet.js");
-        if (engine.hasUncaughtException()) {
-            logDebug("Snippet compile error: " + engine.uncaughtException().toString()
-                     + " at line " + QString::number(engine.uncaughtExceptionLineNumber()));
-            break;
-        }
-
-        QScriptValue fn = engine.globalObject().property("__yt_nsig");
-        if (!fn.isFunction()) {
-            logDebug("__yt_nsig is not a function after evaluation. Aborting.");
-            break;
-        }
-
-        QScriptValue result = fn.call(QScriptValue(), QScriptValueList() << originalN);
-        if (engine.hasUncaughtException()) {
-            QString err = engine.uncaughtException().toString();
-            // QScriptEngine: "ReferenceError: Can't find variable: gW"
-            // Имя переменной — после ПОСЛЕДНЕГО двоеточия
-            QString depName;
-            QRegExp refRx("Can't find variable:\\s*([A-Za-z0-9_$]+)");
-            if (refRx.indexIn(err) >= 0) {
-                depName = refRx.cap(1);
-            } else if (err.contains("ReferenceError")) {
-                int lastColon = err.lastIndexOf(':');
-                QString tail = err.mid(lastColon + 1).trimmed();
-                QRegExp identRx("^([A-Za-z0-9_$]+)");
-                if (identRx.indexIn(tail) >= 0) depName = identRx.cap(1);
-            }
-
-            if (!depName.isEmpty()) {
-                QString dep = resolveDependency(m_cachedScriptContent, depName);
-                if (!dep.isEmpty()) {
-                    logDebug(QString("Resolving runtime dependency: %1 (%2 chars, head: %3)")
-                             .arg(depName).arg(dep.length()).arg(dep.left(80)));
-                    deps.prepend(dep);
-                    collectTypeofDeps(dep, deps, resolvedNames);  // <<< НОВОЕ
-                    continue;
-                }
-                logDebug("Dependency '" + depName + "' not found in script. Aborting.");
-            } else {
-                logDebug("Snippet runtime error: " + err);
-            }
-            break;
-        }
-
-        logDebug(QString("Raw call result: isNull=%1 isUndefined=%2 isString=%3 -> '%4'")
-                 .arg(result.isNull()).arg(result.isUndefined())
-                 .arg(result.isString()).arg(result.toString()));
-        transformedN = result.toString();
-        break;
-    }
-
-    // --- 7. Валидация результата ---
-    if (transformedN.isEmpty() || transformedN == "undefined" || transformedN == "null") {
-        logDebug("N-Decrypt FAILED: no usable result. Returning URL as-is.");
-        return url;
-    }
-    if (transformedN == originalN) {
-        logDebug("N-Decrypt FAILED: function returned input unchanged (anti-tamper guard?). Returning URL as-is.");
-        return url;
-    }
-    // Известный маркер сработавшего анти-вмешательства:
-    // результат вида "enhanced_except_..." или начинающийся с имени функции
-    if (transformedN.startsWith("enhanced_except_") || transformedN.endsWith("_w8_" + originalN)) {
-        logDebug("N-Decrypt FAILED: anti-tamper marker in result: " + transformedN);
-        return url;
-    }
-    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + transformedN + "'");
-
-    // --- 8. Подставляем новое значение в URL ---
-    QString encodedN = QString::fromLatin1(
-                QUrl::toPercentEncoding(transformedN));
-    QString resultUrl = url;
-    resultUrl.replace(nRx.cap(0),                       // "?n=..." или "&n=..."
-                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
-    logDebug("Output URL: " + resultUrl);
-    logDebug("-------------------------------------------------------------------------");
-    return resultUrl;
-}
 
 
 // Поиск закрывающей '}' с учётом строковых литералов
@@ -1425,26 +1436,70 @@ static int findMatchingBrace(const QString &s, int openPos) {
     return -1;
 }
 
-// Вырезает "function(...){...}" по имени: name=function(...) или function name(...)
+// Извлекает тело функции по её имени (Оптимизировано через indexOf)
 QString ApiManager::extractFunctionSource(const QString &script, const QString &name) {
-    QRegExp rx("(?:function\\s+" + QRegExp::escape(name) + "\\s*\\(|"
-               "[^A-Za-z0-9_$]" + QRegExp::escape(name) + "\\s*=\\s*function\\s*\\()");
-    int pos = rx.indexIn(script);
-    if (pos < 0) return QString();
-    int fnKw = script.indexOf("function", pos);      // начало ключевого слова
+    if (script.isEmpty() || name.isEmpty()) return "";
+
+    // Быстрый поиск точного положения объявления функции через indexOf
+    QStringList patterns;
+    patterns << "function " + name
+             << name + "=function"
+             << name + " =function"
+             << name + "= function"
+             << name + " = function"
+             << name + ":function"
+             << name + " :function"
+             << name + ": function"
+             << name + " : function";
+
+    int pos = -1;
+    foreach (const QString &pat, patterns) {
+        pos = script.indexOf(pat);
+        if (pos >= 0) break;
+    }
+
+    if (pos < 0) return "";
+
+    // Находим ключевое слово function рядом с найденной позицией
+    int fnKw = script.indexOf("function", qMax(0, pos - 5));
+    if (fnKw < 0) fnKw = pos;
+
     int open = script.indexOf('{', fnKw);
-    if (open < 0) return QString();
+    if (open < 0) return "";
+
     int close = findMatchingBrace(script, open);
-    if (close < 0) return QString();
-    return script.mid(fnKw, close - fnKw + 1);       // "function(M){...}"
+    if (close < 0) return "";
+
+    return script.mid(fnKw, close - fnKw + 1);
 }
 
-// Вырезает "var name=<значение>;" для глобальной зависимости
+
+// Извлекает глобальные переменные/массивы/объекты, от которых зависит функция (Оптимизировано через indexOf)
 QString ApiManager::extractGlobalDefinition(const QString &script, const QString &name) {
-    QRegExp rx("(?:var\\s+|[;,\\n])" + QRegExp::escape(name) + "\\s*=");
-    int pos = rx.indexIn(script);
-    if (pos < 0) return QString();
+    if (script.isEmpty() || name.isEmpty()) return "";
+
+    // Быстрый поиск объявления переменной через indexOf
+    QStringList patterns;
+    patterns << "var " + name + "="
+             << "var " + name + " ="
+             << ";" + name + "="
+             << ";" + name + " ="
+             << "," + name + "="
+             << "," + name + " ="
+             << "\n" + name + "="
+             << "\n" + name + " =";
+
+    int pos = -1;
+    foreach (const QString &pat, patterns) {
+        pos = script.indexOf(pat);
+        if (pos >= 0) break;
+    }
+
+    if (pos < 0) return "";
+
     int eq = script.indexOf('=', pos);
+    if (eq < 0) return "";
+
     int depth = 0;
     QChar quote('\0');
     bool escaped = false;
@@ -1460,7 +1515,7 @@ QString ApiManager::extractGlobalDefinition(const QString &script, const QString
         if (c == '"' || c == '\'') { quote = c; continue; }
         if (c == '(' || c == '[' || c == '{') depth++;
         else if (c == ')' || c == ']' || c == '}') depth--;
-        else if (c == ';' && depth == 0) break;
+        else if ((c == ';' || c == ',') && depth == 0) break;
     }
     return "var " + name + "=" + script.mid(eq + 1, i - (eq + 1)) + ";";
 }
@@ -1500,4 +1555,84 @@ void ApiManager::collectTypeofDeps(const QString &code, QStringList &deps, QStri
             logDebug("  [typeof-dep] '" + depName + "' not in script (browser global?)");
         }
     }
+}
+
+void safeCharSwap(QString &str, int i, int j) {
+    if (i < 0 || i >= str.length() || j < 0 || j >= str.length() || i == j) return;
+    QChar temp = str.at(i);
+    str.replace(i, 1, str.at(j));
+    str.replace(j, 1, temp);
+}
+
+QString ApiManager::decryptNParameter(const QString &url)
+{
+    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
+    logDebug("Input URL: " + url);
+
+    // 1. Извлекаем исходное значение n из URL
+    QRegExp nRx("[?&]n=([^&]+)");
+    if (nRx.indexIn(url) < 0) {
+        logDebug("No 'n' parameter found in URL. Returning as-is.");
+        return url;
+    }
+    QString originalN = nRx.cap(1);
+    logDebug("Extracted original 'n' value: " + originalN);
+
+    // 2. Выполняем дешифрацию алгоритмом пользователя на чистом C++
+    QString a = originalN;
+    int len = a.length();
+    if (len == 0) return url;
+
+    // a.reverse() — разворачиваем строку в обратном порядке
+    for (int i = 0; i < len / 2; ++i) {
+        QChar temp = a.at(i);
+        a.replace(i, 1, a.at(len - 1 - i));
+        a.replace(len - 1 - i, 1, temp);
+    }
+
+    // a.splice(0, 1) — удаляем первый символ
+    if (a.length() > 0) {
+        a.remove(0, 1);
+    }
+
+    // Свап 0 и 55 % length
+    if (a.length() > 0) {
+        int idx = 55 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // a.splice(0, 1) — удаляем первый символ
+    if (a.length() > 0) {
+        a.remove(0, 1);
+    }
+
+    // Свап 0 и 53 % length
+    if (a.length() > 0) {
+        int idx = 53 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // Свап 0 and 9 % length
+    if (a.length() > 0) {
+        int idx = 9 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // a.splice(0, 3) — удаляем первые 3 символа
+    if (a.length() >= 3) {
+        a.remove(0, 3);
+    } else {
+        a.clear();
+    }
+
+    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + a + "'");
+
+    // 3. Подставляем дешифрованное значение обратно в URL
+    QString encodedN = QString::fromLatin1(QUrl::toPercentEncoding(a));
+    QString resultUrl = url;
+    resultUrl.replace(nRx.cap(0),
+                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
+    logDebug("Output URL: " + resultUrl);
+    logDebug("-------------------------------------------------------------------------");
+    return resultUrl;
 }
