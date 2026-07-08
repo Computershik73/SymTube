@@ -75,6 +75,58 @@ Rectangle {
                 }
             }
 
+            Column {
+                spacing: 8
+                width: parent.width
+                z: 8 // z-index ниже, чтобы выпадающий список языков не перекрывался
+
+                Text {
+                    text: qsTr("Сеть / Прокси")
+                    color: "#CCFFFFFF"
+                    font.pixelSize: 16
+                }
+
+                Row {
+                    spacing: 12
+                    width: parent.width
+                    height: 40
+
+                    Rectangle {
+                        width: 24; height: 24; radius: 4
+                        color: "#1F1F1F"
+                        border.color: "#333333"
+                        border.width: 1
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            text: "✓"
+                            color: "#007ACC"
+                            font.pixelSize: 18
+                            font.bold: true
+                            anchors.centerIn: parent
+                            visible: Config.enableProxy
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: { Config.enableProxy = !Config.enableProxy; }
+                        }
+                    }
+
+                    Text {
+                        text: qsTr("Использовать локальный прокси (VPN)") + (TranslationManager.currentLanguage ? "" : "")
+                        color: "white"
+                        font.pixelSize: 16
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: { Config.enableProxy = !Config.enableProxy; }
+                        }
+                    }
+                }
+            }
+
             Rectangle {
                 width: parent.width
                 height: 45

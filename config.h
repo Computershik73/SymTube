@@ -13,7 +13,7 @@ class Config : public QObject
     Q_PROPERTY(bool enableChannelThumbnails READ enableChannelThumbnails WRITE setEnableChannelThumbnails NOTIFY enableChannelThumbnailsChanged)
     Q_PROPERTY(qreal persistentVolume READ persistentVolume WRITE setPersistentVolume NOTIFY persistentVolumeChanged)
     Q_PROPERTY(QString videoQuality READ videoQuality WRITE setVideoQuality NOTIFY videoQualityChanged)
-
+    Q_PROPERTY(bool enableProxy READ enableProxy WRITE setEnableProxy NOTIFY enableProxyChanged)
 public:
     explicit Config(QObject *parent = 0);
     ~Config();
@@ -33,12 +33,16 @@ public:
     QString videoQuality() const;
     void setVideoQuality(const QString &quality);
 
+    bool enableProxy() const;
+    void setEnableProxy(bool enable);
+
 signals:
     void apiKeyChanged();
     void userTokenChanged();
     void enableChannelThumbnailsChanged();
     void persistentVolumeChanged();
     void videoQualityChanged();
+    void enableProxyChanged();
 
 private:
     QSettings *m_settings;
@@ -49,6 +53,8 @@ private:
     QString m_videoQuality;
 
     QString getDefaultQualityByOs() const;
+
+    bool m_enableProxy;
 };
 
 #endif // CONFIG_H

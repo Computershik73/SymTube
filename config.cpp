@@ -1,5 +1,6 @@
 #include "config.h"
 #include <QSysInfo>
+#include <QNetworkProxy>
 
 // Константы InnerTube
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
@@ -14,6 +15,38 @@ Config::Config(QObject *parent) : QObject(parent)
     m_enableChannelThumbnails = m_settings->value("EnableChannelThumbnails", true).toBool();
     m_persistentVolume = m_settings->value("PersistentVolume", 0.8).toReal();
     m_videoQuality = m_settings->value("VideoQuality", getDefaultQualityByOs()).toString();
+
+    m_enableProxy = m_settings->value("EnableProxy", true).toBool();
+    if (m_enableProxy) {
+        QNetworkProxy extProxy;
+        extProxy.setType(QNetworkProxy::HttpProxy);
+        extProxy.setHostName("127.0.0.1");
+        extProxy.setPort(8080);
+        QNetworkProxy::setApplicationProxy(extProxy);
+    } else {
+        QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+    }
+}
+
+bool Config::enableProxy() const { return m_enableProxy; }
+
+void Config::setEnableProxy(bool enable) {
+    if (m_enableProxy != enable) {
+        m_enableProxy = enable;
+        m_settings->setValue("EnableProxy", m_enableProxy);
+        emit enableProxyChanged();
+
+        // Мгновенно применяем изменения во всей аппликации
+        if (m_enableProxy) {
+            QNetworkProxy extProxy;
+            extProxy.setType(QNetworkProxy::HttpProxy);
+            extProxy.setHostName("127.0.0.1");
+            extProxy.setPort(8080);
+            QNetworkProxy::setApplicationProxy(extProxy);
+        } else {
+            QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+        }
+    }
 }
 
 Config::~Config() {}

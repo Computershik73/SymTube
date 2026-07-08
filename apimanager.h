@@ -71,6 +71,7 @@ signals:
 
     void alternativeQualitiesReady(QString videoId, QVariantList qualities);
     void commentsReady(QVariantList comments, QString continuationToken);
+    void botBlockDetected();
 
 private slots:
     void onReplyFinished(QNetworkReply *reply);

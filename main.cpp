@@ -20,6 +20,7 @@
 #include <QFile>
 #include "compositornudger.h"
 #include "volumekeysobserver.h"
+#include <QFont>
 
 #if defined(SYMBIAN) || defined(Q_OS_SYMBIAN)
 #include <e32std.h>
@@ -34,6 +35,10 @@ int main(int argc, char *argv[])
     QFile::remove("C:/Data/SymTube_debug.txt");
     QSymbianApplication app(argc, argv);
 
+    QFont defaultFont("Series 60 Sans");
+    app.setFont(defaultFont);
+
+
     QApplication::setAttribute(Qt::AA_S60DisablePartialScreenInputMode, false);
 
     void* library = dlopen("QtGui", 0);
@@ -46,11 +51,7 @@ int main(int argc, char *argv[])
     }
 
     // ВОЗВРАЩАЕМ ГЛОБАЛЬНЫЙ ПРОКСИ ЧЕРЕЗ ВАШ VPN!
-    QNetworkProxy extProxy;
-    extProxy.setType(QNetworkProxy::HttpProxy);
-    extProxy.setHostName("127.0.0.1");
-    extProxy.setPort(8080);
-    QNetworkProxy::setApplicationProxy(extProxy);
+
 
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QTextCodec::setCodecForTr(codec);

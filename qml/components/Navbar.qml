@@ -174,7 +174,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: qsTr("Поиск")
+                    text: qsTr("Поиск") + (TranslationManager.currentLanguage ? "" : "")
                     color: "gray"
                     font.pixelSize: 16
                     visible: parent.text.length === 0 && !parent.activeFocus

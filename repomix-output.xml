@@ -32,7 +32,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: **/bld.inf/**
+- Files matching these patterns are excluded: **/bld.inf/**, **/LICENSE/**
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -62,7 +62,6 @@ lang/SymTube_ru_RU.qm
 lang/SymTube_ru_RU.ts
 lang/SymTube_tr_TR.qm
 lang/SymTube_tr_TR.ts
-LICENSE
 localhttpproxy.cpp
 localhttpproxy.h
 main.cpp
@@ -1405,6 +1404,14 @@ namespace QtJson {
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Ağ / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Yerel proxy kullan (VPN)</translation>
+    </message>
     <message>
         <source>Настройки</source>
         <translation>Ayarlar</translation>
@@ -1525,684 +1532,27 @@ namespace QtJson {
         <translation>Açıklama</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Внимание</source>
+        <translation>Dikkat</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube, cihazınızı bot olarak algıladığı için erişimi geçici olarak engelledi.
+
+Lütfen IP adresinizi değiştirin (başka bir VPN sunucusuna bağlanın) ve tekrar deneyin.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>Tamam</translation>
+    </message>
+</context>
 </TS>
-</file>
-
-<file path="LICENSE">
-GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
-
- Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
-
-                            Preamble
-
-  The GNU General Public License is a free, copyleft license for
-software and other kinds of works.
-
-  The licenses for most software and other practical works are designed
-to take away your freedom to share and change the works.  By contrast,
-the GNU General Public License is intended to guarantee your freedom to
-share and change all versions of a program--to make sure it remains free
-software for all its users.  We, the Free Software Foundation, use the
-GNU General Public License for most of our software; it applies also to
-any other work released this way by its authors.  You can apply it to
-your programs, too.
-
-  When we speak of free software, we are referring to freedom, not
-price.  Our General Public Licenses are designed to make sure that you
-have the freedom to distribute copies of free software (and charge for
-them if you wish), that you receive source code or can get it if you
-want it, that you can change the software or use pieces of it in new
-free programs, and that you know you can do these things.
-
-  To protect your rights, we need to prevent others from denying you
-these rights or asking you to surrender the rights.  Therefore, you have
-certain responsibilities if you distribute copies of the software, or if
-you modify it: responsibilities to respect the freedom of others.
-
-  For example, if you distribute copies of such a program, whether
-gratis or for a fee, you must pass on to the recipients the same
-freedoms that you received.  You must make sure that they, too, receive
-or can get the source code.  And you must show them these terms so they
-know their rights.
-
-  Developers that use the GNU GPL protect your rights with two steps:
-(1) assert copyright on the software, and (2) offer you this License
-giving you legal permission to copy, distribute and/or modify it.
-
-  For the developers' and authors' protection, the GPL clearly explains
-that there is no warranty for this free software.  For both users' and
-authors' sake, the GPL requires that modified versions be marked as
-changed, so that their problems will not be attributed erroneously to
-authors of previous versions.
-
-  Some devices are designed to deny users access to install or run
-modified versions of the software inside them, although the manufacturer
-can do so.  This is fundamentally incompatible with the aim of
-protecting users' freedom to change the software.  The systematic
-pattern of such abuse occurs in the area of products for individuals to
-use, which is precisely where it is most unacceptable.  Therefore, we
-have designed this version of the GPL to prohibit the practice for those
-products.  If such problems arise substantially in other domains, we
-stand ready to extend this provision to those domains in future versions
-of the GPL, as needed to protect the freedom of users.
-
-  Finally, every program is threatened constantly by software patents.
-States should not allow patents to restrict development and use of
-software on general-purpose computers, but in those that do, we wish to
-avoid the special danger that patents applied to a free program could
-make it effectively proprietary.  To prevent this, the GPL assures that
-patents cannot be used to render the program non-free.
-
-  The precise terms and conditions for copying, distribution and
-modification follow.
-
-                       TERMS AND CONDITIONS
-
-  0. Definitions.
-
-  "This License" refers to version 3 of the GNU General Public License.
-
-  "Copyright" also means copyright-like laws that apply to other kinds of
-works, such as semiconductor masks.
-
-  "The Program" refers to any copyrightable work licensed under this
-License.  Each licensee is addressed as "you".  "Licensees" and
-"recipients" may be individuals or organizations.
-
-  To "modify" a work means to copy from or adapt all or part of the work
-in a fashion requiring copyright permission, other than the making of an
-exact copy.  The resulting work is called a "modified version" of the
-earlier work or a work "based on" the earlier work.
-
-  A "covered work" means either the unmodified Program or a work based
-on the Program.
-
-  To "propagate" a work means to do anything with it that, without
-permission, would make you directly or secondarily liable for
-infringement under applicable copyright law, except executing it on a
-computer or modifying a private copy.  Propagation includes copying,
-distribution (with or without modification), making available to the
-public, and in some countries other activities as well.
-
-  To "convey" a work means any kind of propagation that enables other
-parties to make or receive copies.  Mere interaction with a user through
-a computer network, with no transfer of a copy, is not conveying.
-
-  An interactive user interface displays "Appropriate Legal Notices"
-to the extent that it includes a convenient and prominently visible
-feature that (1) displays an appropriate copyright notice, and (2)
-tells the user that there is no warranty for the work (except to the
-extent that warranties are provided), that licensees may convey the
-work under this License, and how to view a copy of this License.  If
-the interface presents a list of user commands or options, such as a
-menu, a prominent item in the list meets this criterion.
-
-  1. Source Code.
-
-  The "source code" for a work means the preferred form of the work
-for making modifications to it.  "Object code" means any non-source
-form of a work.
-
-  A "Standard Interface" means an interface that either is an official
-standard defined by a recognized standards body, or, in the case of
-interfaces specified for a particular programming language, one that
-is widely used among developers working in that language.
-
-  The "System Libraries" of an executable work include anything, other
-than the work as a whole, that (a) is included in the normal form of
-packaging a Major Component, but which is not part of that Major
-Component, and (b) serves only to enable use of the work with that
-Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in source code form.  A
-"Major Component", in this context, means a major essential component
-(kernel, window system, and so on) of the specific operating system
-(if any) on which the executable work runs, or a compiler used to
-produce the work, or an object code interpreter used to run it.
-
-  The "Corresponding Source" for a work in object code form means all
-the source code needed to generate, install, and (for an executable
-work) run the object code and to modify the work, including scripts to
-control those activities.  However, it does not include the work's
-System Libraries, or general-purpose tools or generally available free
-programs which are used unmodified in performing those activities but
-which are not part of the work.  For example, Corresponding Source
-includes interface definition files associated with source files for
-the work, and the source code for shared libraries and dynamically
-linked subprograms that the work is specifically designed to require,
-such as by intimate data communication or control flow between those
-subprograms and other parts of the work.
-
-  The Corresponding Source need not include anything that users
-can regenerate automatically from other parts of the Corresponding
-Source.
-
-  The Corresponding Source for a work in source code form is that
-same work.
-
-  2. Basic Permissions.
-
-  All rights granted under this License are granted for the term of
-copyright on the Program, and are irrevocable provided the stated
-conditions are met.  This License explicitly affirms your unlimited
-permission to run the unmodified Program.  The output from running a
-covered work is covered by this License only if the output, given its
-content, constitutes a covered work.  This License acknowledges your
-rights of fair use or other equivalent, as provided by copyright law.
-
-  You may make, run and propagate covered works that you do not
-convey, without conditions so long as your license otherwise remains
-in force.  You may convey covered works to others for the sole purpose
-of having them make modifications exclusively for you, or provide you
-with facilities for running those works, provided that you comply with
-the terms of this License in conveying all material for which you do
-not control copyright.  Those thus making or running the covered works
-for you must do so exclusively on your behalf, under your direction
-and control, on terms that prohibit them from making any copies of
-your copyrighted material outside their relationship with you.
-
-  Conveying under any other circumstances is permitted solely under
-the conditions stated below.  Sublicensing is not allowed; section 10
-makes it unnecessary.
-
-  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
-
-  No covered work shall be deemed part of an effective technological
-measure under any applicable law fulfilling obligations under article
-11 of the WIPO copyright treaty adopted on 20 December 1996, or
-similar laws prohibiting or restricting circumvention of such
-measures.
-
-  When you convey a covered work, you waive any legal power to forbid
-circumvention of technological measures to the extent such circumvention
-is effected by exercising rights under this License with respect to
-the covered work, and you disclaim any intention to limit operation or
-modification of the work as a means of enforcing, against the work's
-users, your or third parties' legal rights to forbid circumvention of
-technological measures.
-
-  4. Conveying Verbatim Copies.
-
-  You may convey verbatim copies of the Program's source code as you
-receive it, in any medium, provided that you conspicuously and
-appropriately publish on each copy an appropriate copyright notice;
-keep intact all notices stating that this License and any
-non-permissive terms added in accord with section 7 apply to the code;
-keep intact all notices of the absence of any warranty; and give all
-recipients a copy of this License along with the Program.
-
-  You may charge any price or no price for each copy that you convey,
-and you may offer support or warranty protection for a fee.
-
-  5. Conveying Modified Source Versions.
-
-  You may convey a work based on the Program, or the modifications to
-produce it from the Program, in the form of source code under the
-terms of section 4, provided that you also meet all of these conditions:
-
-    a) The work must carry prominent notices stating that you modified
-    it, and giving a relevant date.
-
-    b) The work must carry prominent notices stating that it is
-    released under this License and any conditions added under section
-    7.  This requirement modifies the requirement in section 4 to
-    "keep intact all notices".
-
-    c) You must license the entire work, as a whole, under this
-    License to anyone who comes into possession of a copy.  This
-    License will therefore apply, along with any applicable section 7
-    additional terms, to the whole of the work, and all its parts,
-    regardless of how they are packaged.  This License gives no
-    permission to license the work in any other way, but it does not
-    invalidate such permission if you have separately received it.
-
-    d) If the work has interactive user interfaces, each must display
-    Appropriate Legal Notices; however, if the Program has interactive
-    interfaces that do not display Appropriate Legal Notices, your
-    work need not make them do so.
-
-  A compilation of a covered work with other separate and independent
-works, which are not by their nature extensions of the covered work,
-and which are not combined with it such as to form a larger program,
-in or on a volume of a storage or distribution medium, is called an
-"aggregate" if the compilation and its resulting copyright are not
-used to limit the access or legal rights of the compilation's users
-beyond what the individual works permit.  Inclusion of a covered work
-in an aggregate does not cause this License to apply to the other
-parts of the aggregate.
-
-  6. Conveying Non-Source Forms.
-
-  You may convey a covered work in object code form under the terms
-of sections 4 and 5, provided that you also convey the
-machine-readable Corresponding Source under the terms of this License,
-in one of these ways:
-
-    a) Convey the object code in, or embodied in, a physical product
-    (including a physical distribution medium), accompanied by the
-    Corresponding Source fixed on a durable physical medium
-    customarily used for software interchange.
-
-    b) Convey the object code in, or embodied in, a physical product
-    (including a physical distribution medium), accompanied by a
-    written offer, valid for at least three years and valid for as
-    long as you offer spare parts or customer support for that product
-    model, to give anyone who possesses the object code either (1) a
-    copy of the Corresponding Source for all the software in the
-    product that is covered by this License, on a durable physical
-    medium customarily used for software interchange, for a price no
-    more than your reasonable cost of physically performing this
-    conveying of source, or (2) access to copy the
-    Corresponding Source from a network server at no charge.
-
-    c) Convey individual copies of the object code with a copy of the
-    written offer to provide the Corresponding Source.  This
-    alternative is allowed only occasionally and noncommercially, and
-    only if you received the object code with such an offer, in accord
-    with subsection 6b.
-
-    d) Convey the object code by offering access from a designated
-    place (gratis or for a charge), and offer equivalent access to the
-    Corresponding Source in the same way through the same place at no
-    further charge.  You need not require recipients to copy the
-    Corresponding Source along with the object code.  If the place to
-    copy the object code is a network server, the Corresponding Source
-    may be on a different server (operated by you or a third party)
-    that supports equivalent copying facilities, provided you maintain
-    clear directions next to the object code saying where to find the
-    Corresponding Source.  Regardless of what server hosts the
-    Corresponding Source, you remain obligated to ensure that it is
-    available for as long as needed to satisfy these requirements.
-
-    e) Convey the object code using peer-to-peer transmission, provided
-    you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at no
-    charge under subsection 6d.
-
-  A separable portion of the object code, whose source code is excluded
-from the Corresponding Source as a System Library, need not be
-included in conveying the object code work.
-
-  A "User Product" is either (1) a "consumer product", which means any
-tangible personal property which is normally used for personal, family,
-or household purposes, or (2) anything designed or sold for incorporation
-into a dwelling.  In determining whether a product is a consumer product,
-doubtful cases shall be resolved in favor of coverage.  For a particular
-product received by a particular user, "normally used" refers to a
-typical or common use of that class of product, regardless of the status
-of the particular user or of the way in which the particular user
-actually uses, or expects or is expected to use, the product.  A product
-is a consumer product regardless of whether the product has substantial
-commercial, industrial or non-consumer uses, unless such uses represent
-the only significant mode of use of the product.
-
-  "Installation Information" for a User Product means any methods,
-procedures, authorization keys, or other information required to install
-and execute modified versions of a covered work in that User Product from
-a modified version of its Corresponding Source.  The information must
-suffice to ensure that the continued functioning of the modified object
-code is in no case prevented or interfered with solely because
-modification has been made.
-
-  If you convey an object code work under this section in, or with, or
-specifically for use in, a User Product, and the conveying occurs as
-part of a transaction in which the right of possession and use of the
-User Product is transferred to the recipient in perpetuity or for a
-fixed term (regardless of how the transaction is characterized), the
-Corresponding Source conveyed under this section must be accompanied
-by the Installation Information.  But this requirement does not apply
-if neither you nor any third party retains the ability to install
-modified object code on the User Product (for example, the work has
-been installed in ROM).
-
-  The requirement to provide Installation Information does not include a
-requirement to continue to provide support service, warranty, or updates
-for a work that has been modified or installed by the recipient, or for
-the User Product in which it has been modified or installed.  Access to a
-network may be denied when the modification itself materially and
-adversely affects the operation of the network or violates the rules and
-protocols for communication across the network.
-
-  Corresponding Source conveyed, and Installation Information provided,
-in accord with this section must be in a format that is publicly
-documented (and with an implementation available to the public in
-source code form), and must require no special password or key for
-unpacking, reading or copying.
-
-  7. Additional Terms.
-
-  "Additional permissions" are terms that supplement the terms of this
-License by making exceptions from one or more of its conditions.
-Additional permissions that are applicable to the entire Program shall
-be treated as though they were included in this License, to the extent
-that they are valid under applicable law.  If additional permissions
-apply only to part of the Program, that part may be used separately
-under those permissions, but the entire Program remains governed by
-this License without regard to the additional permissions.
-
-  When you convey a copy of a covered work, you may at your option
-remove any additional permissions from that copy, or from any part of
-it.  (Additional permissions may be written to require their own
-removal in certain cases when you modify the work.)  You may place
-additional permissions on material, added by you to a covered work,
-for which you have or can give appropriate copyright permission.
-
-  Notwithstanding any other provision of this License, for material you
-add to a covered work, you may (if authorized by the copyright holders of
-that material) supplement the terms of this License with terms:
-
-    a) Disclaiming warranty or limiting liability differently from the
-    terms of sections 15 and 16 of this License; or
-
-    b) Requiring preservation of specified reasonable legal notices or
-    author attributions in that material or in the Appropriate Legal
-    Notices displayed by works containing it; or
-
-    c) Prohibiting misrepresentation of the origin of that material, or
-    requiring that modified versions of such material be marked in
-    reasonable ways as different from the original version; or
-
-    d) Limiting the use for publicity purposes of names of licensors or
-    authors of the material; or
-
-    e) Declining to grant rights under trademark law for use of some
-    trade names, trademarks, or service marks; or
-
-    f) Requiring indemnification of licensors and authors of that
-    material by anyone who conveys the material (or modified versions of
-    it) with contractual assumptions of liability to the recipient, for
-    any liability that these contractual assumptions directly impose on
-    those licensors and authors.
-
-  All other non-permissive additional terms are considered "further
-restrictions" within the meaning of section 10.  If the Program as you
-received it, or any part of it, contains a notice stating that it is
-governed by this License along with a term that is a further
-restriction, you may remove that term.  If a license document contains
-a further restriction but permits relicensing or conveying under this
-License, you may add to a covered work material governed by the terms
-of that license document, provided that the further restriction does
-not survive such relicensing or conveying.
-
-  If you add terms to a covered work in accord with this section, you
-must place, in the relevant source files, a statement of the
-additional terms that apply to those files, or a notice indicating
-where to find the applicable terms.
-
-  Additional terms, permissive or non-permissive, may be stated in the
-form of a separately written license, or stated as exceptions;
-the above requirements apply either way.
-
-  8. Termination.
-
-  You may not propagate or modify a covered work except as expressly
-provided under this License.  Any attempt otherwise to propagate or
-modify it is void, and will automatically terminate your rights under
-this License (including any patent licenses granted under the third
-paragraph of section 11).
-
-  However, if you cease all violation of this License, then your
-license from a particular copyright holder is reinstated (a)
-provisionally, unless and until the copyright holder explicitly and
-finally terminates your license, and (b) permanently, if the copyright
-holder fails to notify you of the violation by some reasonable means
-prior to 60 days after the cessation.
-
-  Moreover, your license from a particular copyright holder is
-reinstated permanently if the copyright holder notifies you of the
-violation by some reasonable means, this is the first time you have
-received notice of violation of this License (for any work) from that
-copyright holder, and you cure the violation prior to 30 days after
-your receipt of the notice.
-
-  Termination of your rights under this section does not terminate the
-licenses of parties who have received copies or rights from you under
-this License.  If your rights have been terminated and not permanently
-reinstated, you do not qualify to receive new licenses for the same
-material under section 10.
-
-  9. Acceptance Not Required for Having Copies.
-
-  You are not required to accept this License in order to receive or
-run a copy of the Program.  Ancillary propagation of a covered work
-occurring solely as a consequence of using peer-to-peer transmission
-to receive a copy likewise does not require acceptance.  However,
-nothing other than this License grants you permission to propagate or
-modify any covered work.  These actions infringe copyright if you do
-not accept this License.  Therefore, by modifying or propagating a
-covered work, you indicate your acceptance of this License to do so.
-
-  10. Automatic Licensing of Downstream Recipients.
-
-  Each time you convey a covered work, the recipient automatically
-receives a license from the original licensors, to run, modify and
-propagate that work, subject to this License.  You are not responsible
-for enforcing compliance by third parties with this License.
-
-  An "entity transaction" is a transaction transferring control of an
-organization, or substantially all assets of one, or subdividing an
-organization, or merging organizations.  If propagation of a covered
-work results from an entity transaction, each party to that
-transaction who receives a copy of the work also receives whatever
-licenses to the work the party's predecessor in interest had or could
-give under the previous paragraph, plus a right to possession of the
-Corresponding Source of the work from the predecessor in interest, if
-the predecessor has it or can get it with reasonable efforts.
-
-  You may not impose any further restrictions on the exercise of the
-rights granted or affirmed under this License.  For example, you may
-not impose a license fee, royalty, or other charge for exercise of
-rights granted under this License, and you may not initiate litigation
-(including a cross-claim or counterclaim in a lawsuit) alleging that
-any patent claim is infringed by making, using, selling, offering for
-sale, or importing the Program or any portion of it.
-
-  11. Patents.
-
-  A "contributor" is a copyright holder who authorizes use under this
-License of the Program or a work on which the Program is based.  The
-work thus licensed is called the contributor's "contributor version".
-
-  A contributor's "essential patent claims" are all patent claims
-owned or controlled by the contributor, whether already acquired or
-hereafter acquired, that would be infringed by some manner, permitted
-by this License, of making, using, or selling its contributor version,
-but do not include claims that would be infringed only as a
-consequence of further modification of the contributor version.  For
-purposes of this definition, "control" includes the right to grant
-patent sublicenses in a manner consistent with the requirements of
-this License.
-
-  Each contributor grants you a non-exclusive, worldwide, royalty-free
-patent license under the contributor's essential patent claims, to
-make, use, sell, offer for sale, import and otherwise run, modify and
-propagate the contents of its contributor version.
-
-  In the following three paragraphs, a "patent license" is any express
-agreement or commitment, however denominated, not to enforce a patent
-(such as an express permission to practice a patent or covenant not to
-sue for patent infringement).  To "grant" such a patent license to a
-party means to make such an agreement or commitment not to enforce a
-patent against the party.
-
-  If you convey a covered work, knowingly relying on a patent license,
-and the Corresponding Source of the work is not available for anyone
-to copy, free of charge and under the terms of this License, through a
-publicly available network server or other readily accessible means,
-then you must either (1) cause the Corresponding Source to be so
-available, or (2) arrange to deprive yourself of the benefit of the
-patent license for this particular work, or (3) arrange, in a manner
-consistent with the requirements of this License, to extend the patent
-license to downstream recipients.  "Knowingly relying" means you have
-actual knowledge that, but for the patent license, your conveying the
-covered work in a country, or your recipient's use of the covered work
-in a country, would infringe one or more identifiable patents in that
-country that you have reason to believe are valid.
-
-  If, pursuant to or in connection with a single transaction or
-arrangement, you convey, or propagate by procuring conveyance of, a
-covered work, and grant a patent license to some of the parties
-receiving the covered work authorizing them to use, propagate, modify
-or convey a specific copy of the covered work, then the patent license
-you grant is automatically extended to all recipients of the covered
-work and works based on it.
-
-  A patent license is "discriminatory" if it does not include within
-the scope of its coverage, prohibits the exercise of, or is
-conditioned on the non-exercise of one or more of the rights that are
-specifically granted under this License.  You may not convey a covered
-work if you are a party to an arrangement with a third party that is
-in the business of distributing software, under which you make payment
-to the third party based on the extent of your activity of conveying
-the work, and under which the third party grants, to any of the
-parties who would receive the covered work from you, a discriminatory
-patent license (a) in connection with copies of the covered work
-conveyed by you (or copies made from those copies), or (b) primarily
-for and in connection with specific products or compilations that
-contain the covered work, unless you entered into that arrangement,
-or that patent license was granted, prior to 28 March 2007.
-
-  Nothing in this License shall be construed as excluding or limiting
-any implied license or other defenses to infringement that may
-otherwise be available to you under applicable patent law.
-
-  12. No Surrender of Others' Freedom.
-
-  If conditions are imposed on you (whether by court order, agreement or
-otherwise) that contradict the conditions of this License, they do not
-excuse you from the conditions of this License.  If you cannot convey a
-covered work so as to satisfy simultaneously your obligations under this
-License and any other pertinent obligations, then as a consequence you may
-not convey it at all.  For example, if you agree to terms that obligate you
-to collect a royalty for further conveying from those to whom you convey
-the Program, the only way you could satisfy both those terms and this
-License would be to refrain entirely from conveying the Program.
-
-  13. Use with the GNU Affero General Public License.
-
-  Notwithstanding any other provision of this License, you have
-permission to link or combine any covered work with a work licensed
-under version 3 of the GNU Affero General Public License into a single
-combined work, and to convey the resulting work.  The terms of this
-License will continue to apply to the part which is the covered work,
-but the special requirements of the GNU Affero General Public License,
-section 13, concerning interaction through a network will apply to the
-combination as such.
-
-  14. Revised Versions of this License.
-
-  The Free Software Foundation may publish revised and/or new versions of
-the GNU General Public License from time to time.  Such new versions will
-be similar in spirit to the present version, but may differ in detail to
-address new problems or concerns.
-
-  Each version is given a distinguishing version number.  If the
-Program specifies that a certain numbered version of the GNU General
-Public License "or any later version" applies to it, you have the
-option of following the terms and conditions either of that numbered
-version or of any later version published by the Free Software
-Foundation.  If the Program does not specify a version number of the
-GNU General Public License, you may choose any version ever published
-by the Free Software Foundation.
-
-  If the Program specifies that a proxy can decide which future
-versions of the GNU General Public License can be used, that proxy's
-public statement of acceptance of a version permanently authorizes you
-to choose that version for the Program.
-
-  Later license versions may give you additional or different
-permissions.  However, no additional obligations are imposed on any
-author or copyright holder as a result of your choosing to follow a
-later version.
-
-  15. Disclaimer of Warranty.
-
-  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
-HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
-OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
-IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-
-  16. Limitation of Liability.
-
-  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
-THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
-GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
-USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
-DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
-EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
-
-  17. Interpretation of Sections 15 and 16.
-
-  If the disclaimer of warranty and limitation of liability provided
-above cannot be given local legal effect according to their terms,
-reviewing courts shall apply local law that most closely approximates
-an absolute waiver of all civil liability in connection with the
-Program, unless a warranty or assumption of liability accompanies a
-copy of the Program in return for a fee.
-
-                     END OF TERMS AND CONDITIONS
-
-            How to Apply These Terms to Your New Programs
-
-  If you develop a new program, and you want it to be of the greatest
-possible use to the public, the best way to achieve this is to make it
-free software which everyone can redistribute and change under these terms.
-
-  To do so, attach the following notices to the program.  It is safest
-to attach them to the start of each source file to most effectively
-state the exclusion of warranty; and each file should have at least
-the "copyright" line and a pointer to where the full notice is found.
-
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) <year>  <name of author>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-Also add information on how to contact you by electronic and paper mail.
-
-  If the program does terminal interaction, make it output a short
-notice like this when it starts in an interactive mode:
-
-    <program>  Copyright (C) <year>  <name of author>
-    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions; type `show c' for details.
-
-The hypothetical commands `show w' and `show c' should show the appropriate
-parts of the General Public License.  Of course, your program's commands
-might be different; for a GUI interface, you would use an "about box".
-
-  You should also get your employer (if you work as a programmer) or school,
-if any, to sign a "copyright disclaimer" for the program, if necessary.
-For more information on this, and how to apply and follow the GNU GPL, see
-<https://www.gnu.org/licenses/>.
-
-  The GNU General Public License does not permit incorporating your program
-into proprietary programs.  If your program is a subroutine library, you
-may consider it more useful to permit linking proprietary applications with
-the library.  If this is what you want to do, use the GNU Lesser General
-Public License instead of this License.  But first, please read
-<https://www.gnu.org/licenses/why-not-lgpl.html>.
+</TS>
 </file>
 
 <file path="localhttpproxy.h">
@@ -3674,6 +3024,14 @@ private:
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Sieć / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Użyj lokalnego proxy (VPN)</translation>
+    </message>
     <message>
         <source>Настройки</source>
         <translation>Ustawienia</translation>
@@ -3794,6 +3152,26 @@ private:
         <translation>Opis</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Внимание</source>
+        <translation>Uwaga</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube tymczasowo zablokował dostęp, uznając Twoje urządzenie za bota.
+
+Zmień adres IP (połącz się z innym serwerem VPN) i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>OK</translation>
+    </message>
+</context>
+</TS>
 </TS>
 </file>
 
@@ -4154,7 +3532,7 @@ class Config : public QObject
     Q_PROPERTY(bool enableChannelThumbnails READ enableChannelThumbnails WRITE setEnableChannelThumbnails NOTIFY enableChannelThumbnailsChanged)
     Q_PROPERTY(qreal persistentVolume READ persistentVolume WRITE setPersistentVolume NOTIFY persistentVolumeChanged)
     Q_PROPERTY(QString videoQuality READ videoQuality WRITE setVideoQuality NOTIFY videoQualityChanged)
-
+    Q_PROPERTY(bool enableProxy READ enableProxy WRITE setEnableProxy NOTIFY enableProxyChanged)
 public:
     explicit Config(QObject *parent = 0);
     ~Config();
@@ -4174,12 +3552,16 @@ public:
     QString videoQuality() const;
     void setVideoQuality(const QString &quality);
 
+    bool enableProxy() const;
+    void setEnableProxy(bool enable);
+
 signals:
     void apiKeyChanged();
     void userTokenChanged();
     void enableChannelThumbnailsChanged();
     void persistentVolumeChanged();
     void videoQualityChanged();
+    void enableProxyChanged();
 
 private:
     QSettings *m_settings;
@@ -4190,6 +3572,8 @@ private:
     QString m_videoQuality;
 
     QString getDefaultQualityByOs() const;
+
+    bool m_enableProxy;
 };
 
 #endif // CONFIG_H
@@ -4300,6 +3684,14 @@ private:
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Network / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Use local proxy (VPN)</translation>
+    </message>
     <message>
         <source>Настройки</source>
         <translation>Settings</translation>
@@ -4430,6 +3822,22 @@ private:
         <source>Загрузка...</source>
         <translation>Loading...</translation>
     </message>
+    <message>
+        <source>Внимание</source>
+        <translation>Attention</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube has temporarily blocked access, detecting your device as a bot.
+
+Please change your IP address (connect to another VPN server) and try again.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>OK</translation>
+    </message>
 </context>
 </TS>
 </file>
@@ -4527,6 +3935,15 @@ private:
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Сеть / Прокси</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Использовать локальный прокси (VPN)</translation>
+    </message>
+
     <message>
         <source>Настройки</source>
         <translation>Настройки</translation>
@@ -4647,6 +4064,29 @@ private:
         <translation>Описание</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Загрузка...</translation>
+    </message>
+    <message>
+        <source>Внимание</source>
+        <translation>Внимание</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>ОК</translation>
+    </message>
+</context>
 </TS>
 </file>
 
@@ -4686,7 +4126,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Главная")
+                    text: qsTr("Главная") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -4717,7 +4157,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Shorts")
+                    text: qsTr("Shorts") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -4751,7 +4191,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Подписки")
+                    text: qsTr("Подписки") + (TranslationManager.currentLanguage ? "" : "")
                     color: Config.userToken !== "" ? "white" : "gray"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -4784,7 +4224,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Вы")
+                     text: qsTr("Вы") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -5277,7 +4717,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: qsTr("Поиск")
+                    text: qsTr("Поиск") + (TranslationManager.currentLanguage ? "" : "")
                     color: "gray"
                     font.pixelSize: 16
                     visible: parent.text.length === 0 && !parent.activeFocus
@@ -6036,6 +5476,7 @@ Rectangle {
 <file path="config.cpp">
 #include "config.h"
 #include <QSysInfo>
+#include <QNetworkProxy>
 
 // Константы InnerTube
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
@@ -6050,6 +5491,38 @@ Config::Config(QObject *parent) : QObject(parent)
     m_enableChannelThumbnails = m_settings->value("EnableChannelThumbnails", true).toBool();
     m_persistentVolume = m_settings->value("PersistentVolume", 0.8).toReal();
     m_videoQuality = m_settings->value("VideoQuality", getDefaultQualityByOs()).toString();
+
+    m_enableProxy = m_settings->value("EnableProxy", true).toBool();
+    if (m_enableProxy) {
+        QNetworkProxy extProxy;
+        extProxy.setType(QNetworkProxy::HttpProxy);
+        extProxy.setHostName("127.0.0.1");
+        extProxy.setPort(8080);
+        QNetworkProxy::setApplicationProxy(extProxy);
+    } else {
+        QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+    }
+}
+
+bool Config::enableProxy() const { return m_enableProxy; }
+
+void Config::setEnableProxy(bool enable) {
+    if (m_enableProxy != enable) {
+        m_enableProxy = enable;
+        m_settings->setValue("EnableProxy", m_enableProxy);
+        emit enableProxyChanged();
+
+        // Мгновенно применяем изменения во всей аппликации
+        if (m_enableProxy) {
+            QNetworkProxy extProxy;
+            extProxy.setType(QNetworkProxy::HttpProxy);
+            extProxy.setHostName("127.0.0.1");
+            extProxy.setPort(8080);
+            QNetworkProxy::setApplicationProxy(extProxy);
+        } else {
+            QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+        }
+    }
 }
 
 Config::~Config() {}
@@ -6325,6 +5798,58 @@ Rectangle {
                     text: qsTr("* Изменения вступят в силу после перезапуска")
                     color: "gray"
                     font.pixelSize: 12
+                }
+            }
+
+            Column {
+                spacing: 8
+                width: parent.width
+                z: 8 // z-index ниже, чтобы выпадающий список языков не перекрывался
+
+                Text {
+                    text: qsTr("Сеть / Прокси")
+                    color: "#CCFFFFFF"
+                    font.pixelSize: 16
+                }
+
+                Row {
+                    spacing: 12
+                    width: parent.width
+                    height: 40
+
+                    Rectangle {
+                        width: 24; height: 24; radius: 4
+                        color: "#1F1F1F"
+                        border.color: "#333333"
+                        border.width: 1
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            text: "✓"
+                            color: "#007ACC"
+                            font.pixelSize: 18
+                            font.bold: true
+                            anchors.centerIn: parent
+                            visible: Config.enableProxy
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: { Config.enableProxy = !Config.enableProxy; }
+                        }
+                    }
+
+                    Text {
+                        text: qsTr("Использовать локальный прокси (VPN)") + (TranslationManager.currentLanguage ? "" : "")
+                        color: "white"
+                        font.pixelSize: 16
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: { Config.enableProxy = !Config.enableProxy; }
+                        }
+                    }
                 }
             }
 
@@ -6678,6 +6203,23 @@ Rectangle {
     property int forceFullscreen: 1
     property bool isFullscreen: isVideoPageOpen && forceFullscreen === 2
 
+    Connections {
+            target: TranslationManager
+            onLanguageChanged: {
+                // Мгновенно перезагружаем контент-лоадер страницы для применения перевода
+                contentLoader.source = "";
+                pageLoadTimer.nextSource = "pages/SettingsPage.qml";
+                pageLoadTimer.start();
+            }
+        }
+
+    Connections {
+        target: ApiManager
+        onBotBlockDetected: {
+            botAlertPopup.visible = true;
+        }
+    }
+
     onIsLandscapeChanged: {
         if (!isLandscape && forceFullscreen === 2) {
             forceFullscreen = 1;
@@ -6882,6 +6424,80 @@ Rectangle {
             root.switchToTab(tabName);
         }
     }
+
+
+    // Всплывающее окно при обнаружении блокировки (бот-фильтр YouTube)
+        Rectangle {
+            id: botAlertPopup
+            anchors.fill: parent
+            color: "#B3000000" // полупрозрачный темный фон
+            visible: false
+            z: 9999 // Гарантирует отрисовку поверх любых страниц, панелей навигации и OSD
+
+            // Блокируем клики по элементам интерфейса, находящимся "под" окном
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {} // поглощаем нажатие
+            }
+
+            Rectangle {
+                width: parent.width - 40
+                height: dialogCol.height + 40
+                color: "#222222"
+                border.color: "#333333"
+                border.width: 1
+                radius: 10
+                anchors.centerIn: parent
+
+                Column {
+                    id: dialogCol
+                    width: parent.width - 40
+                    anchors.centerIn: parent
+                    spacing: 20
+
+                    Text {
+                        text: qsTr("Внимание")
+                        color: "white"
+                        font.pixelSize: 20
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        width: parent.width
+                    }
+
+                    Text {
+                        text: qsTr("YouTube временно заблокировал доступ, приняв ваше устройство за бота.\n\nПожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.")
+                        color: "#DDDDDD"
+                        font.pixelSize: 15
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                        width: parent.width
+                    }
+
+                    Rectangle {
+                        width: 140
+                        height: 40
+                        color: "#007ACC"
+                        radius: 20
+                        anchors.horizontalCenter: parent.horizontalCenter
+
+                        Text {
+                            text: qsTr("ОК")
+                            color: "white"
+                            font.pixelSize: 16
+                            font.bold: true
+                            anchors.centerIn: parent
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                botAlertPopup.visible = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 }
 </file>
 
@@ -6959,6 +6575,7 @@ signals:
 
     void alternativeQualitiesReady(QString videoId, QVariantList qualities);
     void commentsReady(QVariantList comments, QString continuationToken);
+    void botBlockDetected();
 
 private slots:
     void onReplyFinished(QNetworkReply *reply);
@@ -7707,6 +7324,9 @@ Rectangle {
 #include <QDir>
 #include <QRegExp>
 
+const QByteArray VR_CLIENT_VERSION = "1.65.10";
+const QByteArray VR_USER_AGENT = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
+
 // Константы OAuth для получения токена
 const QString OAUTH_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com";
 const QString OAUTH_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
@@ -7785,7 +7405,13 @@ QVariantMap ApiManager::buildContext(const QString &clientName, const QString &c
     client["hl"] = parts.size() > 0 ? parts[0] : "en";
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
 
-    if (clientName == "TVHTML5") {
+    if (clientName == "ANDROID_VR") {
+        client["deviceMake"] = "Oculus";
+        client["deviceModel"] = "Quest 3";
+        client["androidSdkVersion"] = 32;
+        client["userAgent"] = QString::fromLatin1(VR_USER_AGENT);
+    } else if (clientName == "TVHTML5") {
+        // Оставляем для совместимости
         client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
     }
 
@@ -7829,24 +7455,31 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         token = getAccessToken();
     }
 
-    // С OAuth (Bearer) API-ключ передавать нельзя — он конфликтует с авторизацией
-    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint;
-    if (token.isEmpty()) {
-        url += "?key=" + m_config->apiKey();
-    }
-
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
-
     QVariantMap context = payload.value("context").toMap();
     QVariantMap client = context.value("client").toMap();
     QString clientName = client.value("clientName").toString();
 
+    // Определяем правильный API-ключ в зависимости от клиента
+    QString apiKey = m_config->apiKey();
+    if (clientName == "ANDROID_VR") {
+        apiKey = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"; // Родной ключ ANDROID_VR
+    }
+
+    // Собираем финальный URL
+    QString url = "https://www.youtube.com/youtubei/v1/" + endpoint + "?key=" + apiKey;
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
+
     if (clientName == "ANDROID") {
         request.setRawHeader("x-youtube-client-name", "3");
         request.setRawHeader("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip");
+    } else if (clientName == "ANDROID_VR") {
+        request.setRawHeader("x-youtube-client-name", "28");
+        request.setRawHeader("x-youtube-client-version", VR_CLIENT_VERSION);
+        request.setRawHeader("User-Agent", VR_USER_AGENT);
     } else if (clientName == "TVHTML5") {
-        request.setRawHeader("x-youtube-client-name", "7");   // было 85 — это другой клиент!
+        request.setRawHeader("x-youtube-client-name", "7");
         request.setRawHeader("x-youtube-client-version", TV_CLIENT_VERSION);
         request.setRawHeader("User-Agent", TV_USER_AGENT);
     } else {
@@ -7854,9 +7487,8 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
         request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
-    if (!token.isEmpty()) {
+    if (!token.isEmpty() && clientName != "ANDROID_VR") {
         request.setRawHeader("Authorization", "Bearer " + token.toUtf8());
-
     }
 
     request.setRawHeader("Origin", "https://www.youtube.com");
@@ -8037,9 +7669,15 @@ void ApiManager::requestPlayer(const QString &videoId) {
     QStringList parts = lang.split("_");
 
     QVariantMap client;
-    client["clientName"] = "TVHTML5";
-    client["clientVersion"] = TV_CLIENT_VERSION;
-    client["userAgent"] = QString::fromLatin1(TV_USER_AGENT);
+    client["clientName"] = "ANDROID_VR";
+    client["clientVersion"] = VR_CLIENT_VERSION;
+    client["deviceMake"] = "Meta";
+    client["deviceModel"] = "Quest 3";
+    client["androidSdkVersion"] = 32; // Передаем как число
+    client["osName"] = "Android";
+    client["osVersion"] = "12L";
+    client["platform"] = "MOBILE";
+    client["userAgent"] = QString::fromLatin1(VR_USER_AGENT);
     client["hl"] = parts.size() > 0 ? parts[0] : "en";
     client["gl"] = parts.size() > 1 ? parts[1] : "US";
     if (!m_visitorData.isEmpty()) client["visitorData"] = m_visitorData;
@@ -8047,21 +7685,17 @@ void ApiManager::requestPlayer(const QString &videoId) {
     QVariantMap context;
     context["client"] = client;
 
-    // ГЛАВНОЕ: контекст воспроизведения с версией плеера
-    QVariantMap contentPlaybackContext;
-    contentPlaybackContext["html5Preference"] = "HTML5_PREF_WANTS";
-    contentPlaybackContext["signatureTimestamp"] = m_signatureTimestamp;
-    QVariantMap playbackContext;
-    playbackContext["contentPlaybackContext"] = contentPlaybackContext;
-
     QVariantMap payload;
     payload["context"] = context;
-    payload["playbackContext"] = playbackContext;
     payload["videoId"] = videoId;
     payload["contentCheckOk"] = true;
     payload["racyCheckOk"] = true;
+
     m_lastRequestedVideoId = videoId;
-    postInnertube("player", payload, "VideoInfo", true);
+    logDebug("[ANDROID_VR] Sending player request for: " + videoId);
+
+    // Передаем false в параметр requiresAuth, чтобы не отправлять ТВ-токены
+    postInnertube("player", payload, "VideoInfo", false);
 }
 
 void ApiManager::getRelatedVideos(const QString &videoId, int page) {
@@ -8152,6 +7786,15 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QByteArray responseData = reply->readAll();
 
     if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson") {
+        logDebug(QString("[Network Error] Request '%1' failed with error: %2 (HTTP Code: %3)")
+                 .arg(requestType)
+                 .arg(reply->errorString())
+                 .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
+        int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (requestType == "VideoInfo" && (httpCode == 403 || httpCode == 429)) {
+            logDebug("Network error indicates a bot block / rate limit (HTTP 403/429)!");
+            emit botBlockDetected();
+        }
         emit requestFailed(requestType, reply->errorString());
         reply->deleteLater();
         return;
@@ -8495,8 +8138,46 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         // Протух base.js/sts? Сервер просит "перезагрузить страницу" —
         // обновляем base.js и повторяем запрос (один раз на видео)
         QVariantMap playability = root.value("playabilityStatus").toMap();
-        QString status = playability.value("status").toString();
 
+        if (playability.contains("reason")) {
+            logDebug("Reason of unavailability: " + playability.value("reason").toString());
+        }
+
+        QString status = playability.value("status").toString();
+        QString reason = playability.value("reason").toString();
+        bool isBotBlock = false;
+
+        // Проверяем текстовые упоминания бота/робота/трафика в причине
+        if (reason.contains("bot", Qt::CaseInsensitive) ||
+                reason.contains("robot", Qt::CaseInsensitive) ||
+                reason.contains("бот", Qt::CaseInsensitive) ||
+                reason.contains("unusual traffic", Qt::CaseInsensitive)) {
+            isBotBlock = true;
+        }
+
+        // Проверяем наличие блока капчи (playerCaptchaViewModel) или блокирующегоErrorMessage
+        QVariantMap errorScreen = playability.value("errorScreen").toMap();
+        if (errorScreen.contains("playerCaptchaViewModel")) {
+            isBotBlock = true;
+        }
+        if (errorScreen.contains("playerErrorMessageRenderer")) {
+            QVariantMap errorMessageRenderer = errorScreen.value("playerErrorMessageRenderer").toMap();
+            QString subreason = extractTextFromField(errorMessageRenderer, "subreason");
+            if (subreason.contains("bot", Qt::CaseInsensitive) ||
+                    subreason.contains("robot", Qt::CaseInsensitive) ||
+                    subreason.contains("бот", Qt::CaseInsensitive) ||
+                    subreason.contains("unusual traffic", Qt::CaseInsensitive)) {
+                isBotBlock = true;
+            }
+        }
+
+        if (isBotBlock) {
+            logDebug("CRITICAL: Bot block detected in playabilityStatus!");
+            emit botBlockDetected();
+            emit requestFailed("VideoInfo", "BotBlocked");
+            reply->deleteLater();
+            return;
+        }
 
 
         QVariantMap details;
@@ -8881,42 +8562,176 @@ void ApiManager::setProxyPort(quint16 port)
     m_proxyPort = port;
 }
 
+// Находит имя или выражение функции дешифрации n-параметра
+// Находит имя или выражение функции дешифрации n-параметра
 QString ApiManager::extractNFunctionExpression(const QString &playerScript) {
     if (playerScript.isEmpty()) return "";
 
-    // Шаблон 1
-    QRegExp rx1("\\.get\\(\"n\"\\)\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    logDebug("[N-Extract] Starting robust n-function extraction...");
+
+    // 1. Поиск через точные регулярные выражения
+    QRegExp rx1("\\.get\\([\"']n[\"']\\)\\s*\\)?\\s*&&\\s*\\(?[a-zA-Z_\\$][\\w\\$]*\\s*=\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\s*\\)?\\s*&&\\s*\\(?[a-zA-Z_\\$][\\w\\$]*\\s*=\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+    QRegExp rx3("\\.get\\([\"']n[\"']\\)\\s*\\)?\\s*&&\\s*([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
+
+    QStringList exactCandidates;
+    QStringList exactIndices;
+
     if (rx1.indexIn(playerScript) >= 0) {
-        QString name = rx1.cap(1);
-        QString idx = rx1.cap(2);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx1.cap(1);
+        exactIndices << rx1.cap(2);
+        logDebug("[N-Extract] Precise match rx1: " + rx1.cap(1));
     }
-
-    // Шаблон 2
-    QRegExp rx2("String\\.fromCharCode\\(110\\),[a-zA-Z_\\$][\\w\\$]*=[a-zA-Z_\\$][\\w\\$]*\\.get\\([a-zA-Z_\\$][\\w\\$]*\\)\\)&&\\([a-zA-Z_\\$][\\w\\$]*=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(");
     if (rx2.indexIn(playerScript) >= 0) {
-        QString name = rx2.cap(1);
-        QString idx = rx2.cap(2);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx2.cap(1);
+        exactIndices << rx2.cap(2);
+        logDebug("[N-Extract] Precise match rx2: " + rx2.cap(1));
     }
-
-    // Шаблон 3 (с обратной ссылкой \\1 на имя переменной)
-    QRegExp rx3("\\b([a-zA-Z_\\$][\\w\\$]*)&&\\(\\1=([a-zA-Z_\\$][\\w\\$]*)(?:\\[(\\d+)\\])?\\(\\1\\)");
     if (rx3.indexIn(playerScript) >= 0) {
-        QString name = rx3.cap(2);
-        QString idx = rx3.cap(3);
-        if (!idx.isEmpty()) return name + "[" + idx + "]";
-        return name;
+        exactCandidates << rx3.cap(1);
+        exactIndices << rx3.cap(2);
+        logDebug("[N-Extract] Precise match rx3: " + rx3.cap(1));
     }
 
-    // Шаблон 4 (оптимизированный под QRegExp поиск внутри функции)
-    QRegExp rx4("([a-zA-Z_\\$][\\w\\$]*)=function\\([a-zA-Z_\\$][\\w\\$]*\\)\\{(?=[^\\}]*\\.split\\(\"\"\\))(?=[^\\}]*\\.join\\(\"\"\\))");
-    if (rx4.indexIn(playerScript) >= 0) {
-        return rx4.cap(1);
+    for (int i = 0; i < exactCandidates.size(); ++i) {
+        QString nfunc = exactCandidates[i];
+        QString idx = exactIndices[i];
+
+        // Имя функции-дешифратора обфусцировано и строго ограничено длиной 2-4 символа
+        if (nfunc.length() < 2 || nfunc.length() > 4 || nfunc == "get" || nfunc == "set" || nfunc == "fromCharCode" ||
+                nfunc == "split" || nfunc == "join" || nfunc == "indexOf" || nfunc == "replace" ||
+                nfunc == "if" || nfunc == "match" || nfunc == "catch" || nfunc == "sz" || nfunc == "call") {
+            continue;
+        }
+
+        QString resolvedFuncName = nfunc;
+        if (!idx.isEmpty()) {
+            QRegExp arrayRx("(?:var\\s+|[^\\w\\$])" + QRegExp::escape(nfunc) + "\\s*=\\s*\\[\\s*([\\w\\$,\\s]+)\\s*\\]");
+            if (arrayRx.indexIn(playerScript) >= 0) {
+                QString arrayContent = arrayRx.cap(1);
+                QStringList elements = arrayContent.split(",", QString::SkipEmptyParts);
+                int indexVal = idx.toInt();
+                if (indexVal >= 0 && indexVal < elements.size()) {
+                    resolvedFuncName = elements[indexVal].trimmed();
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+        }
+
+        QString fnSource = extractFunctionSource(playerScript, resolvedFuncName);
+        if (!fnSource.isEmpty()) {
+            if (fnSource.contains("split") && fnSource.contains("join")) {
+                logDebug("[N-Extract] SUCCESS (Precise Regex): Found scramble function -> " + resolvedFuncName);
+                return resolvedFuncName;
+            }
+        }
     }
 
+    // 2. Сканирование всех вхождений ключевых точек (если точные шаблоны не сработали)
+    logDebug("[N-Extract] Precise regexes failed. Scanning all entry point occurrences...");
+
+    QStringList entryPoints;
+    entryPoints << ".get(\"n\")" << "get('n')" << "fromCharCode(110)" << "nn\"[+";
+
+    foreach (const QString &ep, entryPoints) {
+        int findPos = -1;
+        // Перебираем абсолютно все вхождения ключевой строки в файле
+        while ((findPos = playerScript.indexOf(ep, findPos + 1)) >= 0) {
+            QString surrounding = playerScript.mid(findPos, 200);
+            if (surrounding.contains(".replace(") || surrounding.contains("replace(\"/n/\"") || surrounding.contains("match(///n///")) {
+                continue; // Надежно пропускаем URL-хелпер замены и идем к следующему вхождению
+            }
+
+            logDebug("[N-Extract] Testing entry point: " + ep + " at position " + QString::number(findPos));
+
+            QString searchArea = playerScript.mid(findPos, 400);
+            QRegExp rx("([\\w\\$]+)(?:\\[(\\d+)\\])?\\s*\\(");
+            int scanPos = 0;
+            while ((scanPos = rx.indexIn(searchArea, scanPos)) >= 0) {
+                QString nfunc = rx.cap(1);
+                QString idx = rx.cap(2);
+                scanPos += rx.matchedLength();
+
+                if (nfunc.length() < 2 || nfunc.length() > 4 || nfunc == "get" || nfunc == "set" || nfunc == "fromCharCode" ||
+                        nfunc == "split" || nfunc == "join" || nfunc == "indexOf" || nfunc == "replace" ||
+                        nfunc == "if" || nfunc == "match" || nfunc == "catch" || nfunc == "sz" || nfunc == "call" ||
+                        nfunc == "var" || nfunc == "function" || nfunc == "return" || nfunc == "for" || nfunc == "while" ||
+                        nfunc == "try" || nfunc == "new" || nfunc == "null" || nfunc == "true" || nfunc == "false" ||
+                        nfunc == "this" || nfunc == "typeof" || nfunc == "instanceof") {
+                    continue;
+                }
+
+                QString resolvedFuncName = nfunc;
+                if (!idx.isEmpty()) {
+                    QRegExp arrayRx("(?:var\\s+|[^\\w\\$])" + QRegExp::escape(nfunc) + "\\s*=\\s*\\[\\s*([\\w\\$,\\s]+)\\s*\\]");
+                    if (arrayRx.indexIn(playerScript) >= 0) {
+                        QString arrayContent = arrayRx.cap(1);
+                        QStringList elements = arrayContent.split(",", QString::SkipEmptyParts);
+                        int indexVal = idx.toInt();
+                        if (indexVal >= 0 && indexVal < elements.size()) {
+                            resolvedFuncName = elements[indexVal].trimmed();
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
+                if (resolvedFuncName.length() < 2 || resolvedFuncName.length() > 4 ||
+                        resolvedFuncName == "if" || resolvedFuncName == "for" || resolvedFuncName == "while" ||
+                        resolvedFuncName == "catch" || resolvedFuncName == "try" || resolvedFuncName == "return" ||
+                        resolvedFuncName == "var" || resolvedFuncName == "function" || resolvedFuncName == "new") {
+                    continue;
+                }
+
+                QString fnSource = extractFunctionSource(playerScript, resolvedFuncName);
+                if (!fnSource.isEmpty()) {
+                    if (fnSource.contains("split") && fnSource.contains("join")) {
+                        logDebug("[N-Extract] SUCCESS (Fallback Scan): Found scramble function -> " + resolvedFuncName);
+                        return resolvedFuncName;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Глобальный резервный поиск (если по точкам входа ничего не подтвердилось)
+    logDebug("[N-Extract] Entry points failed. Falling back to global search...");
+
+    QRegExp fnGlobalRx("(?:function\\s+([\\w\\$]+)\\s*\\(|([\\w\\$]+)\\s*=\\s*function\\s*\\()");
+    int scanPos = 0;
+    while ((scanPos = fnGlobalRx.indexIn(playerScript, scanPos)) >= 0) {
+        QString fnName = fnGlobalRx.cap(1);
+        if (fnName.isEmpty()) fnName = fnGlobalRx.cap(2);
+        scanPos += fnGlobalRx.matchedLength();
+
+        // Строгое отсечение длинных библиотечных имён (resolve, clone) на этапе глобального поиска
+        if (fnName.length() < 2 || fnName.length() > 4 || fnName == "get" || fnName == "set" || fnName == "F" ||
+                fnName == "if" || fnName == "match" || fnName == "replace" || fnName == "catch" ||
+                fnName == "while" || fnName == "for" || fnName == "try" || fnName == "return") continue;
+
+        int openBracePos = playerScript.indexOf('{', scanPos);
+        if (openBracePos >= 0) {
+            QString peekBody = playerScript.mid(openBracePos, 4000);
+            if (!peekBody.contains("split") || !peekBody.contains("join")) {
+                continue;
+            }
+        }
+
+        QString fnSource = extractFunctionSource(playerScript, fnName);
+        if (fnSource.length() > 600 && fnSource.length() < 6000) {
+            if (fnSource.contains("split") && fnSource.contains("join")) {
+                logDebug("[N-Extract] SUCCESS (Global Fallback): Found scramble function: " + fnName);
+                return fnName;
+            }
+        }
+    }
+
+    logDebug("[N-Extract] CRITICAL: No n-scramble function found in script!");
     return "";
 }
 
@@ -8939,157 +8754,7 @@ QString ApiManager::buildPlayerScriptWithNExport(const QString &playerScript, co
 
 
 
-QString ApiManager::decryptNParameter(const QString &url)
-{
-    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
-    logDebug("Input URL: " + url);
 
-    // --- 1. Достаём исходное значение n из query ---
-    QRegExp nRx("[?&]n=([^&]+)");
-    if (nRx.indexIn(url) < 0) {
-        logDebug("No 'n' parameter found in URL. Returning as-is.");
-        return url;
-    }
-    QString originalN = nRx.cap(1);
-    logDebug("Extracted original 'n' value: " + originalN);
-
-    // --- 2. Проверяем наличие скрипта плеера ---
-    if (m_cachedScriptContent.isEmpty()) {
-        logDebug("No player script in cache. Cannot decrypt 'n'. Returning as-is.");
-        return url;
-    }
-    logDebug(QString("Player script available in cache (size: %1 characters)")
-             .arg(m_cachedScriptContent.length()));
-
-    // --- 3. Имя n-функции (ваши существующие шаблоны) ---
-    QString funcName = extractNFunctionExpression(m_cachedScriptContent);
-    if (funcName.isEmpty()) {
-        logDebug("Failed to find n-scramble function via known patterns. Returning as-is.");
-        return url;
-    }
-    logDebug("Regex match: Found n-scramble function expression -> " + funcName);
-
-    // --- 4. Вырезаем исходник самой функции (а не весь 2МБ скрипт!) ---
-    QString snippet = extractFunctionSource(m_cachedScriptContent, funcName);
-    if (snippet.isEmpty()) {
-        logDebug("Failed to extract n-function source for '" + funcName + "'. Returning as-is.");
-        return url;
-    }
-    logDebug(QString("Extracted n-function source: %1 chars").arg(snippet.length()));
-
-    // --- 5. Заранее разрешаем typeof-guard зависимости ---
-    // Внутри бывает: if(typeof Xyz==="undefined")return M; — typeof не бросает
-    // ReferenceError, функция молча вернёт вход. Поэтому ищем такие имена заранее.
-    logDebug("Snippet body: " + snippet);   // 53 символа — влезет целиком
-
-    QStringList deps;
-    QStringList resolvedNames;
-    collectTypeofDeps(snippet, deps, resolvedNames);
-
-    // --- 6. Исполняем сниппет, доразрешая зависимости по ReferenceError ---
-    QString browserStubs =
-            "var window=this;"
-            "var document={};"
-            "var navigator={userAgent:''};"
-            "var location={hostname:'www.youtube.com',protocol:'https:',"
-            "href:'https://www.youtube.com/'};";
-
-
-    QString transformedN;
-    for (int attempt = 0; attempt < 10; ++attempt) {
-        QScriptEngine engine;
-        QString program = browserStubs + "\n" + deps.join("\n")
-                + "\nvar __yt_nsig=" + snippet + ";";
-
-        logDebug(QString("[Attempt %1] Program size: %2 chars, deps: %3")
-                 .arg(attempt).arg(program.length()).arg(deps.count()));
-
-        // Дамп для ручного анализа
-        QFile dbg("C:/Data/SymTube_nsig_debug.js");
-        if (dbg.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            dbg.write(program.toUtf8());
-            dbg.close();
-        }
-
-        engine.evaluate(program, "nsig_snippet.js");
-        if (engine.hasUncaughtException()) {
-            logDebug("Snippet compile error: " + engine.uncaughtException().toString()
-                     + " at line " + QString::number(engine.uncaughtExceptionLineNumber()));
-            break;
-        }
-
-        QScriptValue fn = engine.globalObject().property("__yt_nsig");
-        if (!fn.isFunction()) {
-            logDebug("__yt_nsig is not a function after evaluation. Aborting.");
-            break;
-        }
-
-        QScriptValue result = fn.call(QScriptValue(), QScriptValueList() << originalN);
-        if (engine.hasUncaughtException()) {
-            QString err = engine.uncaughtException().toString();
-            // QScriptEngine: "ReferenceError: Can't find variable: gW"
-            // Имя переменной — после ПОСЛЕДНЕГО двоеточия
-            QString depName;
-            QRegExp refRx("Can't find variable:\\s*([A-Za-z0-9_$]+)");
-            if (refRx.indexIn(err) >= 0) {
-                depName = refRx.cap(1);
-            } else if (err.contains("ReferenceError")) {
-                int lastColon = err.lastIndexOf(':');
-                QString tail = err.mid(lastColon + 1).trimmed();
-                QRegExp identRx("^([A-Za-z0-9_$]+)");
-                if (identRx.indexIn(tail) >= 0) depName = identRx.cap(1);
-            }
-
-            if (!depName.isEmpty()) {
-                QString dep = resolveDependency(m_cachedScriptContent, depName);
-                if (!dep.isEmpty()) {
-                    logDebug(QString("Resolving runtime dependency: %1 (%2 chars, head: %3)")
-                             .arg(depName).arg(dep.length()).arg(dep.left(80)));
-                    deps.prepend(dep);
-                    collectTypeofDeps(dep, deps, resolvedNames);  // <<< НОВОЕ
-                    continue;
-                }
-                logDebug("Dependency '" + depName + "' not found in script. Aborting.");
-            } else {
-                logDebug("Snippet runtime error: " + err);
-            }
-            break;
-        }
-
-        logDebug(QString("Raw call result: isNull=%1 isUndefined=%2 isString=%3 -> '%4'")
-                 .arg(result.isNull()).arg(result.isUndefined())
-                 .arg(result.isString()).arg(result.toString()));
-        transformedN = result.toString();
-        break;
-    }
-
-    // --- 7. Валидация результата ---
-    if (transformedN.isEmpty() || transformedN == "undefined" || transformedN == "null") {
-        logDebug("N-Decrypt FAILED: no usable result. Returning URL as-is.");
-        return url;
-    }
-    if (transformedN == originalN) {
-        logDebug("N-Decrypt FAILED: function returned input unchanged (anti-tamper guard?). Returning URL as-is.");
-        return url;
-    }
-    // Известный маркер сработавшего анти-вмешательства:
-    // результат вида "enhanced_except_..." или начинающийся с имени функции
-    if (transformedN.startsWith("enhanced_except_") || transformedN.endsWith("_w8_" + originalN)) {
-        logDebug("N-Decrypt FAILED: anti-tamper marker in result: " + transformedN);
-        return url;
-    }
-    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + transformedN + "'");
-
-    // --- 8. Подставляем новое значение в URL ---
-    QString encodedN = QString::fromLatin1(
-                QUrl::toPercentEncoding(transformedN));
-    QString resultUrl = url;
-    resultUrl.replace(nRx.cap(0),                       // "?n=..." или "&n=..."
-                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
-    logDebug("Output URL: " + resultUrl);
-    logDebug("-------------------------------------------------------------------------");
-    return resultUrl;
-}
 
 
 // Поиск закрывающей '}' с учётом строковых литералов
@@ -9112,26 +8777,70 @@ static int findMatchingBrace(const QString &s, int openPos) {
     return -1;
 }
 
-// Вырезает "function(...){...}" по имени: name=function(...) или function name(...)
+// Извлекает тело функции по её имени (Оптимизировано через indexOf)
 QString ApiManager::extractFunctionSource(const QString &script, const QString &name) {
-    QRegExp rx("(?:function\\s+" + QRegExp::escape(name) + "\\s*\\(|"
-               "[^A-Za-z0-9_$]" + QRegExp::escape(name) + "\\s*=\\s*function\\s*\\()");
-    int pos = rx.indexIn(script);
-    if (pos < 0) return QString();
-    int fnKw = script.indexOf("function", pos);      // начало ключевого слова
+    if (script.isEmpty() || name.isEmpty()) return "";
+
+    // Быстрый поиск точного положения объявления функции через indexOf
+    QStringList patterns;
+    patterns << "function " + name
+             << name + "=function"
+             << name + " =function"
+             << name + "= function"
+             << name + " = function"
+             << name + ":function"
+             << name + " :function"
+             << name + ": function"
+             << name + " : function";
+
+    int pos = -1;
+    foreach (const QString &pat, patterns) {
+        pos = script.indexOf(pat);
+        if (pos >= 0) break;
+    }
+
+    if (pos < 0) return "";
+
+    // Находим ключевое слово function рядом с найденной позицией
+    int fnKw = script.indexOf("function", qMax(0, pos - 5));
+    if (fnKw < 0) fnKw = pos;
+
     int open = script.indexOf('{', fnKw);
-    if (open < 0) return QString();
+    if (open < 0) return "";
+
     int close = findMatchingBrace(script, open);
-    if (close < 0) return QString();
-    return script.mid(fnKw, close - fnKw + 1);       // "function(M){...}"
+    if (close < 0) return "";
+
+    return script.mid(fnKw, close - fnKw + 1);
 }
 
-// Вырезает "var name=<значение>;" для глобальной зависимости
+
+// Извлекает глобальные переменные/массивы/объекты, от которых зависит функция (Оптимизировано через indexOf)
 QString ApiManager::extractGlobalDefinition(const QString &script, const QString &name) {
-    QRegExp rx("(?:var\\s+|[;,\\n])" + QRegExp::escape(name) + "\\s*=");
-    int pos = rx.indexIn(script);
-    if (pos < 0) return QString();
+    if (script.isEmpty() || name.isEmpty()) return "";
+
+    // Быстрый поиск объявления переменной через indexOf
+    QStringList patterns;
+    patterns << "var " + name + "="
+             << "var " + name + " ="
+             << ";" + name + "="
+             << ";" + name + " ="
+             << "," + name + "="
+             << "," + name + " ="
+             << "\n" + name + "="
+             << "\n" + name + " =";
+
+    int pos = -1;
+    foreach (const QString &pat, patterns) {
+        pos = script.indexOf(pat);
+        if (pos >= 0) break;
+    }
+
+    if (pos < 0) return "";
+
     int eq = script.indexOf('=', pos);
+    if (eq < 0) return "";
+
     int depth = 0;
     QChar quote('\0');
     bool escaped = false;
@@ -9147,7 +8856,7 @@ QString ApiManager::extractGlobalDefinition(const QString &script, const QString
         if (c == '"' || c == '\'') { quote = c; continue; }
         if (c == '(' || c == '[' || c == '{') depth++;
         else if (c == ')' || c == ']' || c == '}') depth--;
-        else if (c == ';' && depth == 0) break;
+        else if ((c == ';' || c == ',') && depth == 0) break;
     }
     return "var " + name + "=" + script.mid(eq + 1, i - (eq + 1)) + ";";
 }
@@ -9188,6 +8897,86 @@ void ApiManager::collectTypeofDeps(const QString &code, QStringList &deps, QStri
         }
     }
 }
+
+void safeCharSwap(QString &str, int i, int j) {
+    if (i < 0 || i >= str.length() || j < 0 || j >= str.length() || i == j) return;
+    QChar temp = str.at(i);
+    str.replace(i, 1, str.at(j));
+    str.replace(j, 1, temp);
+}
+
+QString ApiManager::decryptNParameter(const QString &url)
+{
+    logDebug("----------------------- [N-PARAMETER DECRYPTION] -----------------------");
+    logDebug("Input URL: " + url);
+
+    // 1. Извлекаем исходное значение n из URL
+    QRegExp nRx("[?&]n=([^&]+)");
+    if (nRx.indexIn(url) < 0) {
+        logDebug("No 'n' parameter found in URL. Returning as-is.");
+        return url;
+    }
+    QString originalN = nRx.cap(1);
+    logDebug("Extracted original 'n' value: " + originalN);
+
+    // 2. Выполняем дешифрацию алгоритмом пользователя на чистом C++
+    QString a = originalN;
+    int len = a.length();
+    if (len == 0) return url;
+
+    // a.reverse() — разворачиваем строку в обратном порядке
+    for (int i = 0; i < len / 2; ++i) {
+        QChar temp = a.at(i);
+        a.replace(i, 1, a.at(len - 1 - i));
+        a.replace(len - 1 - i, 1, temp);
+    }
+
+    // a.splice(0, 1) — удаляем первый символ
+    if (a.length() > 0) {
+        a.remove(0, 1);
+    }
+
+    // Свап 0 и 55 % length
+    if (a.length() > 0) {
+        int idx = 55 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // a.splice(0, 1) — удаляем первый символ
+    if (a.length() > 0) {
+        a.remove(0, 1);
+    }
+
+    // Свап 0 и 53 % length
+    if (a.length() > 0) {
+        int idx = 53 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // Свап 0 and 9 % length
+    if (a.length() > 0) {
+        int idx = 9 % a.length();
+        safeCharSwap(a, 0, idx);
+    }
+
+    // a.splice(0, 3) — удаляем первые 3 символа
+    if (a.length() >= 3) {
+        a.remove(0, 3);
+    } else {
+        a.clear();
+    }
+
+    logDebug("N-Decrypt Success: Transformed '" + originalN + "' -> '" + a + "'");
+
+    // 3. Подставляем дешифрованное значение обратно в URL
+    QString encodedN = QString::fromLatin1(QUrl::toPercentEncoding(a));
+    QString resultUrl = url;
+    resultUrl.replace(nRx.cap(0),
+                      nRx.cap(0).left(nRx.cap(0).indexOf('=') + 1) + encodedN);
+    logDebug("Output URL: " + resultUrl);
+    logDebug("-------------------------------------------------------------------------");
+    return resultUrl;
+}
 </file>
 
 <file path="main.cpp">
@@ -9213,6 +9002,7 @@ void ApiManager::collectTypeofDeps(const QString &code, QStringList &deps, QStri
 #include <QFile>
 #include "compositornudger.h"
 #include "volumekeysobserver.h"
+#include <QFont>
 
 #if defined(SYMBIAN) || defined(Q_OS_SYMBIAN)
 #include <e32std.h>
@@ -9227,6 +9017,10 @@ int main(int argc, char *argv[])
     QFile::remove("C:/Data/SymTube_debug.txt");
     QSymbianApplication app(argc, argv);
 
+    QFont defaultFont("Series 60 Sans");
+    app.setFont(defaultFont);
+
+
     QApplication::setAttribute(Qt::AA_S60DisablePartialScreenInputMode, false);
 
     void* library = dlopen("QtGui", 0);
@@ -9239,11 +9033,7 @@ int main(int argc, char *argv[])
     }
 
     // ВОЗВРАЩАЕМ ГЛОБАЛЬНЫЙ ПРОКСИ ЧЕРЕЗ ВАШ VPN!
-    QNetworkProxy extProxy;
-    extProxy.setType(QNetworkProxy::HttpProxy);
-    extProxy.setHostName("127.0.0.1");
-    extProxy.setPort(8080);
-    QNetworkProxy::setApplicationProxy(extProxy);
+
 
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QTextCodec::setCodecForTr(codec);
@@ -9402,23 +9192,27 @@ Rectangle {
             }
 
             var initialQualities = [{
-                label: "360p (InnerTube)",
-                url: temp.video_url,
-                hasAudio: true
-            }];
+                                    label: "360p (InnerTube)",
+                                    url: temp.video_url,
+                                    hasAudio: true
+        }];
             temp["qualities"] = initialQualities;
 
             videoDetails = temp;
 
             HistoryManager.addToHistory({
-                "video_id": videoDetails.video_id,
-                "title": videoDetails.title,
-                "author": videoDetails.author,
-                "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
-            });
+                                        "video_id": videoDetails.video_id,
+                                        "title": videoDetails.title,
+                                        "author": videoDetails.author,
+                                        "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
+        });
 
-            var base64Url = Qt.btoa(videoDetails.video_url);
-            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+            if (Config.enableProxy) {
+                var base64Url = Qt.btoa(videoDetails.video_url);
+                videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+            } else {
+                videoPage.currentVideoUrl = videoDetails.video_url;
+            }
 
             ApiManager.fetchAlternativeQualities(videoDetails.video_id);
             ApiManager.getComments(videoDetails.video_id, "");
@@ -9469,10 +9263,20 @@ Rectangle {
     }
 
     function changeQuality(newUrl) {
-        var base64Url = Qt.btoa(newUrl);
-        var wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        var wrappedUrl;
 
-        if (!videoDetails || currentVideoUrl === wrappedUrl) return;
+                // Проверяем, является ли ссылка оригинальным потоком Google Video
+                var isGoogleVideo = newUrl.indexOf("googlevideo.com") !== -1;
+
+                // Оборачиваем только оригинальные ссылки Google Video и только если прокси включен
+                if (Config.enableProxy && isGoogleVideo) {
+                    var base64Url = Qt.btoa(newUrl);
+                    wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+                } else {
+                    wrappedUrl = newUrl; // Ссылки от Piped/NotPipe отдаются как есть
+                }
+
+                if (!videoDetails || currentVideoUrl === wrappedUrl) return;
 
         var pos = 0;
         if (videoLoader.item) {
@@ -9944,44 +9748,44 @@ Rectangle {
 
             // Comments preview
             Item {
-                            width: parent.width; height: 110
-                            visible: videoPage.firstComment !== null
+                width: parent.width; height: 110
+                visible: videoPage.firstComment !== null
+                Rectangle {
+                    x: 16; width: parent.width - 32; height: 94
+                    color: "#272727"; radius: 12; clip: true
+                    Column {
+                        anchors.fill: parent; anchors.margins: 12; spacing: 6
+                        Row {
+                            spacing: 8
+                            Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 14; font.bold: true }
+                            Text { color: "gray"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter; text: videoPage.firstComment ? videoPage.firstComment.publishedAt : "" }
+                        }
+                        Row {
+                            width: parent.width
+                            spacing: 8
                             Rectangle {
-                                x: 16; width: parent.width - 32; height: 94
-                                color: "#272727"; radius: 12; clip: true
-                                Column {
-                                    anchors.fill: parent; anchors.margins: 12; spacing: 6
-                                    Row {
-                                        spacing: 8
-                                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 14; font.bold: true }
-                                        Text { color: "gray"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter; text: videoPage.firstComment ? videoPage.firstComment.publishedAt : "" }
-                                    }
-                                    Row {
-                                        width: parent.width
-                                        spacing: 8
-                                        Rectangle {
-                                            width: 24; height: 24; radius: 12; color: "#333"; clip: true
-                                            Image {
-                                                anchors.fill: parent;
-                                                source: videoPage.firstComment && videoPage.firstComment.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(videoPage.firstComment.authorThumbnail).replace("https://", "http://")) : "";
-                                                fillMode: Image.PreserveAspectCrop; asynchronous: true
-                                            }
-                                        }
-                                        Column {
-                                            width: parent.width - 32
-                                            Text { color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width; text: videoPage.firstComment ? videoPage.firstComment.author : "" }
-                                            Text {
-                                                color: "white"; font.pixelSize: 13;
-                                                elide: Text.ElideRight; wrapMode: Text.Wrap;
-                                                width: parent.width; height: 32; clip: true
-                                                text: videoPage.firstComment ? videoPage.firstComment.text : ""
-                                            }
-                                        }
-                                    }
+                                width: 24; height: 24; radius: 12; color: "#333"; clip: true
+                                Image {
+                                    anchors.fill: parent;
+                                    source: videoPage.firstComment && videoPage.firstComment.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(videoPage.firstComment.authorThumbnail).replace("https://", "http://")) : "";
+                                    fillMode: Image.PreserveAspectCrop; asynchronous: true
                                 }
-                                MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" }
+                            }
+                            Column {
+                                width: parent.width - 32
+                                Text { color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width; text: videoPage.firstComment ? videoPage.firstComment.author : "" }
+                                Text {
+                                    color: "white"; font.pixelSize: 13;
+                                    elide: Text.ElideRight; wrapMode: Text.Wrap;
+                                    width: parent.width; height: 32; clip: true
+                                    text: videoPage.firstComment ? videoPage.firstComment.text : ""
+                                }
                             }
                         }
+                    }
+                    MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "visible" }
+                }
+            }
 
             Item {
                 width: parent.width; height: 40
@@ -10101,57 +9905,57 @@ Rectangle {
     }
 
     Rectangle {
-                id: commentsSheet
-                anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 50
-                state: "hidden"
-                states:[ State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } }, State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } } ]
-                transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
-                MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "hidden" }
+        id: commentsSheet
+        anchors.fill: parent; color: "#E6000000"; visible: state === "visible"; z: 50
+        state: "hidden"
+        states:[ State { name: "visible"; PropertyChanges { target: commentsPanel; y: root.height - commentsPanel.height } }, State { name: "hidden"; PropertyChanges { target: commentsPanel; y: root.height } } ]
+        transitions: Transition { NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad } }
+        MouseArea { anchors.fill: parent; onClicked: commentsSheet.state = "hidden" }
 
-                Rectangle {
-                    id: commentsPanel
-                    width: parent.width; height: root.height * 0.75
-                    anchors.bottom: parent.bottom; color: "#282828"
-                    MouseArea { anchors.fill: parent }
+        Rectangle {
+            id: commentsPanel
+            width: parent.width; height: root.height * 0.75
+            anchors.bottom: parent.bottom; color: "#282828"
+            MouseArea { anchors.fill: parent }
 
-                    Column {
-                        anchors.fill: parent; anchors.margins: 16; spacing: 10
-                        Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
-                        Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
+            Column {
+                anchors.fill: parent; anchors.margins: 16; spacing: 10
+                Rectangle { width: 40; height: 5; radius: 2.5; color: "gray"; anchors.horizontalCenter: parent.horizontalCenter }
+                Text { text: qsTr("Комментарии"); color: "white"; font.pixelSize: 18; font.bold: true }
 
-                        ListView {
-                            id: commentsListView
-                            width: parent.width; height: parent.height - 40
-                            model: videoPage.commentsModel
-                            clip: true
-                            spacing: 12
-                            delegate: Item {
-                                width: commentsListView.width
-                                height: Math.max(36, commentCol.height)
-                                Row {
-                                    anchors.fill: parent
-                                    spacing: 10
-                                    Rectangle {
-                                        width: 36; height: 36; radius: 18; color: "#333"; clip: true
-                                        Image {
-                                            anchors.fill: parent;
-                                            source: modelData.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(modelData.authorThumbnail).replace("https://", "http://")) : "";
-                                            fillMode: Image.PreserveAspectCrop; asynchronous: true
-                                        }
-                                    }
-                                    Column {
-                                        id: commentCol
-                                        width: commentsListView.width - 46
-                                        Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width }
-                                        Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.Wrap; width: parent.width }
-                                        Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
-                                    }
+                ListView {
+                    id: commentsListView
+                    width: parent.width; height: parent.height - 40
+                    model: videoPage.commentsModel
+                    clip: true
+                    spacing: 12
+                    delegate: Item {
+                        width: commentsListView.width
+                        height: Math.max(36, commentCol.height)
+                        Row {
+                            anchors.fill: parent
+                            spacing: 10
+                            Rectangle {
+                                width: 36; height: 36; radius: 18; color: "#333"; clip: true
+                                Image {
+                                    anchors.fill: parent;
+                                    source: modelData.authorThumbnail ? "image://rounded/" + encodeURIComponent(String(modelData.authorThumbnail).replace("https://", "http://")) : "";
+                                    fillMode: Image.PreserveAspectCrop; asynchronous: true
                                 }
+                            }
+                            Column {
+                                id: commentCol
+                                width: commentsListView.width - 46
+                                Text { text: modelData.author; color: "gray"; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight; width: parent.width }
+                                Text { text: modelData.text; color: "white"; font.pixelSize: 14; wrapMode: Text.Wrap; width: parent.width }
+                                Text { text: modelData.publishedAt; color: "#666"; font.pixelSize: 12 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
 
     Rectangle {
         id: shareSheet
@@ -10200,10 +10004,10 @@ Rectangle {
 <file path="Makefile">
 #############################################################################
 # Makefile for building: SymTube
-# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 6. ??? 18:40:57 2026
+# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 7. ??? 15:43:07 2026
 # Project:  SymTube.pro
 # Template: app
-# Command: c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc -o bld.inf SymTube.pro
+# Command: c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc -o bld.inf SymTube.pro
 #############################################################################
 
 MAKEFILE          = Makefile
@@ -10219,95 +10023,95 @@ MAKE              = make
 SBS               = sbs
 
 DEFINES	 = -DSYMBIAN -DUNICODE -DQT_KEYPAD_NAVIGATION -DQT_SOFTKEYS_ENABLED -DQT_USE_MATH_H_FLOATS -DQT_NO_DEBUG -DQT_DECLARATIVE_LIB -DQT_SCRIPT_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
-INCPATH	 =  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtScript"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/mkspecs/common/symbian"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/sys"  -I"C:/Users/User/Documents/GitHub/SymTube/qmlapplicationviewer"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc/sc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc/sc"  -I"C:/QtMobility"  -I"C:/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/stlportv5"  -I"C:/Users/User/Documents/GitHub/SymTube/moc"  -I"C:/Users/User/Documents/GitHub/SymTube"  -I"C:/Users/User/Documents/GitHub/SymTube/ui" 
+INCPATH	 =  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtScript"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/mkspecs/common/symbian"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/sys"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/qmlapplicationviewer"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc/sc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc/sc"  -I"C:/QtMobility"  -I"C:/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/stlportv5"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/moc"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/ui" 
 first: default
 
 all: debug release
 
 default: debug-winscw
 qmake:
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-bld.inf: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+bld.inf: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-c:\Users\User\Documents\GitHub\SymTube\SymTube.loc: 
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
+c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc: 
+	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
 
-debug: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
 clean-debug: bld.inf
 	$(SBS) reallyclean --toolcheck=off -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
 freeze-debug: bld.inf
 	$(SBS) freeze -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
-release: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 clean-release: bld.inf
 	$(SBS) reallyclean --toolcheck=off -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 freeze-release: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 
-debug-winscw: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-winscw: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c winscw_udeb.mwccinc
 clean-debug-winscw: bld.inf
 	$(SBS) reallyclean -c winscw_udeb.mwccinc
 freeze-debug-winscw: bld.inf
 	$(SBS) freeze -c winscw_udeb.mwccinc
-debug-gcce: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.udeb.gcce4_4_1
 clean-debug-gcce: bld.inf
 	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
 freeze-debug-gcce: bld.inf
 	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-debug-armv5: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c armv5_udeb
 clean-debug-armv5: bld.inf
 	$(SBS) reallyclean -c armv5_udeb
 freeze-debug-armv5: bld.inf
 	$(SBS) freeze -c armv5_udeb
-debug-armv6: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c armv6_udeb
 clean-debug-armv6: bld.inf
 	$(SBS) reallyclean -c armv6_udeb
 freeze-debug-armv6: bld.inf
 	$(SBS) freeze -c armv6_udeb
-release-gcce: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1
 clean-release-gcce: bld.inf
 	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
 freeze-release-gcce: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-release-armv5: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c armv5_urel
 clean-release-armv5: bld.inf
 	$(SBS) reallyclean -c armv5_urel
 freeze-release-armv5: bld.inf
 	$(SBS) freeze -c armv5_urel
-release-armv6: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c armv6_urel
 clean-release-armv6: bld.inf
 	$(SBS) reallyclean -c armv6_urel
 freeze-release-armv6: bld.inf
 	$(SBS) freeze -c armv6_urel
-debug-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.udeb.gcce4_4_1
 clean-debug-armv5-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
 freeze-debug-armv5-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-release-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v5.urel.gcce4_4_1
 clean-release-armv5-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
 freeze-release-armv5-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-debug-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+debug-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v6.udeb.gcce4_4_1
 clean-debug-armv6-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v6.udeb.gcce4_4_1
 freeze-debug-armv6-gcce4.4.1: bld.inf
 	$(SBS) freeze -c arm.v6.udeb.gcce4_4_1
-release-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube\SymTube.loc bld.inf
+release-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
 	$(SBS) -c arm.v6.urel.gcce4_4_1
 clean-release-armv6-gcce4.4.1: bld.inf
 	$(SBS) reallyclean -c arm.v6.urel.gcce4_4_1
@@ -10330,13 +10134,13 @@ run:
 runonphone: sis
 	runonphone $(QT_RUN_ON_PHONE_OPTIONS) --sis SymTube.sis SymTube.exe $(QT_RUN_OPTIONS)
 
-SymTube_template.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
+SymTube_template.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
-SymTube_installer.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
+SymTube_installer.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
-SymTube_stub.pkg: C:/Users/User/Documents/GitHub/SymTube/SymTube.pro
+SymTube_stub.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
 	$(MAKE) -f $(MAKEFILE) qmake
 
 sis: SymTube_template.pkg
@@ -10386,32 +10190,32 @@ compiler_moc_header_make_all: moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_historymanager.cpp moc\moc_volumekeysobserver.cpp moc\moc_qsymbianapplication.cpp moc\moc_translationmanager.cpp moc\moc_localhttpproxy.cpp moc\moc_compositornudger.cpp moc\moc_qmlapplicationviewer.cpp
 moc\moc_config.cpp: config.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\config.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_config.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\config.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_config.cpp
 
 moc\moc_apimanager.cpp: qrimageprovider.h \
 		apimanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\apimanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_apimanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\apimanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_apimanager.cpp
 
 moc\moc_historymanager.cpp: historymanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\historymanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_historymanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\historymanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_historymanager.cpp
 
 moc\moc_volumekeysobserver.cpp: volumekeysobserver.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\volumekeysobserver.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_volumekeysobserver.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\volumekeysobserver.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_volumekeysobserver.cpp
 
 moc\moc_qsymbianapplication.cpp: qsymbianapplication.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\qsymbianapplication.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_qsymbianapplication.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qsymbianapplication.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qsymbianapplication.cpp
 
 moc\moc_translationmanager.cpp: translationmanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\translationmanager.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_translationmanager.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\translationmanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_translationmanager.cpp
 
 moc\moc_localhttpproxy.cpp: localhttpproxy.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\localhttpproxy.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_localhttpproxy.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\localhttpproxy.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_localhttpproxy.cpp
 
 moc\moc_compositornudger.cpp: compositornudger.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\compositornudger.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_compositornudger.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\compositornudger.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_compositornudger.cpp
 
 moc\moc_qmlapplicationviewer.cpp: qmlapplicationviewer\qmlapplicationviewer.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube\qmlapplicationviewer\qmlapplicationviewer.h -o c:\Users\User\Documents\GitHub\SymTube\moc\moc_qmlapplicationviewer.cpp
+	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qmlapplicationviewer\qmlapplicationviewer.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qmlapplicationviewer.cpp
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
@@ -10431,15 +10235,15 @@ compiler_lex_clean:
 compiler_clean: compiler_moc_header_clean 
 
 dodistclean:
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_template.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_template.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_stub.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_stub.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_installer.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_installer.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\Makefile" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\Makefile"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_exe.mmp" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_exe.mmp"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube_reg.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube_reg.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\SymTube.loc" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\SymTube.loc"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube\bld.inf" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube\bld.inf"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc"
+	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf"
 
 distclean: clean dodistclean
 
@@ -10449,7 +10253,7 @@ clean: bld.inf
 
 <file path="SymTube_exe.mmp">
 // ==============================================================================
-// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
+// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
 // This file is generated by qmake and should not be modified by the
 // user.
 //  Name        : SymTube_exe.mmp
@@ -10592,7 +10396,7 @@ STDCPP
 
 <file path="SymTube_reg.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10613,7 +10417,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.loc">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10629,7 +10433,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-06T18:40:57
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================

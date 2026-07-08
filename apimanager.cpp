@@ -486,7 +486,11 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                  .arg(requestType)
                  .arg(reply->errorString())
                  .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
-
+        int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (requestType == "VideoInfo" && (httpCode == 403 || httpCode == 429)) {
+            logDebug("Network error indicates a bot block / rate limit (HTTP 403/429)!");
+            emit botBlockDetected();
+        }
         emit requestFailed(requestType, reply->errorString());
         reply->deleteLater();
         return;
@@ -832,11 +836,44 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         QVariantMap playability = root.value("playabilityStatus").toMap();
 
         if (playability.contains("reason")) {
-                   logDebug("Reason of unavailability: " + playability.value("reason").toString());
-               }
+            logDebug("Reason of unavailability: " + playability.value("reason").toString());
+        }
 
         QString status = playability.value("status").toString();
+        QString reason = playability.value("reason").toString();
+        bool isBotBlock = false;
 
+        // Проверяем текстовые упоминания бота/робота/трафика в причине
+        if (reason.contains("bot", Qt::CaseInsensitive) ||
+                reason.contains("robot", Qt::CaseInsensitive) ||
+                reason.contains("бот", Qt::CaseInsensitive) ||
+                reason.contains("unusual traffic", Qt::CaseInsensitive)) {
+            isBotBlock = true;
+        }
+
+        // Проверяем наличие блока капчи (playerCaptchaViewModel) или блокирующегоErrorMessage
+        QVariantMap errorScreen = playability.value("errorScreen").toMap();
+        if (errorScreen.contains("playerCaptchaViewModel")) {
+            isBotBlock = true;
+        }
+        if (errorScreen.contains("playerErrorMessageRenderer")) {
+            QVariantMap errorMessageRenderer = errorScreen.value("playerErrorMessageRenderer").toMap();
+            QString subreason = extractTextFromField(errorMessageRenderer, "subreason");
+            if (subreason.contains("bot", Qt::CaseInsensitive) ||
+                    subreason.contains("robot", Qt::CaseInsensitive) ||
+                    subreason.contains("бот", Qt::CaseInsensitive) ||
+                    subreason.contains("unusual traffic", Qt::CaseInsensitive)) {
+                isBotBlock = true;
+            }
+        }
+
+        if (isBotBlock) {
+            logDebug("CRITICAL: Bot block detected in playabilityStatus!");
+            emit botBlockDetected();
+            emit requestFailed("VideoInfo", "BotBlocked");
+            reply->deleteLater();
+            return;
+        }
 
 
         QVariantMap details;

@@ -90,6 +90,14 @@
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Ağ / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Yerel proxy kullan (VPN)</translation>
+    </message>
     <message>
         <source>Настройки</source>
         <translation>Ayarlar</translation>
@@ -210,4 +218,24 @@
         <translation>Açıklama</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Внимание</source>
+        <translation>Dikkat</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube, cihazınızı bot olarak algıladığı için erişimi geçici olarak engelledi.
+
+Lütfen IP adresinizi değiştirin (başka bir VPN sunucusuna bağlanın) ve tekrar deneyin.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>Tamam</translation>
+    </message>
+</context>
+</TS>
 </TS>

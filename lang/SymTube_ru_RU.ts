@@ -90,6 +90,15 @@
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Сеть / Прокси</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Использовать локальный прокси (VPN)</translation>
+    </message>
+
     <message>
         <source>Настройки</source>
         <translation>Настройки</translation>
@@ -208,6 +217,29 @@
     <message>
         <source>Описание</source>
         <translation>Описание</translation>
+    </message>
+</context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Загрузка...</translation>
+    </message>
+    <message>
+        <source>Внимание</source>
+        <translation>Внимание</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>ОК</translation>
     </message>
 </context>
 </TS>

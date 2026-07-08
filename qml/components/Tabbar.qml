@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 
 Rectangle {
     id: tabbarRoot
@@ -33,7 +33,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Главная")
+                    text: qsTr("Главная") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -64,7 +64,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Shorts")
+                    text: qsTr("Shorts") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -98,7 +98,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Подписки")
+                    text: qsTr("Подписки") + (TranslationManager.currentLanguage ? "" : "")
                     color: Config.userToken !== "" ? "white" : "gray"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -131,7 +131,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text {
-                    text: qsTr("Вы")
+                     text: qsTr("Вы") + (TranslationManager.currentLanguage ? "" : "")
                     color: "white"
                     font.pixelSize: 10
                     anchors.horizontalCenter: parent.horizontalCenter

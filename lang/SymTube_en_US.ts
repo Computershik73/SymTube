@@ -102,6 +102,14 @@
 </context>
 <context>
     <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Network / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Use local proxy (VPN)</translation>
+    </message>
     <message>
         <source>Настройки</source>
         <translation>Settings</translation>
@@ -231,6 +239,22 @@
     <message>
         <source>Загрузка...</source>
         <translation>Loading...</translation>
+    </message>
+    <message>
+        <source>Внимание</source>
+        <translation>Attention</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube has temporarily blocked access, detecting your device as a bot.
+
+Please change your IP address (connect to another VPN server) and try again.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>OK</translation>
     </message>
 </context>
 </TS>
