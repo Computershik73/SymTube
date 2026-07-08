@@ -481,6 +481,14 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QString requestType = reply->property("RequestType").toString();
     QByteArray responseData = reply->readAll();
 
+
+
+    if (requestType == "PlaylistDetails" || requestType == "RelatedVideos" || requestType == "VideoInfo" || requestType == "HomeVideos") {
+        logDebug(QString("=== [VIDEO PAGE LOG: %1] ===").arg(requestType));
+        logDebug(QString::fromUtf8(responseData));
+        logDebug(QString("=== [END LOG: %1] ===").arg(requestType));
+    }
+
     if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson") {
         logDebug(QString("[Network Error] Request '%1' failed with error: %2 (HTTP Code: %3)")
                  .arg(requestType)
@@ -619,10 +627,11 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         QVariantList outVideos;
         QStringList seenIds;
 
-        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        // Важно: парсим tileRenderer (плитки плейлистов/джемов) в первую очередь!
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "tileRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "videoRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
-        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "videoWithContextRenderer"));
 
@@ -634,6 +643,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 QVariantMap meta = renderer.value("metadata").toMap().value("lockupMetadataViewModel").toMap();
                 item["title"] = meta.value("title").toMap().value("content").toString();
 
+                // Восстанавливаем разбор авторов, просмотров и дат публикации
                 QVariantList rows = meta.value("metadata").toMap().value("contentMetadataViewModel").toMap().value("metadataRows").toList();
                 if (rows.size() > 0) {
                     QVariantList parts = rows[0].toMap().value("metadataParts").toList();
@@ -645,6 +655,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                     if (parts.size() > 1) item["published_at"] = parts[1].toMap().value("text").toMap().value("content").toString();
                 }
 
+                // Восстанавливаем разбор длительности видео
                 QVariantList overlays = renderer.value("contentImage").toMap().value("thumbnailViewModel").toMap().value("overlays").toList();
                 foreach (const QVariant &ov, overlays) {
                     QVariantMap ovMap = ov.toMap();
@@ -655,15 +666,32 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 }
             }
             else if (renderer.contains("onSelectCommand")) {
-                QVariantMap endpoint = renderer.value("onSelectCommand").toMap().value("watchEndpoint").toMap();
-                item["video_id"] = endpoint.value("videoId").toString();
+                QVariantMap onSelect = renderer.value("onSelectCommand").toMap();
+                QString videoId = "";
+                QString playlistId = "";
+
+                if (onSelect.contains("watchEndpoint")) {
+                    QVariantMap endpoint = onSelect.value("watchEndpoint").toMap();
+                    videoId = endpoint.value("videoId").toString();
+                    playlistId = endpoint.value("playlistId").toString();
+                } else if (onSelect.contains("watchPlaylistEndpoint")) {
+                    QVariantMap endpoint = onSelect.value("watchPlaylistEndpoint").toMap();
+                    playlistId = endpoint.value("playlistId").toString();
+                    videoId = endpoint.value("videoId").toString();
+                }
+
+                item["video_id"] = videoId;
+                item["playlist_id"] = playlistId;
+
                 QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
                 item["title"] = extractTextFromField(meta, "title");
 
                 QVariantList overlays = renderer.value("header").toMap().value("tileHeaderRenderer").toMap().value("thumbnailOverlays").toList();
                 foreach (const QVariant &ov, overlays) {
                     QVariantMap ovMap = ov.toMap();
-                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
+                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) {
+                        item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
+                    }
                 }
 
                 QVariantList lines = meta.value("lines").toList();
@@ -676,6 +704,18 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                     int count = items1.size();
                     if (count >= 1) item["published_at"] = extractTextFromField(items1[count - 1].toMap().value("lineItemRenderer").toMap(), "text");
                     if (count >= 3) item["views"] = extractTextFromField(items1[count - 3].toMap().value("lineItemRenderer").toMap(), "text");
+                }
+
+                // Пытаемся извлечь красивую обложку плейлиста
+                QString thumb = extractThumbnailUrl(renderer, "thumbnail");
+                if (thumb.isEmpty() && renderer.contains("header")) {
+                    QVariantMap header = renderer.value("header").toMap();
+                    if (header.contains("tileHeaderRenderer")) {
+                        thumb = extractThumbnailUrl(header.value("tileHeaderRenderer").toMap(), "thumbnail");
+                    }
+                }
+                if (!thumb.isEmpty()) {
+                    item["thumbnail"] = thumb;
                 }
             }
             else {
@@ -690,10 +730,24 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
 
             QString videoId = item["video_id"].toString();
-            if (videoId.isEmpty() || seenIds.contains(videoId)) continue;
-            seenIds.append(videoId);
+            QString playlistId = item["playlist_id"].toString();
 
-            item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
+            if (videoId.isEmpty() && playlistId.isEmpty()) continue;
+
+            // ИСПРАВЛЕНИЕ 1: Приоритет отдаем плейлисту. Миксы больше не конфликтуют с видео!
+            QString itemKey = !playlistId.isEmpty() ? ("playlist:" + playlistId) : ("video:" + videoId);
+            if (seenIds.contains(itemKey)) continue;
+            seenIds.append(itemKey);
+
+            // ИСПРАВЛЕНИЕ 2: Если это плейлист/джем, подменяем текст длительности на "Джем"
+            if (!playlistId.isEmpty()) {
+                item["duration"] = "Джем";
+            }
+
+            if (item["thumbnail"].toString().isEmpty() && !videoId.isEmpty()) {
+                item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
+            }
+
             outVideos.append(item);
         }
 
@@ -1240,6 +1294,119 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
         }
     }
+
+
+    else if (requestType == "MyPlaylists" || requestType == "ChannelPlaylists") {
+        QVariantList outPlaylists;
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "playlistRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridPlaylistRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
+
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
+            QString playlistId;
+            if (renderer.contains("playlistId")) {
+                playlistId = renderer.value("playlistId").toString();
+            } else if (renderer.contains("contentId")) {
+                playlistId = renderer.value("contentId").toString();
+            }
+
+            if (playlistId.isEmpty()) continue;
+
+            // Исключаем другие типы карточек
+            if (renderer.contains("contentType")) {
+                QString cType = renderer.value("contentType").toString();
+                if (cType.contains("VIDEO") || cType.contains("CHANNEL")) {
+                    continue;
+                }
+            }
+
+            item["playlist_id"] = playlistId;
+            item["title"] = extractTextFromField(renderer, "title");
+            if (item["title"].toString().isEmpty()) {
+                item["title"] = extractTextFromField(renderer, "headline");
+            }
+            if (item["title"].toString().isEmpty()) {
+                item["title"] = "Playlist";
+            }
+
+            QString thumb = extractThumbnailUrl(renderer, "thumbnail");
+            if (thumb.isEmpty() && renderer.contains("header")) {
+                QVariantMap header = renderer.value("header").toMap();
+                if (header.contains("tileHeaderRenderer")) {
+                    thumb = extractThumbnailUrl(header.value("tileHeaderRenderer").toMap(), "thumbnail");
+                }
+            }
+            item["thumbnail"] = thumb;
+
+            QString count = extractTextFromField(renderer, "videoCountText");
+            if (count.isEmpty()) {
+                count = renderer.value("videoCount").toString();
+                if (!count.isEmpty()) count += " videos";
+            }
+            item["video_count_text"] = count;
+
+            outPlaylists.append(item);
+        }
+        emit playlistsReady(outPlaylists);
+    }
+    else if (requestType == "PlaylistDetails") {
+        QVariantMap result;
+        QVariantList outVideos;
+        QStringList seenIds;
+
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "playlistVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "playlistPanelVideoRenderer"));
+
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
+            item["video_id"] = renderer.value("videoId").toString();
+            if (item["video_id"].toString().isEmpty()) continue;
+
+            item["title"] = extractTextFromField(renderer, "title");
+            item["author"] = extractTextFromField(renderer, "shortBylineText");
+            if (item["author"].toString().isEmpty()) {
+                item["author"] = extractTextFromField(renderer, "longBylineText");
+            }
+            item["duration"] = extractTextFromField(renderer, "lengthText");
+            if (item["duration"].toString().isEmpty()) {
+                QList<QVariantMap> overlays = enumerateObjectsWithKey(renderer, "thumbnailOverlayTimeStatusRenderer");
+                if (!overlays.isEmpty()) {
+                    item["duration"] = extractTextFromField(overlays.first(), "text");
+                }
+            }
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/mqdefault.jpg";
+
+            QString videoId = item["video_id"].toString();
+            if (seenIds.contains(videoId)) continue;
+            seenIds.append(videoId);
+
+            outVideos.append(item);
+        }
+
+        result["videos"] = outVideos;
+
+        QString plTitle = "Playlist";
+        QList<QVariantMap> sidebar = enumerateObjectsWithKey(parsedJson, "playlistSidebarPrimaryInfoRenderer");
+        if (!sidebar.isEmpty()) {
+            plTitle = extractTextFromField(sidebar.first(), "title");
+            result["description"] = extractTextFromField(sidebar.first(), "description");
+        } else {
+            QList<QVariantMap> header = enumerateObjectsWithKey(parsedJson, "playlistHeaderRenderer");
+            if (!header.isEmpty()) {
+                plTitle = extractTextFromField(header.first(), "title");
+                result["description"] = extractTextFromField(header.first(), "description");
+            }
+        }
+        result["title"] = plTitle;
+
+        emit playlistDetailsReady(result);
+    }
+
     else if (requestType == "ServerList") {
         QStringList servers;
         QString content = QString::fromUtf8(responseData);
@@ -1672,4 +1839,36 @@ QString ApiManager::decryptNParameter(const QString &url)
     logDebug("Output URL: " + resultUrl);
     logDebug("-------------------------------------------------------------------------");
     return resultUrl;
+}
+
+void ApiManager::getMyPlaylists() {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
+    payload["browseId"] = "FEplaylist_aggregation";
+    postInnertube("browse", payload, "MyPlaylists", true);
+}
+
+void ApiManager::getPlaylistDetails(const QString &playlistId, const QString &pageToken) {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
+
+    QString browseId = playlistId;
+    // Добавляем "VL" только если ID не начинается с "VL" и не является джемом "RD"
+    if (!browseId.startsWith("VL") && !browseId.startsWith("RD")) {
+        browseId = "VL" + browseId;
+    }
+    payload["browseId"] = browseId;
+    if (!pageToken.isEmpty()) {
+        payload["continuation"] = pageToken;
+    }
+    postInnertube("browse", payload, "PlaylistDetails", false);
+}
+
+void ApiManager::getChannelPlaylists(const QString &channelId) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["browseId"] = channelId;
+    // Параметр разметки вкладки плейлистов канала
+    payload["params"] = "EglwbGF5bGlzdHPyBgQKAjoA";
+    postInnertube("browse", payload, "ChannelPlaylists", false);
 }

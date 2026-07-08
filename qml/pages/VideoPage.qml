@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import QtQuick 1.1
 import QtMultimediaKit 1.1
 import "../components"
 
@@ -7,6 +7,12 @@ Rectangle {
     color: "black"
 
     property string currentVideoId: ""
+
+    property string currentPlaylistId: ""
+    property variant playlistVideos: []
+    property int currentPlaylistIndex: -1
+    property string playlistTitle: ""
+
     property variant videoDetails: null
     property bool isPlaying: false
     property variant relatedVideos:[]
@@ -25,6 +31,64 @@ Rectangle {
     property bool isVideoEnded: false
 
     property int uiPosition: 0
+
+    focus: true
+
+    Component.onCompleted: {
+        videoPage.forceActiveFocus();
+    }
+
+    Keys.onPressed: {
+        if (event.key === Qt.Key_Space) {
+            if (videoLoader.item) {
+                if (isPlaying) videoLoader.item.pause();
+                else videoLoader.item.play();
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Right) {
+            // Перемотка вперед на 10 секунд
+            if (videoLoader.item) {
+                var targetPosForward = videoLoader.item.position + 10000;
+                videoLoader.item.performSafeSeek(targetPosForward);
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Left) {
+            // Перемотка назад на 10 секунд
+            if (videoLoader.item) {
+                var targetPosBackward = videoLoader.item.position - 10000;
+                videoLoader.item.performSafeSeek(targetPosBackward);
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Up) {
+            // Увеличить громкость
+            var volUp = Math.min(100, VolumeKeys.volume + 10);
+            VolumeKeys.volume = volUp;
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Down) {
+            // Уменьшить громкость
+            var volDown = Math.max(0, VolumeKeys.volume - 10);
+            VolumeKeys.volume = volDown;
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_N) {
+            // Кнопка N (Next) - следующее видео
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playNextVideo();
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_P) {
+            // Кнопка P (Previous) - предыдущее видео
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playPreviousVideo();
+            }
+            event.accepted = true;
+        }
+    }
 
     Binding {
         target: CompositorFix
@@ -165,23 +229,48 @@ Rectangle {
             relatedVideos = videos;
             mainList.contentY = 0;
         }
+
+        onPlaylistDetailsReady: {
+            if (!videoPage.visible) return;
+
+            playlistVideos = playlistDetails.videos || [];
+            playlistTitle = playlistDetails.title || "Playlist";
+
+            if (playlistVideos.length > 0) {
+                // Если мы открыли плейлист "вслепую" (без стартового videoId)
+                if (currentVideoId === "") {
+                    currentPlaylistIndex = 0;
+                    playPlaylistItem(0);
+                } else {
+                    // Ищем индекс текущего видео внутри плейлиста
+                    var idx = -1;
+                    for (var i = 0; i < playlistVideos.length; i++) {
+                        if (playlistVideos[i].video_id === currentVideoId) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                    currentPlaylistIndex = idx;
+                }
+            }
+        }
     }
 
     function changeQuality(newUrl) {
         var wrappedUrl;
 
-                // Проверяем, является ли ссылка оригинальным потоком Google Video
-                var isGoogleVideo = newUrl.indexOf("googlevideo.com") !== -1;
+        // Проверяем, является ли ссылка оригинальным потоком Google Video
+        var isGoogleVideo = newUrl.indexOf("googlevideo.com") !== -1;
 
-                // Оборачиваем только оригинальные ссылки Google Video и только если прокси включен
-                if (Config.enableProxy && isGoogleVideo) {
-                    var base64Url = Qt.btoa(newUrl);
-                    wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
-                } else {
-                    wrappedUrl = newUrl; // Ссылки от Piped/NotPipe отдаются как есть
-                }
+        // Оборачиваем только оригинальные ссылки Google Video и только если прокси включен
+        if (Config.enableProxy && isGoogleVideo) {
+            var base64Url = Qt.btoa(newUrl);
+            wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        } else {
+            wrappedUrl = newUrl; // Ссылки от Piped/NotPipe отдаются как есть
+        }
 
-                if (!videoDetails || currentVideoUrl === wrappedUrl) return;
+        if (!videoDetails || currentVideoUrl === wrappedUrl) return;
 
         var pos = 0;
         if (videoLoader.item) {
@@ -196,18 +285,68 @@ Rectangle {
         recreateTimer.start();
     }
 
-    function loadVideo(videoId) {
-        currentVideoId = videoId;
-        videoDetails = null;
-        relatedVideos =[];
+
+    function loadVideo(videoId, playlistId) {
+        currentVideoId = videoId || "";
+        currentPlaylistId = playlistId || "";
+
+        relatedVideos = [];
         commentsModel = [];
         firstComment = null;
         videoPage.currentVideoUrl = "";
         videoLoader.sourceComponent = undefined;
         isPlaying = false;
         isSeeking = false;
-        ApiManager.getVideoInfo(videoId);
-        ApiManager.getRelatedVideos(videoId, 0);
+
+        videoPage.forceActiveFocus(); // Забираем фокус клавиатуры на себя
+
+        if (currentPlaylistId !== "") {
+            ApiManager.getPlaylistDetails(currentPlaylistId);
+            // Если видео уже указано, параллельно запускаем его парсинг
+            if (currentVideoId !== "") {
+                ApiManager.getVideoInfo(currentVideoId);
+                ApiManager.getRelatedVideos(currentVideoId, 0);
+            }
+        } else {
+            playlistVideos = [];
+            currentPlaylistIndex = -1;
+            playlistTitle = "";
+            ApiManager.getVideoInfo(currentVideoId);
+            ApiManager.getRelatedVideos(currentVideoId, 0);
+        }
+    }
+
+    function playPlaylistItem(index) {
+        if (index < 0 || index >= playlistVideos.length) return;
+
+        currentPlaylistIndex = index;
+        var targetVideo = playlistVideos[index];
+
+        currentVideoId = targetVideo.video_id;
+        videoDetails = null;
+        relatedVideos = [];
+        commentsModel = [];
+        firstComment = null;
+        videoPage.currentVideoUrl = "";
+        videoLoader.sourceComponent = undefined;
+        isPlaying = false;
+        isSeeking = false;
+
+        ApiManager.getVideoInfo(targetVideo.video_id);
+        ApiManager.getRelatedVideos(targetVideo.video_id, 0);
+        videoPage.forceActiveFocus();
+    }
+
+    function playNextVideo() {
+        if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+            playPlaylistItem(currentPlaylistIndex + 1);
+        }
+    }
+
+    function playPreviousVideo() {
+        if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
+            playPlaylistItem(currentPlaylistIndex - 1);
+        }
     }
 
     Component {
@@ -244,7 +383,19 @@ Rectangle {
                         play();
                     }
                 }
-                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+
+                // ОБНОВЛЕННЫЙ БЛОК:
+                if (status === Video.EndOfMedia) {
+                    if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                        // Если активен плейлист — переключаем на следующий трек
+                        playNextVideo();
+                    } else {
+                        // Если это одиночное видео — просто останавливаемся и возвращаем интерфейс в паузу
+                        videoPage.isSeeking = false;
+                        videoPage.isPlaying = false;
+                    }
+                }
+                else if (status === Video.InvalidMedia || status === Video.NoMedia) {
                     if (videoPage.recoveryPosition === -1) {
                         videoPage.isSeeking = false;
                         videoPage.isPlaying = false;
@@ -353,17 +504,59 @@ Rectangle {
 
             Rectangle { anchors.fill: parent; color: "#66000000" }
 
-            SafeImage {
-                anchors.centerIn: parent; width: 64; height: 64
-                source: videoPage.isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
+            // Контейнер элементов управления воспроизведением
+            Row {
+                anchors.centerIn: parent
+                spacing: 32
                 visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (videoLoader.item !== null ? videoLoader.item.status !== Video.Loading : true)
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (!videoLoader.item) return;
-                        if (videoPage.isPlaying) videoLoader.item.pause(); else videoLoader.item.play();
-                        controlsTimer.restart();
+                // Кнопка НАЗАД по плейлисту
+                Image {
+                    source: "../Assets/player/back.png"
+                    width: 40; height: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: currentPlaylistIndex > 0 ? 0.8 : 0.3
+                    visible: currentPlaylistId !== ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            controlsTimer.restart();
+                            playPreviousVideo();
+                        }
+                    }
+                }
+
+                // Центральная кнопка PLAY / PAUSE
+                SafeImage {
+                    width: 64; height: 64
+                    source: videoPage.isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (!videoLoader.item) return;
+                            if (videoPage.isPlaying) videoLoader.item.pause(); else videoLoader.item.play();
+                            controlsTimer.restart();
+                        }
+                    }
+                }
+
+                // Кнопка ВПЕРЕД по плейлисту
+                Image {
+                    source: "../Assets/player/skip.png"
+                    width: 40; height: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: currentPlaylistIndex < playlistVideos.length - 1 ? 0.8 : 0.3
+                    visible: currentPlaylistId !== ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            controlsTimer.restart();
+                            playNextVideo();
+                        }
                     }
                 }
             }
@@ -651,6 +844,87 @@ Rectangle {
                 }
             }
 
+            // ГОРИЗОНТАЛЬНЫЙ СПИСОК ПЛЕЙЛИСТА
+                        Rectangle {
+                            width: parent.width
+                            height: 125
+                            color: "#161616"
+                            visible: currentPlaylistId !== "" && playlistVideos.length > 0
+
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 8
+
+                                Row {
+                                    width: parent.width - 20
+                                    Text {
+                                        text: playlistTitle + " (" + (currentPlaylistIndex + 1) + " / " + playlistVideos.length + ")"
+                                        color: "white"
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                    }
+                                }
+
+                                ListView {
+                                    id: plHorList
+                                    width: parent.width
+                                    height: 75
+                                    orientation: ListView.Horizontal
+                                    model: playlistVideos
+                                    spacing: 10
+                                    clip: true
+                                    boundsBehavior: Flickable.StopAtBounds
+
+                                    delegate: Rectangle {
+                                        width: 145
+                                        height: 64
+                                        color: currentPlaylistIndex === index ? "#262626" : "#111111"
+                                        border.color: currentPlaylistIndex === index ? "#007ACC" : "#222222"
+                                        border.width: 1
+                                        radius: 6
+
+                                        Row {
+                                            anchors.fill: parent
+                                            anchors.margins: 4
+                                            spacing: 8
+
+                                            Rectangle {
+                                                width: 56
+                                                height: 56
+                                                color: "black"
+                                                radius: 4
+                                                clip: true
+                                                Image {
+                                                    anchors.fill: parent
+                                                    source: modelData.thumbnail || ""
+                                                    fillMode: Image.PreserveAspectCrop
+                                                }
+                                            }
+
+                                            Text {
+                                                width: parent.width - 68
+                                                text: modelData.title || ""
+                                                color: currentPlaylistIndex === index ? "#007ACC" : "white"
+                                                font.pixelSize: 11
+                                                maximumLineCount: 3
+                                                elide: Text.ElideRight
+                                                wrapMode: Text.WordWrap
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                playPlaylistItem(index);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
             // Comments preview
             Item {
                 width: parent.width; height: 110
@@ -704,11 +978,11 @@ Rectangle {
 
         model: relatedVideos
         delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: {
-                root.navigateToVideo(videoId)
-            }
-        }
+                    modelData: model.modelData
+                    onClicked: {
+                        root.navigateToVideo(videoId, playlistId)
+                    }
+                }
     }
 
     Rectangle {
@@ -899,6 +1173,30 @@ Rectangle {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    Connections {
+        target: VolumeKeys
+
+        onPlayPressed: {
+            if (videoLoader.item) videoLoader.item.play();
+        }
+        onPausePressed: {
+            if (videoLoader.item) videoLoader.item.pause();
+        }
+        onStopPressed: {
+            if (videoLoader.item) videoLoader.item.stop();
+        }
+        onNextPressed: {
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playNextVideo();
+            }
+        }
+        onPreviousPressed: {
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playPreviousVideo();
             }
         }
     }

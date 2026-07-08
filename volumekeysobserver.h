@@ -29,6 +29,12 @@ signals:
     void volumeUpPressed();
     void volumeDownPressed();
 
+    void playPressed();
+    void pausePressed();
+    void stopPressed();
+    void nextPressed();
+    void previousPressed();
+
 private: // From MRemConCoreApiTargetObserver
     void MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct);
 

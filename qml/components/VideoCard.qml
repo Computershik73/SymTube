@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import QtQuick 1.1
 import "../components"
 
 Rectangle {
@@ -9,7 +9,8 @@ Rectangle {
 
     property variant modelData
 
-    signal clicked(string videoId)
+    // ОБНОВЛЕННЫЙ СИГНАЛ: передаем и видео, и плейлист
+    signal clicked(string videoId, string playlistId)
 
     Column {
         anchors.fill: parent
@@ -25,6 +26,7 @@ Rectangle {
 
             SafeImage {
                 anchors.fill: parent
+                // Если videoId пустой, используем прямую ссылку на обложку плейлиста
                 source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
@@ -46,7 +48,7 @@ Rectangle {
                     text: modelData && modelData.duration ? modelData.duration : ""
                     color: "white"
                     font.pixelSize: 12
-                    font.weight: Font.Bold
+                    font.bold: true
                 }
             }
         }
@@ -81,7 +83,6 @@ Rectangle {
                     width: parent.width
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
-
                     height: 38
                     clip: true
                 }
@@ -92,7 +93,6 @@ Rectangle {
                     font.pixelSize: 14
                     width: parent.width
                     elide: Text.ElideRight
-
                 }
 
                 Row {
@@ -118,11 +118,14 @@ Rectangle {
         }
     }
 
+    // ОБНОВЛЕННЫЙ ОБРАБОТЧИК: безопасно считывает оба параметра
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            if (modelData && modelData.video_id) {
-                cardRoot.clicked(modelData.video_id);
+            if (modelData) {
+                var vid = modelData.video_id || "";
+                var plid = modelData.playlist_id || "";
+                cardRoot.clicked(vid, plid);
             }
         }
     }

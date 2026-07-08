@@ -1,4 +1,4 @@
-﻿import QtQuick 1.0
+import QtQuick 1.0
 import "../components"
 
 Rectangle {
@@ -49,10 +49,10 @@ Rectangle {
         spacing: 10
         
         delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: {
-                root.navigateToVideo(videoId)
-            }
-        }
+                    modelData: model.modelData
+                    onClicked: {
+                        root.navigateToVideo(videoId, playlistId)
+                    }
+                }
     }
 }

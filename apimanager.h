@@ -52,6 +52,10 @@ public:
     Q_INVOKABLE void unsubscribeFromChannel(const QString &channelIdentifier);
     Q_INVOKABLE void logDebug(const QString &msg);
 
+    Q_INVOKABLE void getMyPlaylists();
+    Q_INVOKABLE void getPlaylistDetails(const QString &playlistId, const QString &pageToken = QString());
+    Q_INVOKABLE void getChannelPlaylists(const QString &channelId);
+
 signals:
     void homeVideosReady(QVariantList videos, QString token);
     void searchResultsReady(QVariantList videos);
@@ -72,6 +76,9 @@ signals:
     void alternativeQualitiesReady(QString videoId, QVariantList qualities);
     void commentsReady(QVariantList comments, QString continuationToken);
     void botBlockDetected();
+
+    void playlistsReady(QVariantList playlists);
+    void playlistDetailsReady(QVariantMap playlistDetails);
 
 private slots:
     void onReplyFinished(QNetworkReply *reply);

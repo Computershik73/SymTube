@@ -194,11 +194,11 @@ Rectangle {
             cacheBuffer: 1000
 
             delegate: VideoCard {
-                modelData: model.modelData
-                onClicked: {
-                    root.navigateToVideo(videoId)
-                }
-            }
+                        modelData: model.modelData
+                        onClicked: {
+                            root.navigateToVideo(videoId, playlistId)
+                        }
+                    }
         }
     }
 }

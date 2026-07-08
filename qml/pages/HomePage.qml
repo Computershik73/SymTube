@@ -220,9 +220,11 @@ Rectangle {
         cacheBuffer: 1200
 
         delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: { root.navigateToVideo(videoId) }
-        }
+                   modelData: model.modelData
+                   onClicked: {
+                       root.navigateToVideo(videoId, playlistId)
+                   }
+               }
 
         onContentYChanged: {
             if (contentY >= (contentHeight - height * 2) && !isLoadingMore && nextPageToken !== "") {

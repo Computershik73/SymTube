@@ -10,6 +10,8 @@ Rectangle {
     property variant historyModel:[]
     property int qrVersion: 0
 
+    property variant playlistsModel: []
+
     Connections {
         target: ApiManager
 
@@ -35,6 +37,10 @@ Rectangle {
 
         onHistoryReady: {
             historyModel = historyList;
+        }
+
+        onPlaylistsReady: {
+            playlistsModel = playlists;
         }
     }
 
@@ -65,6 +71,7 @@ Rectangle {
     function loadAccountInfo() {
         ApiManager.getAccountInfo();
         ApiManager.getHistory();
+        ApiManager.getMyPlaylists();
     }
 
     Column {
@@ -277,6 +284,86 @@ Rectangle {
                     }
                 }
             }
+
+            Text {
+                text: qsTr("Ваши плейлисты")
+                color: "white"
+                font.pixelSize: 18
+                font.bold: true
+                visible: playlistsModel.length > 0
+            }
+
+            ListView {
+                width: parent.width
+                height: 150
+                orientation: ListView.Horizontal
+                model: playlistsModel
+                spacing: 12
+                cacheBuffer: 500
+                visible: playlistsModel.length > 0
+
+                delegate: Item {
+                    width: 150
+                    height: 120
+
+                    Column {
+                        spacing: 8
+
+                        Rectangle {
+                            width: 150; height: 84
+                            color: "#1A1A1A"
+                            radius: 8
+                            clip: true
+
+                            Image {
+                                anchors.fill: parent
+                                source: modelData.thumbnail || ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                            }
+
+                            // Плашка с количеством видео в плейлисте сверху картинки
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 4
+                                color: "#CC000000"
+                                radius: 4
+                                width: plCountText.width + 8
+                                height: plCountText.height + 4
+                                Text {
+                                    id: plCountText
+                                    anchors.centerIn: parent
+                                    text: modelData.video_count_text || ""
+                                    color: "white"
+                                    font.pixelSize: 10
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: modelData.title || ""
+                            color: "white"
+                            font.pixelSize: 13
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            height: 30
+                            clip: true
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            // При клике на плейлист открываем его первое видео
+                            root.navigateToVideo("", modelData.playlist_id);
+                        }
+                    }
+                }
+            }
+
+
         }
     }
 }

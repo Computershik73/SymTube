@@ -15,14 +15,14 @@ Rectangle {
     property bool isFullscreen: isVideoPageOpen && forceFullscreen === 2
 
     Connections {
-            target: TranslationManager
-            onLanguageChanged: {
-                // Мгновенно перезагружаем контент-лоадер страницы для применения перевода
-                contentLoader.source = "";
-                pageLoadTimer.nextSource = "pages/SettingsPage.qml";
-                pageLoadTimer.start();
-            }
+        target: TranslationManager
+        onLanguageChanged: {
+            // Мгновенно перезагружаем контент-лоадер страницы для применения перевода
+            contentLoader.source = "";
+            pageLoadTimer.nextSource = "pages/SettingsPage.qml";
+            pageLoadTimer.start();
         }
+    }
 
     Connections {
         target: ApiManager
@@ -103,6 +103,7 @@ Rectangle {
     // --- БЕЗОПАСНАЯ АСИНХРОННАЯ ЗАГРУЗКА ---
     property string pendingVideoId: ""
     property string pendingChannelId: ""
+    property string pendingPlaylistId: ""
     property string pendingQuery: ""
 
     Rectangle {
@@ -132,8 +133,9 @@ Rectangle {
 
             var src = source.toString();
             if (src.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
-                item.loadVideo(root.pendingVideoId);
+                item.loadVideo(root.pendingVideoId, root.pendingPlaylistId);
                 root.pendingVideoId = "";
+                root.pendingPlaylistId = "";
             } else if (src.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
                 item.loadChannel(root.pendingChannelId);
                 root.pendingChannelId = "";
@@ -206,10 +208,11 @@ Rectangle {
         switchToTab("Home");
     }
 
-    function navigateToVideo(videoId) {
+    function navigateToVideo(videoId, playlistId) {
         forceFullscreen = 1;
         navbar.showBackButton = true;
-        root.pendingVideoId = videoId;
+        root.pendingVideoId = videoId || "";
+        root.pendingPlaylistId = playlistId || "";
         safeLoadPage("pages/VideoPage.qml");
     }
 
@@ -238,75 +241,75 @@ Rectangle {
 
 
     // Всплывающее окно при обнаружении блокировки (бот-фильтр YouTube)
-        Rectangle {
-            id: botAlertPopup
+    Rectangle {
+        id: botAlertPopup
+        anchors.fill: parent
+        color: "#B3000000" // полупрозрачный темный фон
+        visible: false
+        z: 9999 // Гарантирует отрисовку поверх любых страниц, панелей навигации и OSD
+
+        // Блокируем клики по элементам интерфейса, находящимся "под" окном
+        MouseArea {
             anchors.fill: parent
-            color: "#B3000000" // полупрозрачный темный фон
-            visible: false
-            z: 9999 // Гарантирует отрисовку поверх любых страниц, панелей навигации и OSD
+            onClicked: {} // поглощаем нажатие
+        }
 
-            // Блокируем клики по элементам интерфейса, находящимся "под" окном
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {} // поглощаем нажатие
-            }
+        Rectangle {
+            width: parent.width - 40
+            height: dialogCol.height + 40
+            color: "#222222"
+            border.color: "#333333"
+            border.width: 1
+            radius: 10
+            anchors.centerIn: parent
 
-            Rectangle {
+            Column {
+                id: dialogCol
                 width: parent.width - 40
-                height: dialogCol.height + 40
-                color: "#222222"
-                border.color: "#333333"
-                border.width: 1
-                radius: 10
                 anchors.centerIn: parent
+                spacing: 20
 
-                Column {
-                    id: dialogCol
-                    width: parent.width - 40
-                    anchors.centerIn: parent
-                    spacing: 20
+                Text {
+                    text: qsTr("Внимание")
+                    color: "white"
+                    font.pixelSize: 20
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                Text {
+                    text: qsTr("YouTube временно заблокировал доступ, приняв ваше устройство за бота.\n\nПожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.")
+                    color: "#DDDDDD"
+                    font.pixelSize: 15
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                Rectangle {
+                    width: 140
+                    height: 40
+                    color: "#007ACC"
+                    radius: 20
+                    anchors.horizontalCenter: parent.horizontalCenter
 
                     Text {
-                        text: qsTr("Внимание")
+                        text: qsTr("ОК")
                         color: "white"
-                        font.pixelSize: 20
+                        font.pixelSize: 16
                         font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
+                        anchors.centerIn: parent
                     }
 
-                    Text {
-                        text: qsTr("YouTube временно заблокировал доступ, приняв ваше устройство за бота.\n\nПожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.")
-                        color: "#DDDDDD"
-                        font.pixelSize: 15
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
-                    }
-
-                    Rectangle {
-                        width: 140
-                        height: 40
-                        color: "#007ACC"
-                        radius: 20
-                        anchors.horizontalCenter: parent.horizontalCenter
-
-                        Text {
-                            text: qsTr("ОК")
-                            color: "white"
-                            font.pixelSize: 16
-                            font.bold: true
-                            anchors.centerIn: parent
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                botAlertPopup.visible = false;
-                            }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            botAlertPopup.visible = false;
                         }
                     }
                 }
             }
         }
+    }
 }

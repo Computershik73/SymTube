@@ -45,18 +45,36 @@ int VolumeKeysObserver::maxVolume() const
 // Этот метод дергается Symbian OS при нажатии на хард-кнопки телефона
 void VolumeKeysObserver::MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct)
 {
-    // ERemConCoreApiButtonClick - одиночное нажатие.
-    // ERemConCoreApiButtonPress - удержание. Мы будем обрабатывать и то, и то.
     if (aButtonAct == ERemConCoreApiButtonClick || aButtonAct == ERemConCoreApiButtonPress) {
         switch (aOperationId) {
             case ERemConCoreApiVolumeUp:
-                setVolume(m_currentVolume + 10); // Шаг +10%
+                setVolume(m_currentVolume + 10);
                 emit volumeUpPressed();
                 break;
 
             case ERemConCoreApiVolumeDown:
-                setVolume(m_currentVolume - 10); // Шаг -10%
+                setVolume(m_currentVolume - 10);
                 emit volumeDownPressed();
+                break;
+
+            case ERemConCoreApiPlay:
+                emit playPressed();
+                break;
+
+            case ERemConCoreApiPause:
+                emit pausePressed();
+                break;
+
+            case ERemConCoreApiStop:
+                emit stopPressed();
+                break;
+
+            case ERemConCoreApiForward:
+                emit nextPressed();
+                break;
+
+            case ERemConCoreApiBackward:
+                emit previousPressed();
                 break;
 
             default:
