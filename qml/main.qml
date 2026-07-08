@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import QtQuick 1.1
 import QtMultimediaKit 1.1
 import "components"
 
@@ -123,6 +123,7 @@ Rectangle {
 
     Loader {
         id: contentLoader
+
         anchors.top: isFullscreen ? parent.top : navbar.bottom
         anchors.bottom: isFullscreen ? parent.bottom : tabbar.top
         anchors.left: parent.left; anchors.right: parent.right
@@ -161,32 +162,37 @@ Rectangle {
     }
 
     function safeLoadPage(pageSource) {
-        var currentStr = contentLoader.source.toString();
-        if (currentStr.indexOf(pageSource) !== -1) {
-            // Если страница уже открыта - не перезагружаем компонент, а просто обновляем
-            loadingOverlay.visible = false;
-            if (contentLoader.item) {
-                if (pageSource.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
-                    contentLoader.item.loadVideo(root.pendingVideoId);
-                    root.pendingVideoId = "";
-                } else if (pageSource.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
-                    contentLoader.item.loadChannel(root.pendingChannelId);
-                    root.pendingChannelId = "";
-                } else if (pageSource.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
-                    contentLoader.item.performSearch(root.pendingQuery);
-                    root.pendingQuery = "";
-                } else if (pageSource.indexOf("ShortsPage.qml") !== -1) {
-                    if (typeof contentLoader.item.startPlaying !== "undefined") contentLoader.item.startPlaying();
-                } else if (typeof contentLoader.item.onNavigatedTo !== "undefined") {
-                    contentLoader.item.onNavigatedTo();
+            var currentStr = contentLoader.source.toString();
+            if (currentStr.indexOf(pageSource) !== -1) {
+                loadingOverlay.visible = false;
+                if (contentLoader.item) {
+                    if (pageSource.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
+                        contentLoader.item.loadVideo(root.pendingVideoId, root.pendingPlaylistId);
+                        root.pendingVideoId = "";
+                        root.pendingPlaylistId = "";
+                    } else if (pageSource.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
+                        contentLoader.item.loadChannel(root.pendingChannelId);
+                        root.pendingChannelId = "";
+                    } else if (pageSource.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
+                        contentLoader.item.performSearch(root.pendingQuery);
+                        root.pendingQuery = "";
+                    } else if (pageSource.indexOf("ShortsPage.qml") !== -1) {
+                        if (typeof contentLoader.item.startPlaying !== "undefined") contentLoader.item.startPlaying();
+                    } else if (typeof contentLoader.item.onNavigatedTo !== "undefined") {
+                        contentLoader.item.onNavigatedTo();
+                    }
                 }
+            } else {
+                // Мгновенная отрисовка скелета
+                loadingOverlay.visible = true;
+                contentLoader.source = "";   // Выгружаем старый тяжелый QML
+                ApiManager.processEvents();  // Принудительно заставляем Qt отрисовать черный экран на телефоне
+
+                pageLoadTimer.nextSource = pageSource;
+                pageLoadTimer.interval = 50; // Даем системному композитору 50мс на переключение буферов
+                pageLoadTimer.start();
             }
-        } else {
-            loadingOverlay.visible = true;
-            pageLoadTimer.nextSource = pageSource;
-            pageLoadTimer.start();
         }
-    }
 
     function switchToTab(tabName) {
         currentTab = tabName;

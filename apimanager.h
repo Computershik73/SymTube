@@ -12,6 +12,7 @@
 #include "qrimageprovider.h"
 
 class Config;
+class ApiManager;
 
 class ApiManager : public QObject
 {
@@ -19,6 +20,11 @@ class ApiManager : public QObject
 public:
     explicit ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent = 0);
     ~ApiManager();
+
+    static ApiManager* instance();
+
+    Q_INVOKABLE QByteArray downloadImageSync(const QString &url);
+
     void setProxyPort(quint16 port);
     void setImageProvider(QrImageProvider *provider);
 
@@ -27,7 +33,7 @@ public:
     Q_INVOKABLE void getHomeCategoryVideos(const QString &category, const QString &pageToken = QString());
     Q_INVOKABLE void searchVideos(const QString &query);
     Q_INVOKABLE void getVideoInfo(const QString &videoId);
-    Q_INVOKABLE void getRelatedVideos(const QString &videoId, int page);
+    Q_INVOKABLE void getRelatedVideos(const QString &videoId, const QString &playlistId = QString());
     Q_INVOKABLE void getChannelVideos(const QString &author);
     Q_INVOKABLE void getShorts(const QString &sequenceToken = QString());
     Q_INVOKABLE void getComments(const QString &videoId, const QString &continuationToken = QString());
@@ -55,6 +61,8 @@ public:
     Q_INVOKABLE void getMyPlaylists();
     Q_INVOKABLE void getPlaylistDetails(const QString &playlistId, const QString &pageToken = QString());
     Q_INVOKABLE void getChannelPlaylists(const QString &channelId);
+
+    Q_INVOKABLE void processEvents();
 
 signals:
     void homeVideosReady(QVariantList videos, QString token);
@@ -109,25 +117,26 @@ private:
     QrImageProvider *m_qrProvider;
 
     QString m_cachedScriptUrl;
-        QString m_cachedScriptContent;
-        QVariantMap m_pendingVideoDetails;
+    QString m_cachedScriptContent;
+    QVariantMap m_pendingVideoDetails;
+    static ApiManager *s_instance;
 
-        // Вспомогательные методы дешифрации n-параметра
-        QString extractNFunctionExpression(const QString &playerScript);
-        QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
-        QString decryptNParameter(const QString &rawUrl);
+    // Вспомогательные методы дешифрации n-параметра
+    QString extractNFunctionExpression(const QString &playerScript);
+    QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
+    QString decryptNParameter(const QString &rawUrl);
 
-        void requestPlayer(const QString &videoId);
-            int extractSignatureTimestamp(const QString &script);
-            int m_signatureTimestamp;
-            QString m_visitorData;
-            QString m_stsRetriedFor; // защита от зацикливания ретрая
-            QString m_lastRequestedVideoId;
+    void requestPlayer(const QString &videoId);
+    int extractSignatureTimestamp(const QString &script);
+    int m_signatureTimestamp;
+    QString m_visitorData;
+    QString m_stsRetriedFor; // защита от зацикливания ретрая
+    QString m_lastRequestedVideoId;
 
-            QString extractFunctionSource(const QString &script, const QString &name);
-                QString extractGlobalDefinition(const QString &script, const QString &name);
-                QString resolveDependency(const QString &script, const QString &name);
-                void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
+    QString extractFunctionSource(const QString &script, const QString &name);
+    QString extractGlobalDefinition(const QString &script, const QString &name);
+    QString resolveDependency(const QString &script, const QString &name);
+    void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
 };
 
 #endif // APIMANAGER_H

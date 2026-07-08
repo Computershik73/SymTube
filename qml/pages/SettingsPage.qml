@@ -86,7 +86,9 @@ Rectangle {
                     font.pixelSize: 16
                 }
 
-                Row {
+                Row
+
+                {
                     spacing: 12
                     width: parent.width
                     height: 40
@@ -123,6 +125,46 @@ Rectangle {
                             anchors.fill: parent
                             onClicked: { Config.enableProxy = !Config.enableProxy; }
                         }
+                    }
+                }
+            }
+
+            Row {
+                spacing: 12
+                width: parent.width
+                height: 40
+
+                Rectangle {
+                    width: 24; height: 24; radius: 4
+                    color: "#1F1F1F"
+                    border.color: "#333333"
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        text: "✓"
+                        color: "#007ACC"
+                        font.pixelSize: 18
+                        font.bold: true
+                        anchors.centerIn: parent
+                        visible: Config.usePiped
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { Config.usePiped = !Config.usePiped; }
+                    }
+                }
+
+                Text {
+                    text: qsTr("Использовать Piped вместо InnerTube")
+                    color: "white"
+                    font.pixelSize: 16
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { Config.usePiped = !Config.usePiped; }
                     }
                 }
             }

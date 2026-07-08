@@ -14,6 +14,8 @@ class Config : public QObject
     Q_PROPERTY(qreal persistentVolume READ persistentVolume WRITE setPersistentVolume NOTIFY persistentVolumeChanged)
     Q_PROPERTY(QString videoQuality READ videoQuality WRITE setVideoQuality NOTIFY videoQualityChanged)
     Q_PROPERTY(bool enableProxy READ enableProxy WRITE setEnableProxy NOTIFY enableProxyChanged)
+    Q_PROPERTY(bool usePiped READ usePiped WRITE setUsePiped NOTIFY usePipedChanged)
+
 public:
     explicit Config(QObject *parent = 0);
     ~Config();
@@ -36,6 +38,9 @@ public:
     bool enableProxy() const;
     void setEnableProxy(bool enable);
 
+    bool usePiped() const;
+    void setUsePiped(bool enable);
+
 signals:
     void apiKeyChanged();
     void userTokenChanged();
@@ -43,6 +48,8 @@ signals:
     void persistentVolumeChanged();
     void videoQualityChanged();
     void enableProxyChanged();
+
+    void usePipedChanged();
 
 private:
     QSettings *m_settings;
@@ -55,6 +62,8 @@ private:
     QString getDefaultQualityByOs() const;
 
     bool m_enableProxy;
+
+    bool m_usePiped;
 };
 
 #endif // CONFIG_H

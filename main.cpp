@@ -84,9 +84,9 @@ int main(int argc, char *argv[])
     view.setStyleSheet("background: black;");
 
     view.setAttribute(Qt::WA_OpaquePaintEvent);
-    view.setAttribute(Qt::WA_NoSystemBackground);
+    //view.setAttribute(Qt::WA_NoSystemBackground);
     view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
     QDeclarativeContext *context = view.rootContext();
     context->setContextProperty("CompositorFix", nudger);

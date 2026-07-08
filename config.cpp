@@ -26,6 +26,22 @@ Config::Config(QObject *parent) : QObject(parent)
     } else {
         QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
     }
+
+    m_usePiped = m_settings->value("UsePiped", false).toBool();
+
+
+
+
+}
+
+bool Config::usePiped() const { return m_usePiped; }
+
+void Config::setUsePiped(bool enable) {
+    if (m_usePiped != enable) {
+        m_usePiped = enable;
+        m_settings->setValue("UsePiped", m_usePiped);
+        emit usePipedChanged();
+    }
 }
 
 bool Config::enableProxy() const { return m_enableProxy; }

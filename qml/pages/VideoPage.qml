@@ -29,6 +29,8 @@ Rectangle {
     property real sliderDragRatio: 0.0
     property int recoveryAttempts: 0
     property bool isVideoEnded: false
+    property bool hasAttemptedPipedFallback: false
+    property string lastPlaySourceType: "youtube"
 
     property int uiPosition: 0
 
@@ -97,6 +99,31 @@ Rectangle {
     }
 
     Timer {
+        id: pipedFallbackTimer
+        interval: 4000 // 4 секунды на загрузку Piped, далее автоматический откат на YouTube
+        repeat: false
+        onTriggered: {
+            console.log("[Piped] Превышено время ожидания. Автоматический откат на YouTube...");
+            playInnerTubeStreamDirectly();
+        }
+    }
+
+    function playInnerTubeStreamDirectly() {
+        if (!videoDetails) return;
+
+        if (Config.enableProxy) {
+            var base64Url = Qt.btoa(videoDetails.video_url);
+            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        } else {
+            videoPage.currentVideoUrl = videoDetails.video_url;
+        }
+
+        videoPage.recoveryAttempts = 0;
+        videoLoader.sourceComponent = undefined;
+        recreateTimer.start();
+    }
+
+    Timer {
         id: uiTimer
         interval: 500
         repeat: true
@@ -151,10 +178,18 @@ Rectangle {
 
     Connections {
         target: ApiManager
+        onRequestFailed: {
+            if (endpoint === "VideoInfo") {
+                console.log("[Player] C++ сообщил об ошибке доступа (403/бот-блок). Срочный запуск Piped...");
+                handlePlaybackFailure();
+            }
+        }
         onVideoInfoReady: {
-            var temp = {}
+            var temp = {};
             if (videoDetails) {
-                for (var k in videoDetails) temp[k] = videoDetails[k];
+                for (var k in videoDetails) {
+                    temp[k] = videoDetails[k];
+                }
             }
             for (var key in videoDetailsMap) {
                 temp[key] = videoDetailsMap[key];
@@ -176,31 +211,63 @@ Rectangle {
                                         "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
         });
 
-            if (Config.enableProxy) {
-                var base64Url = Qt.btoa(videoDetails.video_url);
-                videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
-            } else {
-                videoPage.currentVideoUrl = videoDetails.video_url;
+            // ИСПРАВЛЕНИЕ: Запускаем фоновые запросы качеств и комментариев только ОДИН раз
+            // (при первом получении данных от YouTube). Если метаданные пришли от Piped,
+            // этот шаг пропускается во избежание вечного зацикливания сети.
+            if (videoDetailsMap.is_piped_meta === undefined) {
+                ApiManager.fetchAlternativeQualities(videoDetails.video_id);
+                ApiManager.getComments(videoDetails.video_id, "");
             }
 
-            ApiManager.fetchAlternativeQualities(videoDetails.video_id);
-            ApiManager.getComments(videoDetails.video_id, "");
-
-            videoPage.recoveryAttempts = 0;
-            videoLoader.sourceComponent = undefined;
-            recreateTimer.start();
+            // Запускаем проигрывание
+            if (lastPlaySourceType === "piped") {
+                console.log("[Player] Ожидание потоков Piped...");
+                pipedFallbackTimer.start();
+            } else {
+                console.log("[Player] Запуск прямого воспроизведения YouTube...");
+                playInnerTubeStreamDirectly();
+            }
         }
 
         onAlternativeQualitiesReady: {
             if (videoDetails && videoId === videoDetails.video_id) {
                 var temp = {};
-                for (var k in videoDetails) temp[k] = videoDetails[k];
+                for (var k in videoDetails) {
+                    temp[k] = videoDetails[k];
+                }
                 var q = temp["qualities"] || [];
                 for (var i = 0; i < qualities.length; i++) {
                     q.push(qualities[i]);
                 }
                 temp["qualities"] = q;
                 videoDetails = temp;
+
+                // Если активен Piped по умолчанию и плеер ждет ответа от него
+                if (lastPlaySourceType === "piped") {
+                    if (pipedFallbackTimer.running) {
+                        pipedFallbackTimer.stop(); // Потоки получены, отменяем откат на YouTube
+                    }
+
+                    // Ищем первый доступный аудио-видео поток Piped со звуком
+                    var pipedStreamUrl = "";
+                    for (var j = 0; j < q.length; j++) {
+                        if (q[j].label.indexOf("Piped") !== -1 && q[j].hasAudio) {
+                            pipedStreamUrl = q[j].url;
+                            break;
+                        }
+                    }
+
+                    if (pipedStreamUrl !== "") {
+                        console.log("[Player] Piped-поток успешно найден. Запуск...");
+                        videoPage.currentVideoUrl = pipedStreamUrl;
+                        videoPage.recoveryAttempts = 0;
+                        videoLoader.sourceComponent = undefined;
+                        recreateTimer.start();
+                    } else {
+                        console.log("[Player] Piped не вернул рабочих потоков. Запуск отката...");
+                        handlePlaybackFailure();
+                    }
+                }
             }
         }
 
@@ -285,69 +352,130 @@ Rectangle {
         recreateTimer.start();
     }
 
-
-    function loadVideo(videoId, playlistId) {
-        currentVideoId = videoId || "";
-        currentPlaylistId = playlistId || "";
-
-        relatedVideos = [];
-        commentsModel = [];
-        firstComment = null;
-        videoPage.currentVideoUrl = "";
-        videoLoader.sourceComponent = undefined;
-        isPlaying = false;
-        isSeeking = false;
-
-        videoPage.forceActiveFocus(); // Забираем фокус клавиатуры на себя
-
-        if (currentPlaylistId !== "") {
-            ApiManager.getPlaylistDetails(currentPlaylistId);
-            // Если видео уже указано, параллельно запускаем его парсинг
-            if (currentVideoId !== "") {
-                ApiManager.getVideoInfo(currentVideoId);
-                ApiManager.getRelatedVideos(currentVideoId, 0);
+    function handlePlaybackFailure() {
+            if (hasAttemptedPipedFallback) {
+                console.log("[Fallback] Обе попытки (YouTube и Piped) провалились. Остановка.");
+                return;
             }
-        } else {
-            playlistVideos = [];
-            currentPlaylistIndex = -1;
-            playlistTitle = "";
-            ApiManager.getVideoInfo(currentVideoId);
-            ApiManager.getRelatedVideos(currentVideoId, 0);
+
+            hasAttemptedPipedFallback = true;
+
+            if (lastPlaySourceType === "youtube") {
+                lastPlaySourceType = "piped";
+                console.log("[Fallback] YouTube заблокирован. Срочный запуск Piped для: " + currentVideoId);
+
+                var pipedStreamUrl = "";
+                if (videoDetails && videoDetails["qualities"]) {
+                    var q = videoDetails["qualities"];
+                    for (var i = 0; i < q.length; i++) {
+                        if (q[i].label.indexOf("Piped") !== -1 && q[i].hasAudio) {
+                            pipedStreamUrl = q[i].url;
+                            break;
+                        }
+                    }
+                }
+
+                if (pipedStreamUrl !== "") {
+                    videoPage.currentVideoUrl = pipedStreamUrl;
+                    videoPage.recoveryAttempts = 0;
+                    videoLoader.sourceComponent = undefined;
+                    recreateTimer.start();
+                } else {
+                    // ИСПРАВЛЕНИЕ: Принудительно пинаем C++ сделать запрос к Piped,
+                    // так как YouTube упал раньше, чем QML успел отправить этот запрос!
+                    ApiManager.fetchAlternativeQualities(currentVideoId);
+                    pipedFallbackTimer.start();
+                }
+            }
+            else if (lastPlaySourceType === "piped") {
+                lastPlaySourceType = "youtube";
+                console.log("[Fallback] Ошибка Piped. Возврат на YouTube...");
+                playInnerTubeStreamDirectly();
+            }
         }
-    }
+
+    // ==========================================
+        // УНИФИЦИРОВАННЫЙ СБРОС СОСТОЯНИЯ ТРЕКА
+        // ==========================================
+        function resetTrackState() {
+            hasAttemptedPipedFallback = false;
+            lastPlaySourceType = Config.usePiped ? "piped" : "youtube";
+
+            videoDetails = null;
+            relatedVideos = [];
+            commentsModel = [];
+            firstComment = null;
+            videoPage.currentVideoUrl = "";
+            videoLoader.sourceComponent = undefined;
+            isPlaying = false;
+            isSeeking = false;
+
+            pipedFallbackTimer.stop(); // Останавливаем любые запущенные таймеры ожидания
+            videoPage.forceActiveFocus(); // Возвращаем фокус ввода клавиатуры
+        }
+
+        // ==========================================
+        // МЕТОДЫ ЗАГРУЗКИ И ПЕРЕКЛЮЧЕНИЯ ПОТОКОВ
+        // ==========================================
+        function loadVideo(videoId, playlistId) {
+            currentVideoId = videoId || "";
+            currentPlaylistId = playlistId || "";
+
+            // Сбрасываем флаги контроля зацикливания перед каждым новым видео!
+            resetTrackState();
+
+            if (currentPlaylistId !== "") {
+                // Если это автогенерируемый джем (RD...) — запрашиваем его через getRelatedVideos (next)
+                if (currentPlaylistId.indexOf("RD") === 0) {
+                    playlistVideos = [];
+                    currentPlaylistIndex = -1;
+
+                    if (currentVideoId !== "") {
+                        ApiManager.getVideoInfo(currentVideoId);
+                    }
+                    ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+                } else {
+                    // Для обычных плейлистов (PL...) используем стандартный browse
+                    ApiManager.getPlaylistDetails(currentPlaylistId);
+                    if (currentVideoId !== "") {
+                        ApiManager.getVideoInfo(currentVideoId);
+                        ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+                    }
+                }
+            } else {
+                playlistVideos = [];
+                currentPlaylistIndex = -1;
+                playlistTitle = "";
+                ApiManager.getVideoInfo(currentVideoId);
+                ApiManager.getRelatedVideos(currentVideoId, "");
+            }
+        }
 
     function playPlaylistItem(index) {
-        if (index < 0 || index >= playlistVideos.length) return;
+            if (index < 0 || index >= playlistVideos.length) return;
 
-        currentPlaylistIndex = index;
-        var targetVideo = playlistVideos[index];
+            currentPlaylistIndex = index;
+            var targetVideo = playlistVideos[index];
 
-        currentVideoId = targetVideo.video_id;
-        videoDetails = null;
-        relatedVideos = [];
-        commentsModel = [];
-        firstComment = null;
-        videoPage.currentVideoUrl = "";
-        videoLoader.sourceComponent = undefined;
-        isPlaying = false;
-        isSeeking = false;
+            // Сбрасываем флаги контроля зацикливания перед переключением трека внутри плейлиста!
+            resetTrackState();
+            currentVideoId = targetVideo.video_id;
 
-        ApiManager.getVideoInfo(targetVideo.video_id);
-        ApiManager.getRelatedVideos(targetVideo.video_id, 0);
-        videoPage.forceActiveFocus();
-    }
+            ApiManager.getVideoInfo(targetVideo.video_id);
+            ApiManager.getRelatedVideos(targetVideo.video_id, currentPlaylistId);
+        }
 
     function playNextVideo() {
-        if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
-            playPlaylistItem(currentPlaylistIndex + 1);
+            if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+                playPlaylistItem(currentPlaylistIndex + 1);
+            }
         }
-    }
 
-    function playPreviousVideo() {
-        if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
-            playPlaylistItem(currentPlaylistIndex - 1);
+        function playPreviousVideo() {
+            if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
+                playPlaylistItem(currentPlaylistIndex - 1);
+            }
         }
-    }
 
     Component {
         id: videoComponent
@@ -387,10 +515,8 @@ Rectangle {
                 // ОБНОВЛЕННЫЙ БЛОК:
                 if (status === Video.EndOfMedia) {
                     if (currentPlaylistId !== "" && playlistVideos.length > 0) {
-                        // Если активен плейлист — переключаем на следующий трек
                         playNextVideo();
                     } else {
-                        // Если это одиночное видео — просто останавливаемся и возвращаем интерфейс в паузу
                         videoPage.isSeeking = false;
                         videoPage.isPlaying = false;
                     }
@@ -399,20 +525,30 @@ Rectangle {
                     if (videoPage.recoveryPosition === -1) {
                         videoPage.isSeeking = false;
                         videoPage.isPlaying = false;
+                        handlePlaybackFailure(); // При сбое формата сразу пробуем откат
                     }
                 }
             }
 
             onError: {
+                console.log("[Video] Ошибка воспроизведения: " + errorString);
+
+                // 1. СОХРАНЯЕМ СИСТЕМНОЕ ВОССТАНОВЛЕНИЕ ИЗ ФОНА SYMBIAN:
+                // Если это ошибка -36 (потеря контекста экрана/памяти при сворачивании),
+                // то восстанавливаем плеер на той же секунде (до 3 попыток).
                 if (errorString.indexOf("-36") !== -1 && videoPage.recoveryAttempts < 3) {
+                    console.log("[Video] Обнаружен уход в фон (-36). Перезапуск сессии...");
                     videoPage.recoveryAttempts++;
                     videoPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
                     videoLoader.sourceComponent = undefined;
                     recreateTimer.start();
-                } else {
-                    videoPage.isSeeking = false;
-                    videoPage.isPlaying = false;
-                    videoPage.recoveryPosition = -1;
+                }
+                // 2. УМНЫЙ ОТКАТ ДЛЯ ВСЕХ ОСТАЛЬНЫХ ОШИБОК:
+                // Если это сетевая ошибка, битый URL или блокировка со стороны YouTube,
+                // переключаемся на альтернативный источник (Piped или обратно на YouTube).
+                else {
+                    console.log("[Video] Критическая ошибка потока. Запуск переключения источника...");
+                    handlePlaybackFailure();
                 }
             }
 
@@ -844,86 +980,7 @@ Rectangle {
                 }
             }
 
-            // ГОРИЗОНТАЛЬНЫЙ СПИСОК ПЛЕЙЛИСТА
-                        Rectangle {
-                            width: parent.width
-                            height: 125
-                            color: "#161616"
-                            visible: currentPlaylistId !== "" && playlistVideos.length > 0
 
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 10
-                                spacing: 8
-
-                                Row {
-                                    width: parent.width - 20
-                                    Text {
-                                        text: playlistTitle + " (" + (currentPlaylistIndex + 1) + " / " + playlistVideos.length + ")"
-                                        color: "white"
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                    }
-                                }
-
-                                ListView {
-                                    id: plHorList
-                                    width: parent.width
-                                    height: 75
-                                    orientation: ListView.Horizontal
-                                    model: playlistVideos
-                                    spacing: 10
-                                    clip: true
-                                    boundsBehavior: Flickable.StopAtBounds
-
-                                    delegate: Rectangle {
-                                        width: 145
-                                        height: 64
-                                        color: currentPlaylistIndex === index ? "#262626" : "#111111"
-                                        border.color: currentPlaylistIndex === index ? "#007ACC" : "#222222"
-                                        border.width: 1
-                                        radius: 6
-
-                                        Row {
-                                            anchors.fill: parent
-                                            anchors.margins: 4
-                                            spacing: 8
-
-                                            Rectangle {
-                                                width: 56
-                                                height: 56
-                                                color: "black"
-                                                radius: 4
-                                                clip: true
-                                                Image {
-                                                    anchors.fill: parent
-                                                    source: modelData.thumbnail || ""
-                                                    fillMode: Image.PreserveAspectCrop
-                                                }
-                                            }
-
-                                            Text {
-                                                width: parent.width - 68
-                                                text: modelData.title || ""
-                                                color: currentPlaylistIndex === index ? "#007ACC" : "white"
-                                                font.pixelSize: 11
-                                                maximumLineCount: 3
-                                                elide: Text.ElideRight
-                                                wrapMode: Text.WordWrap
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: {
-                                                playPlaylistItem(index);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
 
             // Comments preview
             Item {
@@ -978,11 +1035,11 @@ Rectangle {
 
         model: relatedVideos
         delegate: VideoCard {
-                    modelData: model.modelData
-                    onClicked: {
-                        root.navigateToVideo(videoId, playlistId)
-                    }
-                }
+            modelData: model.modelData
+            onClicked: {
+                root.navigateToVideo(videoId, playlistId)
+            }
+        }
     }
 
     Rectangle {
@@ -1197,6 +1254,287 @@ Rectangle {
         onPreviousPressed: {
             if (currentPlaylistId !== "" && playlistVideos.length > 0) {
                 playPreviousVideo();
+            }
+        }
+    }
+
+
+    // ==========================================
+    // ПАРЯЩИЙ "ОСТРОВОК" ПЛЕЙЛИСТА (СВЕРНУТЫЙ ВИД)
+    // ==========================================
+    Rectangle {
+        id: playlistFloatingIsland
+        height: 62
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 12
+        radius: 14
+        color: "#F2161616" // Слегка прозрачный темно-серый фон
+        border.color: "#2C2C2C"
+        border.width: 1
+        z: 45 // Поверх основного контента страницы
+
+        // Видим только если запущен плейлист И свернуты панели джема/комментариев
+        visible: currentPlaylistId !== "" && playlistVideos.length > 0 && playlistSheet.state !== "visible" && commentsSheet.state !== "visible" && !root.isFullscreen
+
+        Row {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 14
+
+            // Иконка беспроводного вещания / джема
+            Text {
+                text: "((•))"
+                color: "#3EA6FF"
+                font.pixelSize: 18
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            // Текстовая информация (Что играет дальше)
+            Column {
+                width: parent.width - 86
+                spacing: 2
+                anchors.verticalCenter: parent.verticalCenter
+
+                Text {
+                    text: {
+                        if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+                            return qsTr("Далее: ") + playlistVideos[currentPlaylistIndex + 1].title;
+                        }
+                        return qsTr("Конец плейлиста");
+                    }
+                    color: "white"
+                    font.pixelSize: 13
+                    font.bold: true
+                    elide: Text.ElideRight
+                    width: parent.width
+                }
+
+                Text {
+                    text: "Джем • " + playlistTitle
+                    color: "#AAAAAA"
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                    width: parent.width
+                }
+            }
+
+            // Кнопка развертывания
+            Text {
+                text: "▲"
+                color: "white"
+                font.pixelSize: 13
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                playlistSheet.state = "visible";
+            }
+        }
+    }
+
+    // ==========================================
+    // ВЫДВИЖНАЯ ПАНЕЛЬ ПЛЕЙЛИСТА (РАЗВЕРНУТЫЙ ВИД)
+    // ==========================================
+    Rectangle {
+        id: playlistSheet
+        anchors.fill: parent
+        color: "#B3000000" // Затемнение фона
+        visible: state === "visible"
+        state: "hidden"
+        z: 60 // Выше парящего островка
+
+        states: [
+            State {
+                name: "visible"
+                PropertyChanges { target: playlistPanel; y: root.height - playlistPanel.height }
+            },
+            State {
+                name: "hidden"
+                PropertyChanges { target: playlistPanel; y: root.height }
+            }
+        ]
+        transitions: Transition {
+            NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: playlistSheet.state = "hidden"
+        }
+
+        Rectangle {
+            id: playlistPanel
+            width: parent.width
+            height: root.isFullscreen ? parent.height : (parent.height - (root.isLandscape ? parent.height * 0.6 : parent.width * 0.5625))
+            anchors.bottom: parent.bottom
+            color: "#161616"
+            radius: 16
+
+            MouseArea { anchors.fill: parent } // Блокировка кликов сквозь панель
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                // Шапка панели
+                Row {
+                    width: parent.width
+                    spacing: 12
+
+                    Text {
+                        text: "((•))"
+                        color: "#3EA6FF"
+                        font.pixelSize: 20
+                        font.bold: true
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Column {
+                        width: parent.width - 64
+                        spacing: 2
+                        Text {
+                            text: playlistTitle
+                            color: "white"
+                            font.pixelSize: 16
+                            font.bold: true
+                            elide: Text.ElideRight
+                            width: parent.width
+                        }
+                        Text {
+                            text: qsTr("Плейлист • Создан специально для вас")
+                            color: "gray"
+                            font.pixelSize: 12
+                        }
+                    }
+
+                    // Кнопка закрытия панели
+                    Text {
+                        text: "✕"
+                        color: "white"
+                        font.pixelSize: 20
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: playlistSheet.state = "hidden"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#2C2C2C"
+                }
+
+                // Вертикальный список воспроизведения
+                ListView {
+                    id: playlistVerticalList
+                    width: parent.width
+                    height: parent.height - 70
+                    model: playlistVideos
+                    clip: true
+                    spacing: 10
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Rectangle {
+                        width: playlistVerticalList.width
+                        height: 76
+                        color: currentPlaylistIndex === index ? "#262626" : "transparent"
+                        radius: 8
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 12
+
+                            // Драг-хэндл маркер
+                            Text {
+                                text: "＝"
+                                color: "#444444"
+                                font.pixelSize: 15
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            // Превью трека
+                            Rectangle {
+                                width: 110
+                                height: 62
+                                color: "black"
+                                radius: 6
+                                clip: true
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Image {
+                                    anchors.fill: parent
+                                    source: modelData.thumbnail || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                }
+
+                                Rectangle {
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 4
+                                    color: "#CC000000"
+                                    radius: 3
+                                    width: tText.width + 8
+                                    height: tText.height + 4
+                                    visible: modelData.duration !== ""
+
+                                    Text {
+                                        id: tText
+                                        anchors.centerIn: parent
+                                        text: modelData.duration || ""
+                                        color: "white"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            // Метаданные трека
+                            Column {
+                                width: parent.width - 164
+                                spacing: 4
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    text: modelData.title || ""
+                                    color: currentPlaylistIndex === index ? "#3EA6FF" : "white"
+                                    font.pixelSize: 13
+                                    font.bold: currentPlaylistIndex === index
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.WordWrap
+                                    width: parent.width
+                                }
+
+                                Text {
+                                    text: modelData.author || ""
+                                    color: "gray"
+                                    font.pixelSize: 11
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                playPlaylistItem(index);
+                                playlistSheet.state = "hidden";
+                            }
+                        }
+                    }
+                }
             }
         }
     }

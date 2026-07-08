@@ -32,7 +32,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: **/bld.inf/**, **/LICENSE/**
+- Files matching these patterns are excluded: **/rcc/**, **/obj/**, **/bld.inf/**, **/LICENSE/**, **/Makefile/**
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -65,7 +65,6 @@ lang/SymTube_tr_TR.ts
 localhttpproxy.cpp
 localhttpproxy.h
 main.cpp
-Makefile
 Makefile_SymTube_exe.mk
 qml/Assets/failed_loading.png
 qml/Assets/LockScreenLogo.scale-200.png
@@ -1311,250 +1310,6 @@ namespace QtJson {
 #endif //JSON_H
 </file>
 
-<file path="lang/SymTube_tr_TR.ts">
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="tr_TR">
-<defaultcodec>UTF-8</defaultcodec>
-<context>
-    <name>AccountPage</name>
-    <message>
-        <source>Для входа отсканируйте QR-код</source>
-        <translation>Giriş yapmak için QR'ı okutunuz</translation>
-    </message>
-    <message>
-        <source>Загрузка...</source>
-        <translation>Yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Настройки</source>
-        <translation>Ayarlar</translation>
-    </message>
-    <message>
-        <source>Пользователь</source>
-        <translation>Kullanıcı</translation>
-    </message>
-    <message>
-        <source>Выйти</source>
-        <translation>Çıkış</translation>
-    </message>
-    <message>
-        <source>История просмотров</source>
-        <translation>İzleme Geçmişi</translation>
-    </message>
-</context>
-<context>
-    <name>ChannelPage</name>
-    <message>
-        <source>Загрузка канала...</source>
-        <translation>Kanal yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Не удалось загрузить канал</source>
-        <translation>Kanal yüklenemedi</translation>
-    </message>
-    <message>
-        <source> подписчиков</source>
-        <translation> abonelikler</translation>
-    </message>
-</context>
-<context>
-    <name>HistoryPage</name>
-    <message>
-        <source>История просмотров</source>
-        <translation>İzleme geçmişi</translation>
-    </message>
-    <message>
-        <source>История пуста</source>
-        <translation>Geçmiş boş</translation>
-    </message>
-</context>
-<context>
-    <name>HomePage</name>
-    <message>
-        <source>Загрузка...</source>
-        <translation>Yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Не удалось получить данные</source>
-        <translation>Veri alınamadı</translation>
-    </message>
-    <message>
-        <source>ПОВТОРИТЬ</source>
-        <translation>YENİDEN DENE</translation>
-    </message>
-</context>
-<context>
-    <name>Navbar</name>
-    <message>
-        <source>Поиск</source>
-        <translation>Ara</translation>
-    </message>
-</context>
-<context>
-    <name>SearchPage</name>
-    <message>
-        <source>Поиск...</source>
-        <translation>Ara...</translation>
-    </message>
-    <message>
-        <source>Ничего не найдено. Нажмите для повтора.</source>
-        <translation>Hiçbir şey bulunamadı. Yeniden denemek için tıklayınız.</translation>
-    </message>
-</context>
-<context>
-    <name>SettingsPage</name>
-	<message>
-        <source>Сеть / Прокси</source>
-        <translation>Ağ / Proxy</translation>
-    </message>
-    <message>
-        <source>Использовать локальный прокси (VPN)</source>
-        <translation>Yerel proxy kullan (VPN)</translation>
-    </message>
-    <message>
-        <source>Настройки</source>
-        <translation>Ayarlar</translation>
-    </message>
-    <message>
-        <source>Основной адрес API</source>
-        <translation>Ana API Uç noktası</translation>
-    </message>
-    <message>
-        <source>Язык / Language</source>
-        <translation>Язык / Language / Dil</translation>
-    </message>
-    <message>
-        <source>* Изменения вступят в силу после перезапуска</source>
-        <translation>* Değişiklikler yeniden başlatıldıktan sonra etkili olacaktır</translation>
-    </message>
-    <message>
-        <source>Сохранить</source>
-        <translation>Kaydet</translation>
-    </message>
-    <message>
-        <source>Настройки сохранены!</source>
-        <translation>Ayarlar kaydedildi!</translation>
-    </message>
-    <message>
-        <source>О приложении</source>
-        <translation>Uygulama hakkında</translation>
-    </message>
-    <message>
-        <source>SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.</source>
-        <translation>Symtube özellikle Symbian için tasarlanmış bir YouTube istemcisidir. Hedefimiz modern içeriğe erişim sağlayarak eski cihazlara yeni bir soluk getirmektir.</translation>
-    </message>  
-</context>
-<context>
-    <name>ShortsPage</name>
-    <message>
-        <source>Ошибка воспроизведения</source>
-        <translation>Oynatma hatası</translation>
-    </message>
-    <message>
-        <source>Лайк</source>
-        <translation>Beğen</translation>
-    </message>
-    <message>
-        <source>Комментарии</source>
-        <translation>Yorumlar</translation>
-    </message>
-    <message>
-        <source>Функция комментариев в разработке...</source>
-        <translation>Yorumlar özelliği yapım aşamasındadır...</translation>
-    </message>
-</context>
-<context>
-    <name>SubscriptionsPage</name>
-    <message>
-        <source>Загрузка...</source>
-        <translation>Yükleniyor...</translation>
-    </message>
-</context>
-<context>
-    <name>Tabbar</name>
-    <message>
-        <source>Shorts</source>
-        <translation>Shorts</translation>
-    </message>
-    <message>
-        <source>Главная</source>
-        <translation>Ev</translation>
-    </message>
-    <message>
-        <source>Подписки</source>
-        <translation>Abonelikler</translation>
-    </message>
-    <message>
-        <source>Вы</source>
-        <translation>Sen</translation>
-    </message>
-</context>
-<context>
-    <name>VideoCard</name>
-    <message>
-        <source> просмотров</source>
-        <translation> izlenmeler</translation>
-    </message>
-</context>
-<context>
-    <name>VideoPage</name>
-    <message>
-        <source>Ошибка воспроизведения</source>
-        <translation>Oynatma hatası</translation>
-    </message>
-    <message>
-        <source>Загрузка...</source>
-        <translation>Yükleniyor...</translation>
-    </message>
-    <message>
-        <source> просмотров</source>
-        <translation> izlenmeler</translation>
-    </message>
-    <message>
-        <source>Неизвестно</source>
-        <translation>Bilinmeyen</translation>
-    </message>
-    <message>
-        <source> подписчиков</source>
-        <translation> abonelikler</translation>
-    </message>
-    <message>
-        <source>Нет описания</source>
-        <translation>Açıklama yok</translation>
-    </message>
-    <message>
-        <source>Похожие видео</source>
-        <translation>İlgili videolar</translation>
-    </message>
-    <message>
-        <source>Описание</source>
-        <translation>Açıklama</translation>
-    </message>
-</context>
-<context>
-    <name>main</name>
-    <message>
-        <source>Внимание</source>
-        <translation>Dikkat</translation>
-    </message>
-    <message>
-        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
-
-Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
-        <translation>YouTube, cihazınızı bot olarak algıladığı için erişimi geçici olarak engelledi.
-
-Lütfen IP adresinizi değiştirin (başka bir VPN sunucusuna bağlanın) ve tekrar deneyin.</translation>
-    </message>
-    <message>
-        <source>ОК</source>
-        <translation>Tamam</translation>
-    </message>
-</context>
-</TS>
-</TS>
-</file>
-
 <file path="localhttpproxy.h">
 #ifndef LOCALHTTPPROXY_H
 #define LOCALHTTPPROXY_H
@@ -2298,120 +2053,6 @@ X-HildonDesk-ShowInToolbar=true
 X-Osso-Type=application/x-executable
 </file>
 
-<file path="volumekeysobserver.cpp">
-#include "volumekeysobserver.h"
-#include <QDebug>
-#include <remconcoreapitarget.h>       // Полное определение класса
-#include <remconinterfaceselector.h>   // Полное определение класса
-
-VolumeKeysObserver::VolumeKeysObserver(QObject *parent)
-    : QObject(parent), m_interfaceSelector(0), m_coreTarget(0)
-{
-    m_maxVolume = 100;
-    m_currentVolume = 50;
-
-    QT_TRAP_THROWING(
-        m_interfaceSelector = CRemConInterfaceSelector::NewL();
-        m_coreTarget = CRemConCoreApiTarget::NewL(*m_interfaceSelector, *this);
-        m_interfaceSelector->OpenTargetL();
-    );
-}
-
-VolumeKeysObserver::~VolumeKeysObserver()
-{
-    delete m_interfaceSelector; // Это автоматически удалит m_coreTarget
-}
-
-int VolumeKeysObserver::volume() const
-{
-    return m_currentVolume;
-}
-
-void VolumeKeysObserver::setVolume(int vol)
-{
-    if (vol < 0) vol = 0;
-    if (vol > m_maxVolume) vol = m_maxVolume;
-
-    if (m_currentVolume != vol) {
-        m_currentVolume = vol;
-        emit volumeChanged(m_currentVolume);
-    }
-}
-
-int VolumeKeysObserver::maxVolume() const
-{
-    return m_maxVolume;
-}
-
-// Этот метод дергается Symbian OS при нажатии на хард-кнопки телефона
-void VolumeKeysObserver::MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct)
-{
-    // ERemConCoreApiButtonClick - одиночное нажатие.
-    // ERemConCoreApiButtonPress - удержание. Мы будем обрабатывать и то, и то.
-    if (aButtonAct == ERemConCoreApiButtonClick || aButtonAct == ERemConCoreApiButtonPress) {
-        switch (aOperationId) {
-            case ERemConCoreApiVolumeUp:
-                setVolume(m_currentVolume + 10); // Шаг +10%
-                emit volumeUpPressed();
-                break;
-
-            case ERemConCoreApiVolumeDown:
-                setVolume(m_currentVolume - 10); // Шаг -10%
-                emit volumeDownPressed();
-                break;
-
-            default:
-                break;
-        }
-    }
-}
-</file>
-
-<file path="volumekeysobserver.h">
-#ifndef VOLUMEKEYSOBSERVER_H
-#define VOLUMEKEYSOBSERVER_H
-
-#include <QObject>
-
-// Symbian-специфичные классы, которые мы будем использовать только как указатели
-// Мы их пред-объявляем, а инклуды перенесем в .cpp файл
-class CRemConInterfaceSelector;
-class CRemConCoreApiTarget;
-
-#include <remconcoreapitargetobserver.h> // Этот заголовок содержит M-класс (интерфейс), его нужно включить
-
-class VolumeKeysObserver : public QObject, public MRemConCoreApiTargetObserver
-{
-    Q_OBJECT
-    Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
-    Q_PROPERTY(int maxVolume READ maxVolume CONSTANT)
-
-public:
-    explicit VolumeKeysObserver(QObject *parent = 0);
-    ~VolumeKeysObserver();
-
-    int volume() const;
-    void setVolume(int vol);
-    int maxVolume() const;
-
-signals:
-    void volumeChanged(int volume);
-    void volumeUpPressed();
-    void volumeDownPressed();
-
-private: // From MRemConCoreApiTargetObserver
-    void MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct);
-
-private:
-    CRemConInterfaceSelector *m_interfaceSelector;
-    CRemConCoreApiTarget *m_coreTarget;
-    int m_currentVolume;
-    int m_maxVolume;
-};
-
-#endif // VOLUMEKEYSOBSERVER_H
-</file>
-
 <file path=".gitignore">
 # Скомпилированные файлы
 build/
@@ -2516,6 +2157,250 @@ void HistoryManager::clearHistory()
     saveHistory();
     emit historyChanged();
 }
+</file>
+
+<file path="lang/SymTube_tr_TR.ts">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0" language="tr_TR">
+<defaultcodec>UTF-8</defaultcodec>
+<context>
+    <name>AccountPage</name>
+    <message>
+        <source>Для входа отсканируйте QR-код</source>
+        <translation>Giriş yapmak için QR'ı okutunuz</translation>
+    </message>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Настройки</source>
+        <translation>Ayarlar</translation>
+    </message>
+    <message>
+        <source>Пользователь</source>
+        <translation>Kullanıcı</translation>
+    </message>
+    <message>
+        <source>Выйти</source>
+        <translation>Çıkış</translation>
+    </message>
+    <message>
+        <source>История просмотров</source>
+        <translation>İzleme Geçmişi</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelPage</name>
+    <message>
+        <source>Загрузка канала...</source>
+        <translation>Kanal yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Не удалось загрузить канал</source>
+        <translation>Kanal yüklenemedi</translation>
+    </message>
+    <message>
+        <source> подписчиков</source>
+        <translation> abonelikler</translation>
+    </message>
+</context>
+<context>
+    <name>HistoryPage</name>
+    <message>
+        <source>История просмотров</source>
+        <translation>İzleme geçmişi</translation>
+    </message>
+    <message>
+        <source>История пуста</source>
+        <translation>Geçmiş boş</translation>
+    </message>
+</context>
+<context>
+    <name>HomePage</name>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Не удалось получить данные</source>
+        <translation>Veri alınamadı</translation>
+    </message>
+    <message>
+        <source>ПОВТОРИТЬ</source>
+        <translation>YENİDEN DENE</translation>
+    </message>
+</context>
+<context>
+    <name>Navbar</name>
+    <message>
+        <source>Поиск</source>
+        <translation>Ara</translation>
+    </message>
+</context>
+<context>
+    <name>SearchPage</name>
+    <message>
+        <source>Поиск...</source>
+        <translation>Ara...</translation>
+    </message>
+    <message>
+        <source>Ничего не найдено. Нажмите для повтора.</source>
+        <translation>Hiçbir şey bulunamadı. Yeniden denemek için tıklayınız.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+	<message>
+        <source>Сеть / Прокси</source>
+        <translation>Ağ / Proxy</translation>
+    </message>
+    <message>
+        <source>Использовать локальный прокси (VPN)</source>
+        <translation>Yerel proxy kullan (VPN)</translation>
+    </message>
+    <message>
+        <source>Настройки</source>
+        <translation>Ayarlar</translation>
+    </message>
+    <message>
+        <source>Основной адрес API</source>
+        <translation>Ana API Uç noktası</translation>
+    </message>
+    <message>
+        <source>Язык / Language</source>
+        <translation>Язык / Language / Dil</translation>
+    </message>
+    <message>
+        <source>* Изменения вступят в силу после перезапуска</source>
+        <translation>* Değişiklikler yeniden başlatıldıktan sonra etkili olacaktır</translation>
+    </message>
+    <message>
+        <source>Сохранить</source>
+        <translation>Kaydet</translation>
+    </message>
+    <message>
+        <source>Настройки сохранены!</source>
+        <translation>Ayarlar kaydedildi!</translation>
+    </message>
+    <message>
+        <source>О приложении</source>
+        <translation>Uygulama hakkında</translation>
+    </message>
+    <message>
+        <source>SymTube - это клиент для YouTube, созданный специально для Symbian. Мы стремимся вернуть жизнь в старые устройства, предоставляя доступ к современному контенту.</source>
+        <translation>Symtube özellikle Symbian için tasarlanmış bir YouTube istemcisidir. Hedefimiz modern içeriğe erişim sağlayarak eski cihazlara yeni bir soluk getirmektir.</translation>
+    </message>  
+</context>
+<context>
+    <name>ShortsPage</name>
+    <message>
+        <source>Ошибка воспроизведения</source>
+        <translation>Oynatma hatası</translation>
+    </message>
+    <message>
+        <source>Лайк</source>
+        <translation>Beğen</translation>
+    </message>
+    <message>
+        <source>Комментарии</source>
+        <translation>Yorumlar</translation>
+    </message>
+    <message>
+        <source>Функция комментариев в разработке...</source>
+        <translation>Yorumlar özelliği yapım aşamasındadır...</translation>
+    </message>
+</context>
+<context>
+    <name>SubscriptionsPage</name>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Yükleniyor...</translation>
+    </message>
+</context>
+<context>
+    <name>Tabbar</name>
+    <message>
+        <source>Shorts</source>
+        <translation>Shorts</translation>
+    </message>
+    <message>
+        <source>Главная</source>
+        <translation>Ev</translation>
+    </message>
+    <message>
+        <source>Подписки</source>
+        <translation>Abonelikler</translation>
+    </message>
+    <message>
+        <source>Вы</source>
+        <translation>Sen</translation>
+    </message>
+</context>
+<context>
+    <name>VideoCard</name>
+    <message>
+        <source> просмотров</source>
+        <translation> izlenmeler</translation>
+    </message>
+</context>
+<context>
+    <name>VideoPage</name>
+    <message>
+        <source>Ошибка воспроизведения</source>
+        <translation>Oynatma hatası</translation>
+    </message>
+    <message>
+        <source>Загрузка...</source>
+        <translation>Yükleniyor...</translation>
+    </message>
+    <message>
+        <source> просмотров</source>
+        <translation> izlenmeler</translation>
+    </message>
+    <message>
+        <source>Неизвестно</source>
+        <translation>Bilinmeyen</translation>
+    </message>
+    <message>
+        <source> подписчиков</source>
+        <translation> abonelikler</translation>
+    </message>
+    <message>
+        <source>Нет описания</source>
+        <translation>Açıklama yok</translation>
+    </message>
+    <message>
+        <source>Похожие видео</source>
+        <translation>İlgili videolar</translation>
+    </message>
+    <message>
+        <source>Описание</source>
+        <translation>Açıklama</translation>
+    </message>
+</context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Внимание</source>
+        <translation>Dikkat</translation>
+    </message>
+    <message>
+        <source>YouTube временно заблокировал доступ, приняв ваше устройство за бота.
+
+Пожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.</source>
+        <translation>YouTube, cihazınızı bot olarak algıladığı için erişimi geçici olarak engelledi.
+
+Lütfen IP adresinizi değiştirin (başka bir VPN sunucusuna bağlanın) ve tekrar deneyin.</translation>
+    </message>
+    <message>
+        <source>ОК</source>
+        <translation>Tamam</translation>
+    </message>
+</context>
+</TS>
+</TS>
 </file>
 
 <file path="qml/components/CustomComboBox.qml">
@@ -2931,6 +2816,353 @@ private:
 #endif // TRANSLATIONMANAGER_H
 </file>
 
+<file path="volumekeysobserver.cpp">
+#include "volumekeysobserver.h"
+#include <QDebug>
+#include <remconcoreapitarget.h>       // Полное определение класса
+#include <remconinterfaceselector.h>   // Полное определение класса
+
+VolumeKeysObserver::VolumeKeysObserver(QObject *parent)
+    : QObject(parent), m_interfaceSelector(0), m_coreTarget(0)
+{
+    m_maxVolume = 100;
+    m_currentVolume = 50;
+
+    QT_TRAP_THROWING(
+        m_interfaceSelector = CRemConInterfaceSelector::NewL();
+        m_coreTarget = CRemConCoreApiTarget::NewL(*m_interfaceSelector, *this);
+        m_interfaceSelector->OpenTargetL();
+    );
+}
+
+VolumeKeysObserver::~VolumeKeysObserver()
+{
+    delete m_interfaceSelector; // Это автоматически удалит m_coreTarget
+}
+
+int VolumeKeysObserver::volume() const
+{
+    return m_currentVolume;
+}
+
+void VolumeKeysObserver::setVolume(int vol)
+{
+    if (vol < 0) vol = 0;
+    if (vol > m_maxVolume) vol = m_maxVolume;
+
+    if (m_currentVolume != vol) {
+        m_currentVolume = vol;
+        emit volumeChanged(m_currentVolume);
+    }
+}
+
+int VolumeKeysObserver::maxVolume() const
+{
+    return m_maxVolume;
+}
+
+// Этот метод дергается Symbian OS при нажатии на хард-кнопки телефона
+void VolumeKeysObserver::MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct)
+{
+    if (aButtonAct == ERemConCoreApiButtonClick || aButtonAct == ERemConCoreApiButtonPress) {
+        switch (aOperationId) {
+            case ERemConCoreApiVolumeUp:
+                setVolume(m_currentVolume + 10);
+                emit volumeUpPressed();
+                break;
+
+            case ERemConCoreApiVolumeDown:
+                setVolume(m_currentVolume - 10);
+                emit volumeDownPressed();
+                break;
+
+            case ERemConCoreApiPlay:
+                emit playPressed();
+                break;
+
+            case ERemConCoreApiPause:
+                emit pausePressed();
+                break;
+
+            case ERemConCoreApiStop:
+                emit stopPressed();
+                break;
+
+            case ERemConCoreApiForward:
+                emit nextPressed();
+                break;
+
+            case ERemConCoreApiBackward:
+                emit previousPressed();
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+</file>
+
+<file path="volumekeysobserver.h">
+#ifndef VOLUMEKEYSOBSERVER_H
+#define VOLUMEKEYSOBSERVER_H
+
+#include <QObject>
+
+// Symbian-специфичные классы, которые мы будем использовать только как указатели
+// Мы их пред-объявляем, а инклуды перенесем в .cpp файл
+class CRemConInterfaceSelector;
+class CRemConCoreApiTarget;
+
+#include <remconcoreapitargetobserver.h> // Этот заголовок содержит M-класс (интерфейс), его нужно включить
+
+class VolumeKeysObserver : public QObject, public MRemConCoreApiTargetObserver
+{
+    Q_OBJECT
+    Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
+    Q_PROPERTY(int maxVolume READ maxVolume CONSTANT)
+
+public:
+    explicit VolumeKeysObserver(QObject *parent = 0);
+    ~VolumeKeysObserver();
+
+    int volume() const;
+    void setVolume(int vol);
+    int maxVolume() const;
+
+signals:
+    void volumeChanged(int volume);
+    void volumeUpPressed();
+    void volumeDownPressed();
+
+    void playPressed();
+    void pausePressed();
+    void stopPressed();
+    void nextPressed();
+    void previousPressed();
+
+private: // From MRemConCoreApiTargetObserver
+    void MrccatoCommand(TRemConCoreApiOperationId aOperationId, TRemConCoreApiButtonAction aButtonAct);
+
+private:
+    CRemConInterfaceSelector *m_interfaceSelector;
+    CRemConCoreApiTarget *m_coreTarget;
+    int m_currentVolume;
+    int m_maxVolume;
+};
+
+#endif // VOLUMEKEYSOBSERVER_H
+</file>
+
+<file path="localhttpproxy.cpp">
+#include "localhttpproxy.h"
+#include <QNetworkRequest>
+#include <QNetworkProxy>
+#include <QUrl>
+#include <QDebug>
+#include <QStringList>
+
+const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
+"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
+
+
+LocalHttpProxy::~LocalHttpProxy()
+{
+}
+
+LocalHttpProxy::LocalHttpProxy(QObject *parent) : QObject(parent)
+{
+    m_server = new QTcpServer(this);
+    m_networkManager = new QNetworkAccessManager(this);
+
+    // 1. НАСТРАИВАЕМ ВНЕШНИЙ ПРОКСИ (Чтобы прокси на телефоне мог обойти блокировку)
+   /* QNetworkProxy extProxy;
+    extProxy.setType(QNetworkProxy::HttpProxy);
+    extProxy.setHostName("192.168.1.183"); // IP вашего ПК
+    extProxy.setPort(8890);                // Порт вашего прокси*/
+    //m_networkManager->setProxy(extProxy);
+}
+
+bool LocalHttpProxy::start()
+{
+    connect(m_server, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
+
+    // 2. СЛУШАЕМ НА ВСЕХ АДРЕСАХ (Иногда 127.0.0.1 на Symbian глючит)
+    // Попробуем порт 8080 или 0 для автовыбора
+    return m_server->listen(QHostAddress::Any, 8080);
+}
+
+void LocalHttpProxy::onNewConnection()
+{
+    qDebug() << "Proxy: New connection incoming!";
+    QTcpSocket *clientSocket = m_server->nextPendingConnection();
+    if (clientSocket) {
+        connect(clientSocket, SIGNAL(readyRead()), this, SLOT(onClientReadyRead()));
+        connect(clientSocket, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
+    }
+}
+
+void LocalHttpProxy::onClientReadyRead()
+{
+    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
+    if (!clientSocket || m_connections.contains(clientSocket)) return;
+
+    QByteArray requestData = clientSocket->readAll();
+    QString requestString(requestData);
+
+    // Ищем наш параметр b64url
+    int b64Index = requestString.indexOf("b64url=");
+    if (b64Index == -1) return;
+
+    int spaceIndex = requestString.indexOf(" ", b64Index);
+    QByteArray encodedUrl = requestString.mid(b64Index + 7, spaceIndex - (b64Index + 7)).toUtf8();
+
+    // Декодируем обратно в чистую ссылку Google
+    QByteArray rawUrl = QByteArray::fromBase64(encodedUrl);
+    QString realUrl = QString::fromUtf8(rawUrl);
+
+    if (realUrl.isEmpty()) return;
+
+    qDebug() << "Proxy fixing URL and forwarding to Google Video...";
+
+    // Используем fromEncoded, чтобы Qt не пытался "умничать" с процентами
+    QUrl targetUrl = QUrl::fromEncoded(rawUrl);
+    QNetworkRequest proxyRequest(targetUrl);
+
+    // СТРОГОЕ СООТВЕТСТВИЕ ИДЕАЛЬНОМУ КЛИЕНТУ (UWP / NSPlayer)
+    proxyRequest.setRawHeader("Host", targetUrl.host().toUtf8());
+    proxyRequest.setRawHeader("User-Agent", TV_USER_AGENT);
+    proxyRequest.setRawHeader("Accept", "*/*");
+    proxyRequest.setRawHeader("Accept-Language", "ru-RU,en,*");
+    proxyRequest.setRawHeader("Connection", "Keep-Alive");
+
+    // Копируем Range или ставим по умолчанию
+    bool rangeFound = false;
+    QStringList lines = requestString.split("\r\n");
+    foreach (const QString &line, lines) {
+        if (line.startsWith("Range:", Qt::CaseInsensitive)) {
+            proxyRequest.setRawHeader("Range", line.mid(6).trimmed().toUtf8());
+            rangeFound = true;
+            break;
+        }
+    }
+    if (!rangeFound) {
+        proxyRequest.setRawHeader("Range", "bytes=0-");
+    }
+
+    QNetworkReply *proxyReply = m_networkManager->get(proxyRequest);
+    m_connections.insert(clientSocket, proxyReply);
+
+    connect(proxyReply, SIGNAL(finished()), this, SLOT(onProxyReplyFinished()));
+    connect(proxyReply, SIGNAL(readyRead()), this, SLOT(onProxyReadyRead()));
+    connect(proxyReply, SIGNAL(metaDataChanged()), this, SLOT(onProxyHeadersReceived()));
+}
+
+
+
+void LocalHttpProxy::onProxyHeadersReceived()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (!clientSocket) return;
+
+    QByteArray headers;
+    int statusCode = proxyReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    QString reason = proxyReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+
+    headers.append(QString("HTTP/1.1 %1 %2\r\n").arg(statusCode).arg(reason).toUtf8());
+
+    foreach(const QNetworkReply::RawHeaderPair& pair, proxyReply->rawHeaderPairs()) {
+        QString hName = QString(pair.first).toLower();
+        // Пропускаем специфичные заголовки Google, отдаем только нужные для медиа
+        if (hName == "content-type" || hName == "content-length" || hName == "content-range" || hName == "accept-ranges") {
+            headers.append(pair.first + ": " + pair.second + "\r\n");
+        }
+    }
+    headers.append("\r\n");
+    clientSocket->write(headers);
+}
+
+void LocalHttpProxy::onProxyReadyRead()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (clientSocket && clientSocket->isOpen()) {
+        clientSocket->write(proxyReply->readAll());
+    }
+}
+
+void LocalHttpProxy::onProxyReplyFinished()
+{
+    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
+    if (!proxyReply) return;
+
+    QTcpSocket* clientSocket = m_connections.key(proxyReply);
+    if (clientSocket) {
+        clientSocket->disconnectFromHost();
+    }
+    proxyReply->deleteLater();
+}
+
+void LocalHttpProxy::onClientDisconnected()
+{
+    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
+    if (!clientSocket) return;
+
+    QNetworkReply *proxyReply = m_connections.take(clientSocket);
+    if (proxyReply) {
+        proxyReply->abort();
+        proxyReply->deleteLater();
+    }
+    clientSocket->deleteLater();
+}
+</file>
+
+<file path="qml/components/SafeImage.qml">
+import QtQuick 1.0
+
+Image {
+    id: root
+    
+    // Свойство для хранения "реального" URL, который мы хотим загрузить
+    property string targetSource: ""
+    property int retryCount: 0
+    property int maxRetries: 3
+    asynchronous: true
+    source: targetSource
+    
+    // Используем таймер для задержки повторного запроса
+    Timer {
+        id: retryTimer
+        interval: 2000 // 2 секунды перед повтором
+        repeat: false
+        onTriggered: {
+            // "Передергиваем" source, чтобы QML снова полез в сеть
+            root.source = "";
+            root.source = root.targetSource;
+        }
+    }
+    
+    onStatusChanged: {
+        if (status === Image.Error) {
+            if (retryCount < maxRetries) {
+                retryCount++;
+                console.log("[SafeImage] Ошибка загрузки, попытка " + retryCount + "...");
+                retryTimer.start();
+            } else {
+                console.log("[SafeImage] Исчерпаны все попытки загрузки.");
+            }
+        } else if (status === Image.Ready) {
+            retryCount = 0; // Сбрасываем счетчик при успехе
+        }
+    }
+}
+</file>
+
 <file path="lang/SymTube_pl_PL.ts">
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
@@ -3175,215 +3407,6 @@ Zmień adres IP (połącz się z innym serwerem VPN) i spróbuj ponownie.</trans
 </TS>
 </file>
 
-<file path="localhttpproxy.cpp">
-#include "localhttpproxy.h"
-#include <QNetworkRequest>
-#include <QNetworkProxy>
-#include <QUrl>
-#include <QDebug>
-#include <QStringList>
-
-const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
-"(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
-
-
-LocalHttpProxy::~LocalHttpProxy()
-{
-}
-
-LocalHttpProxy::LocalHttpProxy(QObject *parent) : QObject(parent)
-{
-    m_server = new QTcpServer(this);
-    m_networkManager = new QNetworkAccessManager(this);
-
-    // 1. НАСТРАИВАЕМ ВНЕШНИЙ ПРОКСИ (Чтобы прокси на телефоне мог обойти блокировку)
-   /* QNetworkProxy extProxy;
-    extProxy.setType(QNetworkProxy::HttpProxy);
-    extProxy.setHostName("192.168.1.183"); // IP вашего ПК
-    extProxy.setPort(8890);                // Порт вашего прокси*/
-    //m_networkManager->setProxy(extProxy);
-}
-
-bool LocalHttpProxy::start()
-{
-    connect(m_server, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
-
-    // 2. СЛУШАЕМ НА ВСЕХ АДРЕСАХ (Иногда 127.0.0.1 на Symbian глючит)
-    // Попробуем порт 8080 или 0 для автовыбора
-    return m_server->listen(QHostAddress::Any, 8080);
-}
-
-void LocalHttpProxy::onNewConnection()
-{
-    qDebug() << "Proxy: New connection incoming!";
-    QTcpSocket *clientSocket = m_server->nextPendingConnection();
-    if (clientSocket) {
-        connect(clientSocket, SIGNAL(readyRead()), this, SLOT(onClientReadyRead()));
-        connect(clientSocket, SIGNAL(disconnected()), this, SLOT(onClientDisconnected()));
-    }
-}
-
-void LocalHttpProxy::onClientReadyRead()
-{
-    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!clientSocket || m_connections.contains(clientSocket)) return;
-
-    QByteArray requestData = clientSocket->readAll();
-    QString requestString(requestData);
-
-    // Ищем наш параметр b64url
-    int b64Index = requestString.indexOf("b64url=");
-    if (b64Index == -1) return;
-
-    int spaceIndex = requestString.indexOf(" ", b64Index);
-    QByteArray encodedUrl = requestString.mid(b64Index + 7, spaceIndex - (b64Index + 7)).toUtf8();
-
-    // Декодируем обратно в чистую ссылку Google
-    QByteArray rawUrl = QByteArray::fromBase64(encodedUrl);
-    QString realUrl = QString::fromUtf8(rawUrl);
-
-    if (realUrl.isEmpty()) return;
-
-    qDebug() << "Proxy fixing URL and forwarding to Google Video...";
-
-    // Используем fromEncoded, чтобы Qt не пытался "умничать" с процентами
-    QUrl targetUrl = QUrl::fromEncoded(rawUrl);
-    QNetworkRequest proxyRequest(targetUrl);
-
-    // СТРОГОЕ СООТВЕТСТВИЕ ИДЕАЛЬНОМУ КЛИЕНТУ (UWP / NSPlayer)
-    proxyRequest.setRawHeader("Host", targetUrl.host().toUtf8());
-    proxyRequest.setRawHeader("User-Agent", TV_USER_AGENT);
-    proxyRequest.setRawHeader("Accept", "*/*");
-    proxyRequest.setRawHeader("Accept-Language", "ru-RU,en,*");
-    proxyRequest.setRawHeader("Connection", "Keep-Alive");
-
-    // Копируем Range или ставим по умолчанию
-    bool rangeFound = false;
-    QStringList lines = requestString.split("\r\n");
-    foreach (const QString &line, lines) {
-        if (line.startsWith("Range:", Qt::CaseInsensitive)) {
-            proxyRequest.setRawHeader("Range", line.mid(6).trimmed().toUtf8());
-            rangeFound = true;
-            break;
-        }
-    }
-    if (!rangeFound) {
-        proxyRequest.setRawHeader("Range", "bytes=0-");
-    }
-
-    QNetworkReply *proxyReply = m_networkManager->get(proxyRequest);
-    m_connections.insert(clientSocket, proxyReply);
-
-    connect(proxyReply, SIGNAL(finished()), this, SLOT(onProxyReplyFinished()));
-    connect(proxyReply, SIGNAL(readyRead()), this, SLOT(onProxyReadyRead()));
-    connect(proxyReply, SIGNAL(metaDataChanged()), this, SLOT(onProxyHeadersReceived()));
-}
-
-
-
-void LocalHttpProxy::onProxyHeadersReceived()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (!clientSocket) return;
-
-    QByteArray headers;
-    int statusCode = proxyReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    QString reason = proxyReply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-
-    headers.append(QString("HTTP/1.1 %1 %2\r\n").arg(statusCode).arg(reason).toUtf8());
-
-    foreach(const QNetworkReply::RawHeaderPair& pair, proxyReply->rawHeaderPairs()) {
-        QString hName = QString(pair.first).toLower();
-        // Пропускаем специфичные заголовки Google, отдаем только нужные для медиа
-        if (hName == "content-type" || hName == "content-length" || hName == "content-range" || hName == "accept-ranges") {
-            headers.append(pair.first + ": " + pair.second + "\r\n");
-        }
-    }
-    headers.append("\r\n");
-    clientSocket->write(headers);
-}
-
-void LocalHttpProxy::onProxyReadyRead()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (clientSocket && clientSocket->isOpen()) {
-        clientSocket->write(proxyReply->readAll());
-    }
-}
-
-void LocalHttpProxy::onProxyReplyFinished()
-{
-    QNetworkReply* proxyReply = qobject_cast<QNetworkReply*>(sender());
-    if (!proxyReply) return;
-
-    QTcpSocket* clientSocket = m_connections.key(proxyReply);
-    if (clientSocket) {
-        clientSocket->disconnectFromHost();
-    }
-    proxyReply->deleteLater();
-}
-
-void LocalHttpProxy::onClientDisconnected()
-{
-    QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!clientSocket) return;
-
-    QNetworkReply *proxyReply = m_connections.take(clientSocket);
-    if (proxyReply) {
-        proxyReply->abort();
-        proxyReply->deleteLater();
-    }
-    clientSocket->deleteLater();
-}
-</file>
-
-<file path="qml/components/SafeImage.qml">
-import QtQuick 1.0
-
-Image {
-    id: root
-    
-    // Свойство для хранения "реального" URL, который мы хотим загрузить
-    property string targetSource: ""
-    property int retryCount: 0
-    property int maxRetries: 3
-    asynchronous: true
-    source: targetSource
-    
-    // Используем таймер для задержки повторного запроса
-    Timer {
-        id: retryTimer
-        interval: 2000 // 2 секунды перед повтором
-        repeat: false
-        onTriggered: {
-            // "Передергиваем" source, чтобы QML снова полез в сеть
-            root.source = "";
-            root.source = root.targetSource;
-        }
-    }
-    
-    onStatusChanged: {
-        if (status === Image.Error) {
-            if (retryCount < maxRetries) {
-                retryCount++;
-                console.log("[SafeImage] Ошибка загрузки, попытка " + retryCount + "...");
-                retryTimer.start();
-            } else {
-                console.log("[SafeImage] Исчерпаны все попытки загрузки.");
-            }
-        } else if (status === Image.Ready) {
-            retryCount = 0; // Сбрасываем счетчик при успехе
-        }
-    }
-}
-</file>
-
 <file path="qml/pages/HistoryPage.qml">
 import QtQuick 1.0
 import "../components"
@@ -3436,11 +3459,11 @@ Rectangle {
         spacing: 10
         
         delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: {
-                root.navigateToVideo(videoId)
-            }
-        }
+                    modelData: model.modelData
+                    onClicked: {
+                        root.navigateToVideo(videoId, playlistId)
+                    }
+                }
     }
 }
 </file>
@@ -3509,10 +3532,210 @@ Rectangle {
         delegate: VideoCard {
             modelData: model.modelData
             onClicked: {
-                root.navigateToVideo(videoId)
+                root.navigateToVideo(videoId, playlistId)
             }
         }
     }
+}
+</file>
+
+<file path="qsymbianapplication.cpp">
+#include "qsymbianapplication.h"
+#include <coemain.h>    // for CCoeEnv, LIBS += -lcone
+#include <w32std.h>
+#include <QDebug>
+#include <Qfile>
+#include <QKeyEvent>
+#include <e32std.h>
+
+
+
+QSymbianApplication::QSymbianApplication(int argc, char** argv) :
+    QApplication(argc, argv), iForeground(false)
+{
+}
+
+
+
+void QSymbianApplication::keepScreenOn()
+{
+#ifdef Q_OS_SYMBIAN
+    // Сбрасывает системный таймер бездействия.
+    // Экран не погаснет, пока мы вызываем эту функцию.
+    User::ResetInactivityTime();
+#endif
+}
+
+bool QSymbianApplication::foreground()
+{
+    return iForeground;
+}
+
+
+bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
+{
+    if (event->type() == QSymbianEvent::WindowServerEvent) {
+        switch (event->windowServerEvent()->Type()) {
+        // fire when press red key
+        case KAknUidValueEndKeyCloseEvent: {
+            emit redPressed();
+            this->quit();
+            return true;
+
+        }
+
+        // fire when app is focus or in foreground
+        case EEventFocusGained: {
+            iForeground = true;
+            emit foregroundChanged(iForeground);
+            emit inFocus();
+        }
+        break;
+
+
+        case EEventFocusLost: {
+            iForeground = false;
+            emit foregroundChanged(iForeground);
+            emit inBackground();
+        }
+        break;
+
+
+
+        }
+    }
+    else if (event->type() == QSymbianEvent::CommandEvent) {
+        if (event->command() == EEikCmdExit || event->command() == EAknCmdExit) {
+            emit redPressed();
+            this->quit();
+            return true;
+
+        }
+    }
+
+    return QApplication::symbianEventFilter(event);
+
+
+}
+</file>
+
+<file path="roundedimageprovider.cpp">
+#include "roundedimageprovider.h"
+#include <QPainter>
+#include <QPainterPath>
+#include <QUrl>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QEventLoop>
+#include <QDebug>
+#include <QMutex>
+#include <QTimer>
+#include "apimanager.h"
+
+// Глобальный мьютекс для сериализации сетевых запросов.
+// Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
+static QMutex s_networkMutex;
+
+RoundedImageProvider::RoundedImageProvider()
+    : QDeclarativeImageProvider(QDeclarativeImageProvider::Image)
+{
+    // Выделяем 10 МБ памяти под кэш изображений
+    m_cache.setMaxCost(4 * 1024 * 1024);
+}
+
+QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
+{
+    QString decodedId = QUrl::fromPercentEncoding(id.toUtf8());
+
+    // 1. Проверяем локальный кэш картинок
+    m_mutex.lock();
+    if (QImage *cachedImg = m_cache.object(decodedId)) {
+        QImage result = *cachedImg;
+        if (size) *size = result.size();
+        m_mutex.unlock();
+        return result;
+    }
+    m_mutex.unlock();
+
+    QImage originalImage;
+
+    // 2. Скачивание изображения (БЕЗОПАСНЫЙ СИНХРОННЫЙ ВЫЗОВ ГЛАВНОГО ПОТОКА)
+    if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
+        QByteArray imgData;
+        ApiManager *api = ApiManager::instance();
+
+        if (api) {
+            // Вызываем метод скачивания на ГЛАВНОМ GUI-потоке,
+            // фоновый поток рендеринга QML безопасно блокируется и ждет результат.
+            QMetaObject::invokeMethod(api, "downloadImageSync",
+                                      Qt::BlockingQueuedConnection,
+                                      Q_RETURN_ARG(QByteArray, imgData),
+                                      Q_ARG(QString, decodedId));
+        }
+
+        if (!imgData.isEmpty()) {
+            originalImage.loadFromData(imgData);
+        }
+    } else if (decodedId.startsWith("qrc:/")) {
+        originalImage.load(":" + decodedId.mid(4));
+    } else {
+        originalImage.load(decodedId);
+    }
+
+    // Заглушка при отсутствии сети
+    if (originalImage.isNull()) {
+        int w = requestedSize.isValid() ? requestedSize.width() : 64;
+        int h = requestedSize.isValid() ? requestedSize.height() : 64;
+        QImage empty(w, h, QImage::Format_ARGB32_Premultiplied);
+        empty.fill(Qt::transparent);
+        return empty;
+    }
+
+    // 3. Скругляем оригинальное изображение
+    QImage rounded = roundImage(originalImage);
+
+    if (requestedSize.isValid()) {
+        rounded = rounded.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+
+    if (size) *size = rounded.size();
+
+    // 4. Сохраняем в кэш
+    m_mutex.lock();
+    m_cache.insert(decodedId, new QImage(rounded), rounded.byteCount());
+    m_mutex.unlock();
+
+    return rounded;
+}
+
+QImage RoundedImageProvider::roundImage(const QImage &img)
+{
+    // Обрезаем по центру, чтобы картинка была квадратной
+    int squareSize = qMin(img.width(), img.height());
+    QRect targetRect(0, 0, squareSize, squareSize);
+    QImage squareImg = img.copy((img.width() - squareSize) / 2,
+                                (img.height() - squareSize) / 2,
+                                squareSize, squareSize);
+
+    // Создаем пустой холст с прозрачным фоном (Alpha Channel)
+    QImage roundedImg(squareSize, squareSize, QImage::Format_ARGB32_Premultiplied);
+    roundedImg.fill(Qt::transparent);
+
+    QPainter painter(&roundedImg);
+    // Включаем самое качественное сглаживание краев
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    // Накладываем круглую маску
+    QPainterPath path;
+    path.addEllipse(targetRect);
+    painter.setClipPath(path);
+
+    // Рисуем картинку
+    painter.drawImage(targetRect, squareImg);
+
+    return roundedImg;
 }
 </file>
 
@@ -3533,6 +3756,8 @@ class Config : public QObject
     Q_PROPERTY(qreal persistentVolume READ persistentVolume WRITE setPersistentVolume NOTIFY persistentVolumeChanged)
     Q_PROPERTY(QString videoQuality READ videoQuality WRITE setVideoQuality NOTIFY videoQualityChanged)
     Q_PROPERTY(bool enableProxy READ enableProxy WRITE setEnableProxy NOTIFY enableProxyChanged)
+    Q_PROPERTY(bool usePiped READ usePiped WRITE setUsePiped NOTIFY usePipedChanged)
+
 public:
     explicit Config(QObject *parent = 0);
     ~Config();
@@ -3555,6 +3780,9 @@ public:
     bool enableProxy() const;
     void setEnableProxy(bool enable);
 
+    bool usePiped() const;
+    void setUsePiped(bool enable);
+
 signals:
     void apiKeyChanged();
     void userTokenChanged();
@@ -3562,6 +3790,8 @@ signals:
     void persistentVolumeChanged();
     void videoQualityChanged();
     void enableProxyChanged();
+
+    void usePipedChanged();
 
 private:
     QSettings *m_settings;
@@ -3574,6 +3804,8 @@ private:
     QString getDefaultQualityByOs() const;
 
     bool m_enableProxy;
+
+    bool m_usePiped;
 };
 
 #endif // CONFIG_H
@@ -4090,6 +4322,87 @@ Please change your IP address (connect to another VPN server) and try again.</tr
 </TS>
 </file>
 
+<file path="Makefile_SymTube_exe.mk">
+# ==============================================================================
+# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 13. ??? 21:46:30 2026
+# This file is generated by qmake and should not be modified by the
+# user.
+#  Name        : Makefile_SymTube_exe.mk
+#  Part of     : SymTube
+#  Description : This file is used to call necessary targets on wrapper makefile
+#                during normal Symbian build process.
+#  Version     : 
+#
+# ==============================================================================
+
+
+
+MAKE = make
+
+VISUAL_CFG = RELEASE
+ifeq "$(CFG)" "UDEB"
+VISUAL_CFG = DEBUG
+endif
+
+do_nothing :
+	@rem do_nothing
+
+MAKMAKE: create_temps pre_targetdeps store_build
+
+LIB: create_temps pre_targetdeps store_build
+
+BLD: create_temps pre_targetdeps store_build
+
+ifeq "$(PLATFORM)" "WINSCW"
+CLEAN: extension_clean winscw_deployment_clean deployment_clean
+else
+CLEAN: extension_clean deployment_clean
+endif
+
+CLEANLIB: do_nothing
+
+RESOURCE: do_nothing
+
+FREEZE: do_nothing
+
+SAVESPACE: do_nothing
+
+RELEASABLES: do_nothing
+
+ifeq "$(PLATFORM)" "WINSCW"
+FINAL: finalize winscw_deployment deployment
+else
+FINAL: finalize deployment
+endif
+
+pre_targetdeps : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" pre_targetdeps QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+create_temps : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" create_temps QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+extension_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" extension_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+finalize : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" finalize QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+winscw_deployment_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" winscw_deployment_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+winscw_deployment : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" winscw_deployment QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+deployment_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" deployment_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+deployment : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" deployment QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+
+store_build : c:\Users\User\Documents\GitHub\SymTube\Makefile
+	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" store_build QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
+</file>
+
 <file path="qml/components/Tabbar.qml">
 import QtQuick 1.0
 
@@ -4241,303 +4554,6 @@ Rectangle {
         }
     }
 }
-</file>
-
-<file path="qsymbianapplication.cpp">
-#include "qsymbianapplication.h"
-#include <coemain.h>    // for CCoeEnv, LIBS += -lcone
-#include <w32std.h>
-#include <QDebug>
-#include <Qfile>
-#include <QKeyEvent>
-#include <e32std.h>
-
-
-
-QSymbianApplication::QSymbianApplication(int argc, char** argv) :
-    QApplication(argc, argv), iForeground(false)
-{
-}
-
-
-
-void QSymbianApplication::keepScreenOn()
-{
-#ifdef Q_OS_SYMBIAN
-    // Сбрасывает системный таймер бездействия.
-    // Экран не погаснет, пока мы вызываем эту функцию.
-    User::ResetInactivityTime();
-#endif
-}
-
-bool QSymbianApplication::foreground()
-{
-    return iForeground;
-}
-
-
-bool QSymbianApplication::symbianEventFilter(const QSymbianEvent *event)
-{
-    if (event->type() == QSymbianEvent::WindowServerEvent) {
-        switch (event->windowServerEvent()->Type()) {
-        // fire when press red key
-        case KAknUidValueEndKeyCloseEvent: {
-            emit redPressed();
-            this->quit();
-            return true;
-
-        }
-
-        // fire when app is focus or in foreground
-        case EEventFocusGained: {
-            iForeground = true;
-            emit foregroundChanged(iForeground);
-            emit inFocus();
-        }
-        break;
-
-
-        case EEventFocusLost: {
-            iForeground = false;
-            emit foregroundChanged(iForeground);
-            emit inBackground();
-        }
-        break;
-
-
-
-        }
-    }
-    else if (event->type() == QSymbianEvent::CommandEvent) {
-        if (event->command() == EEikCmdExit || event->command() == EAknCmdExit) {
-            emit redPressed();
-            this->quit();
-            return true;
-
-        }
-    }
-
-    return QApplication::symbianEventFilter(event);
-
-
-}
-</file>
-
-<file path="roundedimageprovider.cpp">
-#include "roundedimageprovider.h"
-#include <QPainter>
-#include <QPainterPath>
-#include <QUrl>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QEventLoop>
-#include <QDebug>
-#include <QMutex>
-#include <QTimer>
-
-// Глобальный мьютекс для сериализации сетевых запросов.
-// Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
-static QMutex s_networkMutex;
-
-RoundedImageProvider::RoundedImageProvider()
-    : QDeclarativeImageProvider(QDeclarativeImageProvider::Image)
-{
-    // Выделяем 10 МБ памяти под кэш изображений
-    m_cache.setMaxCost(4 * 1024 * 1024);
-}
-
-QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
-{
-    QString decodedId = QUrl::fromPercentEncoding(id.toUtf8());
-
-    // 1. БЕЗОПАСНО проверяем кэш
-    m_mutex.lock();
-    if (QImage *cachedImg = m_cache.object(decodedId)) {
-        QImage result = *cachedImg;
-        if (size) *size = result.size();
-        m_mutex.unlock();
-        return result;
-    }
-    m_mutex.unlock();
-
-    QImage originalImage;
-
-    // 2. Скачивание изображения (в фоновом потоке от QML)
-    if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
-
-        s_networkMutex.lock();
-
-            QNetworkAccessManager manager;
-            manager.setParent(0);
-            QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
-            QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
-            reply->ignoreSslErrors();
-
-            // Предохранитель: прерываем ожидание, если картинка не скачалась за 5 секунд
-            QEventLoop loop;
-            QTimer timeoutTimer;
-            timeoutTimer.setSingleShot(true);
-            QObject::connect(&timeoutTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
-            QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-            timeoutTimer.start(5000);
-
-            loop.exec();
-
-            if (reply->isRunning()) {
-                reply->abort();
-            } else if (reply->error() == QNetworkReply::NoError) {
-                originalImage.loadFromData(reply->readAll());
-            }
-
-            reply->disconnect();
-            delete reply;
-
-            s_networkMutex.unlock();
-
-
-    } else if (decodedId.startsWith("qrc:/")) {
-        originalImage.load(":" + decodedId.mid(4));
-    } else {
-        originalImage.load(decodedId);
-    }
-
-    // Заглушка: если картинка не загрузилась (нет сети), возвращаем прозрачный фон
-    if (originalImage.isNull()) {
-        int w = requestedSize.isValid() ? requestedSize.width() : 64;
-        int h = requestedSize.isValid() ? requestedSize.height() : 64;
-        QImage empty(w, h, QImage::Format_ARGB32_Premultiplied);
-        empty.fill(Qt::transparent);
-        return empty;
-    }
-
-    // 3. Скругляем (сглаживание Antialiasing применяется внутри roundImage)
-    QImage rounded = roundImage(originalImage);
-
-    // Масштабируем до требуемого размера (запрошенного QML)
-    if (requestedSize.isValid()) {
-        rounded = rounded.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
-
-    if (size) *size = rounded.size();
-
-    // 4. БЕЗОПАСНО сохраняем готовую круглую картинку в кэш
-    m_mutex.lock();
-    m_cache.insert(decodedId, new QImage(rounded), rounded.byteCount());
-    m_mutex.unlock();
-
-    return rounded;
-}
-
-QImage RoundedImageProvider::roundImage(const QImage &img)
-{
-    // Обрезаем по центру, чтобы картинка была квадратной
-    int squareSize = qMin(img.width(), img.height());
-    QRect targetRect(0, 0, squareSize, squareSize);
-    QImage squareImg = img.copy((img.width() - squareSize) / 2,
-                                (img.height() - squareSize) / 2,
-                                squareSize, squareSize);
-
-    // Создаем пустой холст с прозрачным фоном (Alpha Channel)
-    QImage roundedImg(squareSize, squareSize, QImage::Format_ARGB32_Premultiplied);
-    roundedImg.fill(Qt::transparent);
-
-    QPainter painter(&roundedImg);
-    // Включаем самое качественное сглаживание краев
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-    // Накладываем круглую маску
-    QPainterPath path;
-    path.addEllipse(targetRect);
-    painter.setClipPath(path);
-
-    // Рисуем картинку
-    painter.drawImage(targetRect, squareImg);
-
-    return roundedImg;
-}
-</file>
-
-<file path="Makefile_SymTube_exe.mk">
-# ==============================================================================
-# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 13. ??? 21:46:30 2026
-# This file is generated by qmake and should not be modified by the
-# user.
-#  Name        : Makefile_SymTube_exe.mk
-#  Part of     : SymTube
-#  Description : This file is used to call necessary targets on wrapper makefile
-#                during normal Symbian build process.
-#  Version     : 
-#
-# ==============================================================================
-
-
-
-MAKE = make
-
-VISUAL_CFG = RELEASE
-ifeq "$(CFG)" "UDEB"
-VISUAL_CFG = DEBUG
-endif
-
-do_nothing :
-	@rem do_nothing
-
-MAKMAKE: create_temps pre_targetdeps store_build
-
-LIB: create_temps pre_targetdeps store_build
-
-BLD: create_temps pre_targetdeps store_build
-
-ifeq "$(PLATFORM)" "WINSCW"
-CLEAN: extension_clean winscw_deployment_clean deployment_clean
-else
-CLEAN: extension_clean deployment_clean
-endif
-
-CLEANLIB: do_nothing
-
-RESOURCE: do_nothing
-
-FREEZE: do_nothing
-
-SAVESPACE: do_nothing
-
-RELEASABLES: do_nothing
-
-ifeq "$(PLATFORM)" "WINSCW"
-FINAL: finalize winscw_deployment deployment
-else
-FINAL: finalize deployment
-endif
-
-pre_targetdeps : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" pre_targetdeps QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-create_temps : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" create_temps QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-extension_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" extension_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-finalize : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" finalize QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-winscw_deployment_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" winscw_deployment_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-winscw_deployment : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" winscw_deployment QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-deployment_clean : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" deployment_clean QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-deployment : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" deployment QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
-
-store_build : c:\Users\User\Documents\GitHub\SymTube\Makefile
-	-$(MAKE) -f "c:\Users\User\Documents\GitHub\SymTube\Makefile" store_build QT_SIS_TARGET=$(VISUAL_CFG)-$(PLATFORM)
 </file>
 
 <file path="qml/components/Navbar.qml">
@@ -4800,6 +4816,8 @@ Rectangle {
     property variant historyModel:[]
     property int qrVersion: 0
 
+    property variant playlistsModel: []
+
     Connections {
         target: ApiManager
 
@@ -4825,6 +4843,10 @@ Rectangle {
 
         onHistoryReady: {
             historyModel = historyList;
+        }
+
+        onPlaylistsReady: {
+            playlistsModel = playlists;
         }
     }
 
@@ -4855,6 +4877,7 @@ Rectangle {
     function loadAccountInfo() {
         ApiManager.getAccountInfo();
         ApiManager.getHistory();
+        ApiManager.getMyPlaylists();
     }
 
     Column {
@@ -5067,6 +5090,86 @@ Rectangle {
                     }
                 }
             }
+
+            Text {
+                text: qsTr("Ваши плейлисты")
+                color: "white"
+                font.pixelSize: 18
+                font.bold: true
+                visible: playlistsModel.length > 0
+            }
+
+            ListView {
+                width: parent.width
+                height: 150
+                orientation: ListView.Horizontal
+                model: playlistsModel
+                spacing: 12
+                cacheBuffer: 500
+                visible: playlistsModel.length > 0
+
+                delegate: Item {
+                    width: 150
+                    height: 120
+
+                    Column {
+                        spacing: 8
+
+                        Rectangle {
+                            width: 150; height: 84
+                            color: "#1A1A1A"
+                            radius: 8
+                            clip: true
+
+                            Image {
+                                anchors.fill: parent
+                                source: modelData.thumbnail || ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                            }
+
+                            // Плашка с количеством видео в плейлисте сверху картинки
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 4
+                                color: "#CC000000"
+                                radius: 4
+                                width: plCountText.width + 8
+                                height: plCountText.height + 4
+                                Text {
+                                    id: plCountText
+                                    anchors.centerIn: parent
+                                    text: modelData.video_count_text || ""
+                                    color: "white"
+                                    font.pixelSize: 10
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: modelData.title || ""
+                            color: "white"
+                            font.pixelSize: 13
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            height: 30
+                            clip: true
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            // При клике на плейлист открываем его первое видео
+                            root.navigateToVideo("", modelData.playlist_id);
+                        }
+                    }
+                }
+            }
+
+
         }
     }
 }
@@ -5084,6 +5187,9 @@ Rectangle {
     property variant channelData: null
     property variant videosModel:[]
 
+    property string activeTab: "Videos"
+    property variant playlistsModel: []
+
     Connections {
         target: ApiManager
         onChannelVideosReady: {
@@ -5099,14 +5205,21 @@ Rectangle {
                 errorText.visible = true
             }
         }
+
+        onPlaylistsReady: {
+            loadingIndicator.visible = false;
+            playlistsModel = playlists;
+        }
     }
 
     function loadChannel(author) {
-        channelData = null
-        videosModel =[]
-        loadingIndicator.visible = true
-        errorText.visible = false
-        ApiManager.getChannelVideos(author)
+        channelData = null;
+        videosModel = [];
+        playlistsModel = [];
+        activeTab = "Videos";
+        loadingIndicator.visible = true;
+        errorText.visible = false;
+        ApiManager.getChannelVideos(author);
     }
 
     Text {
@@ -5131,9 +5244,9 @@ Rectangle {
     ListView {
         id: mainList
         anchors.fill: parent
-        model: videosModel
+        // Переключаем модель в зависимости от активной вкладки
+        model: activeTab === "Videos" ? videosModel : playlistsModel
         visible: !loadingIndicator.visible && !errorText.visible
-
         cacheBuffer: 1000
 
         onModelChanged: {
@@ -5191,13 +5304,69 @@ Rectangle {
                             font.bold: true
                             width: parent.width
                             elide: Text.ElideRight
-
                         }
                         Text {
                             text: channelData && channelData.channel_info ? ((channelData.channel_info["subscriber_count"] || "0")) : ""
                             color: "gray"
                             font.pixelSize: 14
+                        }
+                    }
+                }
+            }
 
+            // ПАНЕЛЬ ВКЛАДОК (ВИДЕО / ПЛЕЙЛИСТЫ)
+            Row {
+                width: parent.width - 32
+                height: 40
+                spacing: 12
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Rectangle {
+                    width: (parent.width - 12) / 2
+                    height: 36
+                    color: activeTab === "Videos" ? "#333333" : "transparent"
+                    border.color: "#444444"
+                    border.width: activeTab === "Videos" ? 0 : 1
+                    radius: 18
+
+                    Text {
+                        text: qsTr("Видео")
+                        color: "white"
+                        font.pixelSize: 14
+                        font.bold: activeTab === "Videos"
+                        anchors.centerIn: parent
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: activeTab = "Videos"
+                    }
+                }
+
+                Rectangle {
+                    width: (parent.width - 12) / 2
+                    height: 36
+                    color: activeTab === "Playlists" ? "#333333" : "transparent"
+                    border.color: "#444444"
+                    border.width: activeTab === "Playlists" ? 0 : 1
+                    radius: 18
+
+                    Text {
+                        text: qsTr("Плейлисты")
+                        color: "white"
+                        font.pixelSize: 14
+                        font.bold: activeTab === "Playlists"
+                        anchors.centerIn: parent
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            activeTab = "Playlists";
+                            if (playlistsModel.length === 0 && channelData && channelData.channel_info) {
+                                loadingIndicator.visible = true;
+                                ApiManager.getChannelPlaylists(channelData.channel_info.channel_id);
+                            }
                         }
                     }
                 }
@@ -5206,10 +5375,94 @@ Rectangle {
             Item { width: parent.width; height: 8 }
         }
 
-        delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: {
-                root.navigateToVideo(videoId)
+        // Рендерим VideoCard для видео или кастомный блок для плейлистов
+        delegate: Item {
+            width: parent.width
+            height: activeTab === "Videos" ? 300 : 100
+
+            VideoCard {
+                anchors.fill: parent
+                modelData: model.modelData
+                visible: activeTab === "Videos"
+                onClicked: {
+                    root.navigateToVideo(videoId)
+                }
+            }
+
+            // Элемент отображения плейлиста в списке
+            Rectangle {
+                anchors.fill: parent
+                color: "black"
+                visible: activeTab === "Playlists"
+
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 12
+
+                    Rectangle {
+                        width: 140
+                        height: 80
+                        color: "#1A1A1A"
+                        radius: 8
+                        clip: true
+
+                        Image {
+                            anchors.fill: parent
+                            source: modelData.thumbnail || ""
+                            fillMode: Image.PreserveAspectCrop
+                        }
+
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 6
+                            color: "#CC000000"
+                            width: pcText.width + 12
+                            height: pcText.height + 4
+                            radius: 4
+                            visible: modelData.views !== undefined
+
+                            Text {
+                                id: pcText
+                                anchors.centerIn: parent
+                                text: modelData.views || ""
+                                color: "white"
+                                font.pixelSize: 11
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width - 162
+                        spacing: 4
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            text: modelData.title || ""
+                            color: "white"
+                            font.pixelSize: 15
+                            font.bold: true
+                            width: parent.width
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            text: modelData.author || ""
+                            color: "gray"
+                            font.pixelSize: 13
+                            width: parent.width
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        root.navigateToVideo("", modelData.playlist_id);
+                    }
+                }
             }
         }
     }
@@ -5439,9 +5692,11 @@ Rectangle {
         cacheBuffer: 1200
 
         delegate: VideoCard {
-            modelData: model.modelData
-            onClicked: { root.navigateToVideo(videoId) }
-        }
+                   modelData: model.modelData
+                   onClicked: {
+                       root.navigateToVideo(videoId, playlistId)
+                   }
+               }
 
         onContentYChanged: {
             if (contentY >= (contentHeight - height * 2) && !isLoadingMore && nextPageToken !== "") {
@@ -5501,6 +5756,22 @@ Config::Config(QObject *parent) : QObject(parent)
         QNetworkProxy::setApplicationProxy(extProxy);
     } else {
         QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
+    }
+
+    m_usePiped = m_settings->value("UsePiped", false).toBool();
+
+
+
+
+}
+
+bool Config::usePiped() const { return m_usePiped; }
+
+void Config::setUsePiped(bool enable) {
+    if (m_usePiped != enable) {
+        m_usePiped = enable;
+        m_settings->setValue("UsePiped", m_usePiped);
+        emit usePipedChanged();
     }
 }
 
@@ -5585,7 +5856,7 @@ void Config::setVideoQuality(const QString &quality) {
 </file>
 
 <file path="qml/components/VideoCard.qml">
-import QtQuick 1.0
+import QtQuick 1.1
 import "../components"
 
 Rectangle {
@@ -5596,7 +5867,8 @@ Rectangle {
 
     property variant modelData
 
-    signal clicked(string videoId)
+    // ОБНОВЛЕННЫЙ СИГНАЛ: передаем и видео, и плейлист
+    signal clicked(string videoId, string playlistId)
 
     Column {
         anchors.fill: parent
@@ -5612,6 +5884,7 @@ Rectangle {
 
             SafeImage {
                 anchors.fill: parent
+                // Если videoId пустой, используем прямую ссылку на обложку плейлиста
                 source: modelData && modelData.thumbnail ? modelData.thumbnail.replace("https", "http") : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
@@ -5633,7 +5906,7 @@ Rectangle {
                     text: modelData && modelData.duration ? modelData.duration : ""
                     color: "white"
                     font.pixelSize: 12
-                    font.weight: Font.Bold
+                    font.bold: true
                 }
             }
         }
@@ -5668,7 +5941,6 @@ Rectangle {
                     width: parent.width
                     wrapMode: Text.WordWrap
                     elide: Text.ElideRight
-
                     height: 38
                     clip: true
                 }
@@ -5679,7 +5951,6 @@ Rectangle {
                     font.pixelSize: 14
                     width: parent.width
                     elide: Text.ElideRight
-
                 }
 
                 Row {
@@ -5705,11 +5976,14 @@ Rectangle {
         }
     }
 
+    // ОБНОВЛЕННЫЙ ОБРАБОТЧИК: безопасно считывает оба параметра
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            if (modelData && modelData.video_id) {
-                cardRoot.clicked(modelData.video_id);
+            if (modelData) {
+                var vid = modelData.video_id || "";
+                var plid = modelData.playlist_id || "";
+                cardRoot.clicked(vid, plid);
             }
         }
     }
@@ -5812,7 +6086,9 @@ Rectangle {
                     font.pixelSize: 16
                 }
 
-                Row {
+                Row
+
+                {
                     spacing: 12
                     width: parent.width
                     height: 40
@@ -5849,6 +6125,46 @@ Rectangle {
                             anchors.fill: parent
                             onClicked: { Config.enableProxy = !Config.enableProxy; }
                         }
+                    }
+                }
+            }
+
+            Row {
+                spacing: 12
+                width: parent.width
+                height: 40
+
+                Rectangle {
+                    width: 24; height: 24; radius: 4
+                    color: "#1F1F1F"
+                    border.color: "#333333"
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        text: "✓"
+                        color: "#007ACC"
+                        font.pixelSize: 18
+                        font.bold: true
+                        anchors.centerIn: parent
+                        visible: Config.usePiped
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { Config.usePiped = !Config.usePiped; }
+                    }
+                }
+
+                Text {
+                    text: qsTr("Использовать Piped вместо InnerTube")
+                    color: "white"
+                    font.pixelSize: 16
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { Config.usePiped = !Config.usePiped; }
                     }
                 }
             }
@@ -6176,18 +6492,18 @@ Rectangle {
             cacheBuffer: 1000
 
             delegate: VideoCard {
-                modelData: model.modelData
-                onClicked: {
-                    root.navigateToVideo(videoId)
-                }
-            }
+                        modelData: model.modelData
+                        onClicked: {
+                            root.navigateToVideo(videoId, playlistId)
+                        }
+                    }
         }
     }
 }
 </file>
 
 <file path="qml/main.qml">
-import QtQuick 1.0
+import QtQuick 1.1
 import QtMultimediaKit 1.1
 import "components"
 
@@ -6204,14 +6520,14 @@ Rectangle {
     property bool isFullscreen: isVideoPageOpen && forceFullscreen === 2
 
     Connections {
-            target: TranslationManager
-            onLanguageChanged: {
-                // Мгновенно перезагружаем контент-лоадер страницы для применения перевода
-                contentLoader.source = "";
-                pageLoadTimer.nextSource = "pages/SettingsPage.qml";
-                pageLoadTimer.start();
-            }
+        target: TranslationManager
+        onLanguageChanged: {
+            // Мгновенно перезагружаем контент-лоадер страницы для применения перевода
+            contentLoader.source = "";
+            pageLoadTimer.nextSource = "pages/SettingsPage.qml";
+            pageLoadTimer.start();
         }
+    }
 
     Connections {
         target: ApiManager
@@ -6292,6 +6608,7 @@ Rectangle {
     // --- БЕЗОПАСНАЯ АСИНХРОННАЯ ЗАГРУЗКА ---
     property string pendingVideoId: ""
     property string pendingChannelId: ""
+    property string pendingPlaylistId: ""
     property string pendingQuery: ""
 
     Rectangle {
@@ -6311,6 +6628,7 @@ Rectangle {
 
     Loader {
         id: contentLoader
+
         anchors.top: isFullscreen ? parent.top : navbar.bottom
         anchors.bottom: isFullscreen ? parent.bottom : tabbar.top
         anchors.left: parent.left; anchors.right: parent.right
@@ -6321,8 +6639,9 @@ Rectangle {
 
             var src = source.toString();
             if (src.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
-                item.loadVideo(root.pendingVideoId);
+                item.loadVideo(root.pendingVideoId, root.pendingPlaylistId);
                 root.pendingVideoId = "";
+                root.pendingPlaylistId = "";
             } else if (src.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
                 item.loadChannel(root.pendingChannelId);
                 root.pendingChannelId = "";
@@ -6348,32 +6667,37 @@ Rectangle {
     }
 
     function safeLoadPage(pageSource) {
-        var currentStr = contentLoader.source.toString();
-        if (currentStr.indexOf(pageSource) !== -1) {
-            // Если страница уже открыта - не перезагружаем компонент, а просто обновляем
-            loadingOverlay.visible = false;
-            if (contentLoader.item) {
-                if (pageSource.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
-                    contentLoader.item.loadVideo(root.pendingVideoId);
-                    root.pendingVideoId = "";
-                } else if (pageSource.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
-                    contentLoader.item.loadChannel(root.pendingChannelId);
-                    root.pendingChannelId = "";
-                } else if (pageSource.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
-                    contentLoader.item.performSearch(root.pendingQuery);
-                    root.pendingQuery = "";
-                } else if (pageSource.indexOf("ShortsPage.qml") !== -1) {
-                    if (typeof contentLoader.item.startPlaying !== "undefined") contentLoader.item.startPlaying();
-                } else if (typeof contentLoader.item.onNavigatedTo !== "undefined") {
-                    contentLoader.item.onNavigatedTo();
+            var currentStr = contentLoader.source.toString();
+            if (currentStr.indexOf(pageSource) !== -1) {
+                loadingOverlay.visible = false;
+                if (contentLoader.item) {
+                    if (pageSource.indexOf("VideoPage.qml") !== -1 && root.pendingVideoId !== "") {
+                        contentLoader.item.loadVideo(root.pendingVideoId, root.pendingPlaylistId);
+                        root.pendingVideoId = "";
+                        root.pendingPlaylistId = "";
+                    } else if (pageSource.indexOf("ChannelPage.qml") !== -1 && root.pendingChannelId !== "") {
+                        contentLoader.item.loadChannel(root.pendingChannelId);
+                        root.pendingChannelId = "";
+                    } else if (pageSource.indexOf("SearchPage.qml") !== -1 && root.pendingQuery !== "") {
+                        contentLoader.item.performSearch(root.pendingQuery);
+                        root.pendingQuery = "";
+                    } else if (pageSource.indexOf("ShortsPage.qml") !== -1) {
+                        if (typeof contentLoader.item.startPlaying !== "undefined") contentLoader.item.startPlaying();
+                    } else if (typeof contentLoader.item.onNavigatedTo !== "undefined") {
+                        contentLoader.item.onNavigatedTo();
+                    }
                 }
+            } else {
+                // Мгновенная отрисовка скелета
+                loadingOverlay.visible = true;
+                contentLoader.source = "";   // Выгружаем старый тяжелый QML
+                ApiManager.processEvents();  // Принудительно заставляем Qt отрисовать черный экран на телефоне
+
+                pageLoadTimer.nextSource = pageSource;
+                pageLoadTimer.interval = 50; // Даем системному композитору 50мс на переключение буферов
+                pageLoadTimer.start();
             }
-        } else {
-            loadingOverlay.visible = true;
-            pageLoadTimer.nextSource = pageSource;
-            pageLoadTimer.start();
         }
-    }
 
     function switchToTab(tabName) {
         currentTab = tabName;
@@ -6395,10 +6719,11 @@ Rectangle {
         switchToTab("Home");
     }
 
-    function navigateToVideo(videoId) {
+    function navigateToVideo(videoId, playlistId) {
         forceFullscreen = 1;
         navbar.showBackButton = true;
-        root.pendingVideoId = videoId;
+        root.pendingVideoId = videoId || "";
+        root.pendingPlaylistId = playlistId || "";
         safeLoadPage("pages/VideoPage.qml");
     }
 
@@ -6427,207 +6752,78 @@ Rectangle {
 
 
     // Всплывающее окно при обнаружении блокировки (бот-фильтр YouTube)
-        Rectangle {
-            id: botAlertPopup
+    Rectangle {
+        id: botAlertPopup
+        anchors.fill: parent
+        color: "#B3000000" // полупрозрачный темный фон
+        visible: false
+        z: 9999 // Гарантирует отрисовку поверх любых страниц, панелей навигации и OSD
+
+        // Блокируем клики по элементам интерфейса, находящимся "под" окном
+        MouseArea {
             anchors.fill: parent
-            color: "#B3000000" // полупрозрачный темный фон
-            visible: false
-            z: 9999 // Гарантирует отрисовку поверх любых страниц, панелей навигации и OSD
+            onClicked: {} // поглощаем нажатие
+        }
 
-            // Блокируем клики по элементам интерфейса, находящимся "под" окном
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {} // поглощаем нажатие
-            }
+        Rectangle {
+            width: parent.width - 40
+            height: dialogCol.height + 40
+            color: "#222222"
+            border.color: "#333333"
+            border.width: 1
+            radius: 10
+            anchors.centerIn: parent
 
-            Rectangle {
+            Column {
+                id: dialogCol
                 width: parent.width - 40
-                height: dialogCol.height + 40
-                color: "#222222"
-                border.color: "#333333"
-                border.width: 1
-                radius: 10
                 anchors.centerIn: parent
+                spacing: 20
 
-                Column {
-                    id: dialogCol
-                    width: parent.width - 40
-                    anchors.centerIn: parent
-                    spacing: 20
+                Text {
+                    text: qsTr("Внимание")
+                    color: "white"
+                    font.pixelSize: 20
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                Text {
+                    text: qsTr("YouTube временно заблокировал доступ, приняв ваше устройство за бота.\n\nПожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.")
+                    color: "#DDDDDD"
+                    font.pixelSize: 15
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                Rectangle {
+                    width: 140
+                    height: 40
+                    color: "#007ACC"
+                    radius: 20
+                    anchors.horizontalCenter: parent.horizontalCenter
 
                     Text {
-                        text: qsTr("Внимание")
+                        text: qsTr("ОК")
                         color: "white"
-                        font.pixelSize: 20
+                        font.pixelSize: 16
                         font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
+                        anchors.centerIn: parent
                     }
 
-                    Text {
-                        text: qsTr("YouTube временно заблокировал доступ, приняв ваше устройство за бота.\n\nПожалуйста, смените IP-адрес (подключитесь к другому VPN-серверу) и попробуйте снова.")
-                        color: "#DDDDDD"
-                        font.pixelSize: 15
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
-                    }
-
-                    Rectangle {
-                        width: 140
-                        height: 40
-                        color: "#007ACC"
-                        radius: 20
-                        anchors.horizontalCenter: parent.horizontalCenter
-
-                        Text {
-                            text: qsTr("ОК")
-                            color: "white"
-                            font.pixelSize: 16
-                            font.bold: true
-                            anchors.centerIn: parent
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                botAlertPopup.visible = false;
-                            }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            botAlertPopup.visible = false;
                         }
                     }
                 }
             }
         }
+    }
 }
-</file>
-
-<file path="apimanager.h">
-#ifndef APIMANAGER_H
-#define APIMANAGER_H
-
-#include <QObject>
-#include <QString>
-#include <QVariantMap>
-#include <QVariantList>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QDateTime>
-#include <QStringList>
-#include "qrimageprovider.h"
-
-class Config;
-
-class ApiManager : public QObject
-{
-    Q_OBJECT
-public:
-    explicit ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent = 0);
-    ~ApiManager();
-    void setProxyPort(quint16 port);
-    void setImageProvider(QrImageProvider *provider);
-
-    // Основные методы
-    Q_INVOKABLE void getHomeVideos(const QString &pageToken = QString());
-    Q_INVOKABLE void getHomeCategoryVideos(const QString &category, const QString &pageToken = QString());
-    Q_INVOKABLE void searchVideos(const QString &query);
-    Q_INVOKABLE void getVideoInfo(const QString &videoId);
-    Q_INVOKABLE void getRelatedVideos(const QString &videoId, int page);
-    Q_INVOKABLE void getChannelVideos(const QString &author);
-    Q_INVOKABLE void getShorts(const QString &sequenceToken = QString());
-    Q_INVOKABLE void getComments(const QString &videoId, const QString &continuationToken = QString());
-
-    // Работа со сторонними API
-    Q_INVOKABLE void fetchAlternativeQualities(const QString &videoId);
-    Q_INVOKABLE void copyToClipboard(const QString &text);
-
-    // Восстановленные методы, работающие напрямую с Google/YouTube API
-    Q_INVOKABLE void getSearchSuggestions(const QString &query);
-    Q_INVOKABLE void getHistory();
-    Q_INVOKABLE void getSubscriptions();
-    Q_INVOKABLE void getAccountInfo();
-    Q_INVOKABLE void checkAuthContent(); // Запрашивает QR-код и опрашивает токен
-    Q_INVOKABLE void fetchServerList();
-
-    // Действия (Лайки, Подписки)
-    Q_INVOKABLE void checkRating(const QString &videoId) { Q_UNUSED(videoId) }
-    Q_INVOKABLE void checkSubscription(const QString &channelIdentifier) { Q_UNUSED(channelIdentifier) }
-    Q_INVOKABLE void rateVideo(const QString &videoId, const QString &rating);
-    Q_INVOKABLE void subscribeToChannel(const QString &channelIdentifier);
-    Q_INVOKABLE void unsubscribeFromChannel(const QString &channelIdentifier);
-    Q_INVOKABLE void logDebug(const QString &msg);
-
-signals:
-    void homeVideosReady(QVariantList videos, QString token);
-    void searchResultsReady(QVariantList videos);
-    void searchSuggestionsReady(QVariantList suggestions);
-    void videoInfoReady(QVariantMap videoDetailsMap);
-    void relatedVideosReady(QVariantList videos);
-    void channelVideosReady(QVariantMap channelDataMap);
-    void shortsReady(QVariantList shortsList, QString seqToken);
-    void historyReady(QVariantList historyList);
-    void subscriptionsReady(QVariantList subscriptions);
-    void accountInfoReady(QVariantMap accountInfo);
-    void authContentReady(QString content, QString type);
-    void authImageReady();
-    void serverListReady(const QStringList &servers);
-    void requestFailed(QString endpoint, QString errorMessage);
-    void videoExtraInfoReady(QVariantMap extraDetails);
-
-    void alternativeQualitiesReady(QString videoId, QVariantList qualities);
-    void commentsReady(QVariantList comments, QString continuationToken);
-    void botBlockDetected();
-
-private slots:
-    void onReplyFinished(QNetworkReply *reply);
-
-private:
-    void postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth = false);
-    QVariantMap buildContext(const QString &clientName, const QString &clientVersion);
-    QString getLocaleParams(bool firstParam = false);
-
-    QStringList m_pipedInstances;
-    QStringList m_yt2009Instances;
-    void requestPipedStreams(const QString &videoId);
-
-    // Управление токенами OAuth
-    QString getAccessToken();
-    QString m_accessToken;
-    QDateTime m_tokenExpiry;
-    QString m_deviceCode;
-    QString m_userCode;
-    quint16 m_proxyPort;
-    // Вспомогательные функции парсинга
-    QList<QVariantMap> enumerateObjectsWithKey(const QVariant &root, const QString &targetKey);
-    QString extractTextFromField(const QVariantMap &obj, const QString &fieldName);
-    QString extractThumbnailUrl(const QVariantMap &obj, const QString &fieldName);
-
-    QNetworkAccessManager *m_networkManager;
-    Config *m_config;
-    QrImageProvider *m_qrProvider;
-
-    QString m_cachedScriptUrl;
-        QString m_cachedScriptContent;
-        QVariantMap m_pendingVideoDetails;
-
-        // Вспомогательные методы дешифрации n-параметра
-        QString extractNFunctionExpression(const QString &playerScript);
-        QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
-        QString decryptNParameter(const QString &rawUrl);
-
-        void requestPlayer(const QString &videoId);
-            int extractSignatureTimestamp(const QString &script);
-            int m_signatureTimestamp;
-            QString m_visitorData;
-            QString m_stsRetriedFor; // защита от зацикливания ретрая
-            QString m_lastRequestedVideoId;
-
-            QString extractFunctionSource(const QString &script, const QString &name);
-                QString extractGlobalDefinition(const QString &script, const QString &name);
-                QString resolveDependency(const QString &script, const QString &name);
-                void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
-};
-
-#endif // APIMANAGER_H
 </file>
 
 <file path="SymTube.pro">
@@ -6746,6 +6942,151 @@ OTHER_FILES += \
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)
 qtcAddDeployment()
+</file>
+
+<file path="apimanager.h">
+#ifndef APIMANAGER_H
+#define APIMANAGER_H
+
+#include <QObject>
+#include <QString>
+#include <QVariantMap>
+#include <QVariantList>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QDateTime>
+#include <QStringList>
+#include "qrimageprovider.h"
+
+class Config;
+class ApiManager;
+
+class ApiManager : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent = 0);
+    ~ApiManager();
+
+    static ApiManager* instance();
+
+    Q_INVOKABLE QByteArray downloadImageSync(const QString &url);
+
+    void setProxyPort(quint16 port);
+    void setImageProvider(QrImageProvider *provider);
+
+    // Основные методы
+    Q_INVOKABLE void getHomeVideos(const QString &pageToken = QString());
+    Q_INVOKABLE void getHomeCategoryVideos(const QString &category, const QString &pageToken = QString());
+    Q_INVOKABLE void searchVideos(const QString &query);
+    Q_INVOKABLE void getVideoInfo(const QString &videoId);
+    Q_INVOKABLE void getRelatedVideos(const QString &videoId, const QString &playlistId = QString());
+    Q_INVOKABLE void getChannelVideos(const QString &author);
+    Q_INVOKABLE void getShorts(const QString &sequenceToken = QString());
+    Q_INVOKABLE void getComments(const QString &videoId, const QString &continuationToken = QString());
+
+    // Работа со сторонними API
+    Q_INVOKABLE void fetchAlternativeQualities(const QString &videoId);
+    Q_INVOKABLE void copyToClipboard(const QString &text);
+
+    // Восстановленные методы, работающие напрямую с Google/YouTube API
+    Q_INVOKABLE void getSearchSuggestions(const QString &query);
+    Q_INVOKABLE void getHistory();
+    Q_INVOKABLE void getSubscriptions();
+    Q_INVOKABLE void getAccountInfo();
+    Q_INVOKABLE void checkAuthContent(); // Запрашивает QR-код и опрашивает токен
+    Q_INVOKABLE void fetchServerList();
+
+    // Действия (Лайки, Подписки)
+    Q_INVOKABLE void checkRating(const QString &videoId) { Q_UNUSED(videoId) }
+    Q_INVOKABLE void checkSubscription(const QString &channelIdentifier) { Q_UNUSED(channelIdentifier) }
+    Q_INVOKABLE void rateVideo(const QString &videoId, const QString &rating);
+    Q_INVOKABLE void subscribeToChannel(const QString &channelIdentifier);
+    Q_INVOKABLE void unsubscribeFromChannel(const QString &channelIdentifier);
+    Q_INVOKABLE void logDebug(const QString &msg);
+
+    Q_INVOKABLE void getMyPlaylists();
+    Q_INVOKABLE void getPlaylistDetails(const QString &playlistId, const QString &pageToken = QString());
+    Q_INVOKABLE void getChannelPlaylists(const QString &channelId);
+
+    Q_INVOKABLE void processEvents();
+
+signals:
+    void homeVideosReady(QVariantList videos, QString token);
+    void searchResultsReady(QVariantList videos);
+    void searchSuggestionsReady(QVariantList suggestions);
+    void videoInfoReady(QVariantMap videoDetailsMap);
+    void relatedVideosReady(QVariantList videos);
+    void channelVideosReady(QVariantMap channelDataMap);
+    void shortsReady(QVariantList shortsList, QString seqToken);
+    void historyReady(QVariantList historyList);
+    void subscriptionsReady(QVariantList subscriptions);
+    void accountInfoReady(QVariantMap accountInfo);
+    void authContentReady(QString content, QString type);
+    void authImageReady();
+    void serverListReady(const QStringList &servers);
+    void requestFailed(QString endpoint, QString errorMessage);
+    void videoExtraInfoReady(QVariantMap extraDetails);
+
+    void alternativeQualitiesReady(QString videoId, QVariantList qualities);
+    void commentsReady(QVariantList comments, QString continuationToken);
+    void botBlockDetected();
+
+    void playlistsReady(QVariantList playlists);
+    void playlistDetailsReady(QVariantMap playlistDetails);
+
+private slots:
+    void onReplyFinished(QNetworkReply *reply);
+
+private:
+    void postInnertube(const QString &endpoint, const QVariantMap &payload, const QString &requestType, bool requiresAuth = false);
+    QVariantMap buildContext(const QString &clientName, const QString &clientVersion);
+    QString getLocaleParams(bool firstParam = false);
+
+    QStringList m_pipedInstances;
+    QStringList m_yt2009Instances;
+    void requestPipedStreams(const QString &videoId);
+
+    // Управление токенами OAuth
+    QString getAccessToken();
+    QString m_accessToken;
+    QDateTime m_tokenExpiry;
+    QString m_deviceCode;
+    QString m_userCode;
+    quint16 m_proxyPort;
+    // Вспомогательные функции парсинга
+    QList<QVariantMap> enumerateObjectsWithKey(const QVariant &root, const QString &targetKey);
+    QString extractTextFromField(const QVariantMap &obj, const QString &fieldName);
+    QString extractThumbnailUrl(const QVariantMap &obj, const QString &fieldName);
+
+    QNetworkAccessManager *m_networkManager;
+    Config *m_config;
+    QrImageProvider *m_qrProvider;
+
+    QString m_cachedScriptUrl;
+    QString m_cachedScriptContent;
+    QVariantMap m_pendingVideoDetails;
+    static ApiManager *s_instance;
+
+    // Вспомогательные методы дешифрации n-параметра
+    QString extractNFunctionExpression(const QString &playerScript);
+    QString buildPlayerScriptWithNExport(const QString &playerScript, const QString &nFunctionExpression);
+    QString decryptNParameter(const QString &rawUrl);
+
+    void requestPlayer(const QString &videoId);
+    int extractSignatureTimestamp(const QString &script);
+    int m_signatureTimestamp;
+    QString m_visitorData;
+    QString m_stsRetriedFor; // защита от зацикливания ретрая
+    QString m_lastRequestedVideoId;
+
+    QString extractFunctionSource(const QString &script, const QString &name);
+    QString extractGlobalDefinition(const QString &script, const QString &name);
+    QString resolveDependency(const QString &script, const QString &name);
+    void collectTypeofDeps(const QString &code, QStringList &deps, QStringList &resolvedNames);
+};
+
+#endif // APIMANAGER_H
 </file>
 
 <file path="qml/pages/ShortsPage.qml">
@@ -7323,6 +7664,9 @@ Rectangle {
 #include <QTextStream>
 #include <QDir>
 #include <QRegExp>
+#include <QTimer>
+
+ApiManager* ApiManager::s_instance = NULL;
 
 const QByteArray VR_CLIENT_VERSION = "1.65.10";
 const QByteArray VR_USER_AGENT = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
@@ -7335,9 +7679,51 @@ const QByteArray TV_CLIENT_VERSION = "7.20260114.12.00";
 const QByteArray TV_USER_AGENT = "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold "
 "(unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)";
 
+
+QByteArray ApiManager::downloadImageSync(const QString &urlStr) {
+    QNetworkAccessManager syncManager;
+    QUrl url = QUrl::fromEncoded(urlStr.toUtf8());
+    QNetworkRequest request(url);
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (SymTube; Symbian OS)");
+
+    // ИСПРАВЛЕНИЕ: передаем правильную переменную request вместо несуществующей headRequest
+    QNetworkReply *reply = syncManager.get(request);
+    reply->ignoreSslErrors();
+
+    QEventLoop loop;
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+    timer.start(4000);
+
+    loop.exec();
+
+    QByteArray data;
+    if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+        data = reply->readAll();
+    } else {
+        reply->abort();
+    }
+    reply->deleteLater();
+    return data;
+}
+
+
+
+ApiManager* ApiManager::instance() {
+    return s_instance;
+}
+
+
+
 ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *parent)
     : QObject(parent), m_config(config), m_qrProvider(qrProvider)
 {
+    // Записываем указатель на единственный экземпляр синглтона
+    s_instance = this;
+
     m_networkManager = new QNetworkAccessManager(this);
     connect(m_networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReplyFinished(QNetworkReply*)));
 
@@ -7355,7 +7741,6 @@ ApiManager::ApiManager(Config *config, QrImageProvider *qrProvider, QObject *par
         m_signatureTimestamp = extractSignatureTimestamp(m_cachedScriptContent);
         if (m_signatureTimestamp > 0)
             logDebug(QString("Extracted sts from cached base.js: %1").arg(m_signatureTimestamp));
-
     }
 }
 
@@ -7647,20 +8032,9 @@ void ApiManager::searchVideos(const QString &query) {
 
 void ApiManager::getVideoInfo(const QString &videoId) {
     logDebug(">>> Requesting VideoInfo for ID: " + videoId);
-
-    if (m_signatureTimestamp > 0) {
-        // sts есть — можно сразу делать player-запрос
-        requestPlayer(videoId);
-    } else {
-        // base.js нет — СНАЧАЛА добываем его, потом player-запрос
-        logDebug("No sts available. Fetching watch page first...");
-        QUrl watchUrl("https://www.youtube.com/watch?v=" + videoId);
-        QNetworkRequest req(watchUrl);
-        req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
-        QNetworkReply *watchReply = m_networkManager->get(req);
-        watchReply->setProperty("RequestType", "WatchPageFetch");
-        watchReply->setProperty("PendingVideoId", videoId);
-    }
+    // Больше не скачиваем watch-страницу и base.js для дешифрации n.
+    // Сразу делаем прямой запрос player-информации.
+    requestPlayer(videoId);
 }
 
 void ApiManager::requestPlayer(const QString &videoId) {
@@ -7698,11 +8072,15 @@ void ApiManager::requestPlayer(const QString &videoId) {
     postInnertube("player", payload, "VideoInfo", false);
 }
 
-void ApiManager::getRelatedVideos(const QString &videoId, int page) {
-    Q_UNUSED(page)
+void ApiManager::getRelatedVideos(const QString &videoId, const QString &playlistId) {
     QVariantMap payload;
     payload["context"] = buildContext("WEB", "2.20250101");
-    payload["videoId"] = videoId;
+    if (!videoId.isEmpty()) {
+        payload["videoId"] = videoId;
+    }
+    if (!playlistId.isEmpty()) {
+        payload["playlistId"] = playlistId;
+    }
     postInnertube("next", payload, "RelatedVideos");
 }
 
@@ -7785,6 +8163,14 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     QString requestType = reply->property("RequestType").toString();
     QByteArray responseData = reply->readAll();
 
+
+
+    if (requestType == "PlaylistDetails" || requestType == "RelatedVideos" || requestType == "VideoInfo" || requestType == "HomeVideos") {
+        logDebug(QString("=== [VIDEO PAGE LOG: %1] ===").arg(requestType));
+        logDebug(QString::fromUtf8(responseData));
+        logDebug(QString("=== [END LOG: %1] ===").arg(requestType));
+    }
+
     if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson") {
         logDebug(QString("[Network Error] Request '%1' failed with error: %2 (HTTP Code: %3)")
                  .arg(requestType)
@@ -7821,7 +8207,32 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
     else if (requestType == "PipedStreams") {
         QString videoId = reply->property("VideoId").toString();
         QVariantList qualities;
+        QVariantMap videoDetailsMap;
+        bool hasMeta = false;
+
         if (reply->error() == QNetworkReply::NoError && parseSuccess) {
+            // 1. ИЗВЛЕКАЕМ МЕТАДАННЫЕ ИЗ PIPED (на случай блокировки YouTube)
+            QString title = parsedMap.value("title").toString();
+            if (!title.isEmpty()) {
+                videoDetailsMap["video_id"] = videoId;
+                videoDetailsMap["title"] = title;
+                videoDetailsMap["author"] = parsedMap.value("uploader").toString();
+                videoDetailsMap["description"] = parsedMap.value("description").toString();
+                videoDetailsMap["views"] = QString::number(parsedMap.value("views").toLongLong());
+                videoDetailsMap["published_at"] = parsedMap.value("uploadDate").toString();
+
+                QString avatar = parsedMap.value("uploaderAvatar").toString();
+                if (!avatar.isEmpty()) {
+                    videoDetailsMap["channel_thumbnail"] = avatar;
+                }
+
+                // Специальный флаг-предохранитель для QML
+                videoDetailsMap["is_piped_meta"] = true;
+                hasMeta = true;
+                logDebug("[Piped Meta] Successfully parsed fallback metadata for: " + title);
+            }
+
+            // 2. ИЗВЛЕКАЕМ ПОТОКИ КАСКАДОМ
             QVariantList videoStreams = parsedMap.value("videoStreams").toList();
             foreach(const QVariant &v, videoStreams) {
                 QVariantMap stream = v.toMap();
@@ -7833,8 +8244,19 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                     qualities.append(q);
                 }
             }
+
+            if (!qualities.isEmpty()) {
+                videoDetailsMap["video_url"] = qualities.first().toMap().value("url").toString();
+            }
         }
+
+        // Отдаем качества в плеер
         emit alternativeQualitiesReady(videoId, qualities);
+
+        // Если YouTube был заблокирован, мы отдаем метаданные из Piped в QML
+        if (hasMeta) {
+            emit videoInfoReady(videoDetailsMap);
+        }
     }
     else if (requestType == "CommentsTokenFetch") {
         QString token;
@@ -7923,10 +8345,11 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         QVariantList outVideos;
         QStringList seenIds;
 
-        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        // Важно: парсим tileRenderer (плитки плейлистов/джемов) в первую очередь!
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "tileRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "videoRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
-        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
         renderers.append(enumerateObjectsWithKey(parsedJson, "videoWithContextRenderer"));
 
@@ -7938,6 +8361,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 QVariantMap meta = renderer.value("metadata").toMap().value("lockupMetadataViewModel").toMap();
                 item["title"] = meta.value("title").toMap().value("content").toString();
 
+                // Восстанавливаем разбор авторов, просмотров и дат публикации
                 QVariantList rows = meta.value("metadata").toMap().value("contentMetadataViewModel").toMap().value("metadataRows").toList();
                 if (rows.size() > 0) {
                     QVariantList parts = rows[0].toMap().value("metadataParts").toList();
@@ -7949,6 +8373,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                     if (parts.size() > 1) item["published_at"] = parts[1].toMap().value("text").toMap().value("content").toString();
                 }
 
+                // Восстанавливаем разбор длительности видео
                 QVariantList overlays = renderer.value("contentImage").toMap().value("thumbnailViewModel").toMap().value("overlays").toList();
                 foreach (const QVariant &ov, overlays) {
                     QVariantMap ovMap = ov.toMap();
@@ -7959,15 +8384,32 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 }
             }
             else if (renderer.contains("onSelectCommand")) {
-                QVariantMap endpoint = renderer.value("onSelectCommand").toMap().value("watchEndpoint").toMap();
-                item["video_id"] = endpoint.value("videoId").toString();
+                QVariantMap onSelect = renderer.value("onSelectCommand").toMap();
+                QString videoId = "";
+                QString playlistId = "";
+
+                if (onSelect.contains("watchEndpoint")) {
+                    QVariantMap endpoint = onSelect.value("watchEndpoint").toMap();
+                    videoId = endpoint.value("videoId").toString();
+                    playlistId = endpoint.value("playlistId").toString();
+                } else if (onSelect.contains("watchPlaylistEndpoint")) {
+                    QVariantMap endpoint = onSelect.value("watchPlaylistEndpoint").toMap();
+                    playlistId = endpoint.value("playlistId").toString();
+                    videoId = endpoint.value("videoId").toString();
+                }
+
+                item["video_id"] = videoId;
+                item["playlist_id"] = playlistId;
+
                 QVariantMap meta = renderer.value("metadata").toMap().value("tileMetadataRenderer").toMap();
                 item["title"] = extractTextFromField(meta, "title");
 
                 QVariantList overlays = renderer.value("header").toMap().value("tileHeaderRenderer").toMap().value("thumbnailOverlays").toList();
                 foreach (const QVariant &ov, overlays) {
                     QVariantMap ovMap = ov.toMap();
-                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
+                    if (ovMap.contains("thumbnailOverlayTimeStatusRenderer")) {
+                        item["duration"] = extractTextFromField(ovMap.value("thumbnailOverlayTimeStatusRenderer").toMap(), "text");
+                    }
                 }
 
                 QVariantList lines = meta.value("lines").toList();
@@ -7980,6 +8422,18 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                     int count = items1.size();
                     if (count >= 1) item["published_at"] = extractTextFromField(items1[count - 1].toMap().value("lineItemRenderer").toMap(), "text");
                     if (count >= 3) item["views"] = extractTextFromField(items1[count - 3].toMap().value("lineItemRenderer").toMap(), "text");
+                }
+
+                // Пытаемся извлечь красивую обложку плейлиста
+                QString thumb = extractThumbnailUrl(renderer, "thumbnail");
+                if (thumb.isEmpty() && renderer.contains("header")) {
+                    QVariantMap header = renderer.value("header").toMap();
+                    if (header.contains("tileHeaderRenderer")) {
+                        thumb = extractThumbnailUrl(header.value("tileHeaderRenderer").toMap(), "thumbnail");
+                    }
+                }
+                if (!thumb.isEmpty()) {
+                    item["thumbnail"] = thumb;
                 }
             }
             else {
@@ -7994,11 +8448,25 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
 
             QString videoId = item["video_id"].toString();
-            if (videoId.isEmpty() || seenIds.contains(videoId)) continue;
-            seenIds.append(videoId);
+            QString playlistId = item["playlist_id"].toString();
 
-            item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
-            outVideos.append(item);
+            if (videoId.isEmpty() && playlistId.isEmpty()) continue;
+
+            // ИСПРАВЛЕНИЕ 1: Приоритет отдаем плейлисту. Миксы больше не конфликтуют с видео!
+            QString itemKey = !playlistId.isEmpty() ? ("playlist:" + playlistId) : ("video:" + videoId);
+            if (seenIds.contains(itemKey)) continue;
+            seenIds.append(itemKey);
+
+            // ИСПРАВЛЕНИЕ 2: Если это плейлист/джем, подменяем текст длительности на "Джем"
+            if (!playlistId.isEmpty()) {
+                item["duration"] = "Джем";
+            }
+
+            if (item["thumbnail"].toString().isEmpty() && !videoId.isEmpty()) {
+                item["thumbnail"] = "https://i.ytimg.com/vi/" + videoId + "/mqdefault.jpg";
+            }
+
+            outVideos.prepend(item);
         }
 
         QString nextToken = "";
@@ -8048,6 +8516,36 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 
             emit videoExtraInfoReady(extraDetails);
             emit relatedVideosReady(outVideos);
+
+            // ИСПРАВЛЕНИЕ: Если это джем, извлекаем элементы плейлиста из этого же ответа /next!
+            QList<QVariantMap> playlistRenderers = enumerateObjectsWithKey(parsedJson, "playlistPanelVideoRenderer");
+            if (!playlistRenderers.isEmpty()) {
+                QVariantList playlistVideos;
+                QString playlistTitle = "Playlist";
+
+                QList<QVariantMap> playlistPanels = enumerateObjectsWithKey(parsedJson, "playlistPanelRenderer");
+                if (!playlistPanels.isEmpty()) {
+                    playlistTitle = extractTextFromField(playlistPanels.first(), "title");
+                }
+
+                foreach (QVariantMap pr, playlistRenderers) {
+                    QVariantMap pItem;
+                    pItem["video_id"] = pr.value("videoId").toString();
+                    pItem["title"] = extractTextFromField(pr, "title");
+                    pItem["author"] = extractTextFromField(pr, "shortBylineText");
+                    if (pItem["author"].toString().isEmpty()) {
+                        pItem["author"] = extractTextFromField(pr, "longBylineText");
+                    }
+                    pItem["duration"] = extractTextFromField(pr, "lengthText");
+                    pItem["thumbnail"] = "https://i.ytimg.com/vi/" + pItem["video_id"].toString() + "/mqdefault.jpg";
+                    playlistVideos.prepend(pItem);
+                }
+
+                QVariantMap plDetails;
+                plDetails["videos"] = playlistVideos;
+                plDetails["title"] = playlistTitle;
+                emit playlistDetailsReady(plDetails);
+            }
         }
         else if (requestType == "ChannelVideos") {
             if (outVideos.isEmpty()) {
@@ -8128,26 +8626,16 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         logDebug("Raw Server JSON Response:\n" + QString::fromUtf8(responseData));
         logDebug("============================================================================");
 
-
         QVariantMap root = parsedJson.toMap();
 
-        // Запоминаем visitorData для последующих запросов
         QString vd = root.value("responseContext").toMap().value("visitorData").toString();
         if (!vd.isEmpty()) m_visitorData = vd;
 
-        // Протух base.js/sts? Сервер просит "перезагрузить страницу" —
-        // обновляем base.js и повторяем запрос (один раз на видео)
         QVariantMap playability = root.value("playabilityStatus").toMap();
-
-        if (playability.contains("reason")) {
-            logDebug("Reason of unavailability: " + playability.value("reason").toString());
-        }
-
         QString status = playability.value("status").toString();
         QString reason = playability.value("reason").toString();
         bool isBotBlock = false;
 
-        // Проверяем текстовые упоминания бота/робота/трафика в причине
         if (reason.contains("bot", Qt::CaseInsensitive) ||
                 reason.contains("robot", Qt::CaseInsensitive) ||
                 reason.contains("бот", Qt::CaseInsensitive) ||
@@ -8155,20 +8643,9 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             isBotBlock = true;
         }
 
-        // Проверяем наличие блока капчи (playerCaptchaViewModel) или блокирующегоErrorMessage
         QVariantMap errorScreen = playability.value("errorScreen").toMap();
         if (errorScreen.contains("playerCaptchaViewModel")) {
             isBotBlock = true;
-        }
-        if (errorScreen.contains("playerErrorMessageRenderer")) {
-            QVariantMap errorMessageRenderer = errorScreen.value("playerErrorMessageRenderer").toMap();
-            QString subreason = extractTextFromField(errorMessageRenderer, "subreason");
-            if (subreason.contains("bot", Qt::CaseInsensitive) ||
-                    subreason.contains("robot", Qt::CaseInsensitive) ||
-                    subreason.contains("бот", Qt::CaseInsensitive) ||
-                    subreason.contains("unusual traffic", Qt::CaseInsensitive)) {
-                isBotBlock = true;
-            }
         }
 
         if (isBotBlock) {
@@ -8179,32 +8656,13 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             return;
         }
 
-
         QVariantMap details;
-
         QVariantMap videoDetails = root.value("videoDetails").toMap();
-
-        QString vid = videoDetails.value("videoId").toString();
-        if (vid.isEmpty()) vid = m_lastRequestedVideoId;
-
-        if (status == "UNPLAYABLE" && m_stsRetriedFor != vid) {
-            m_stsRetriedFor = vid;
-            logDebug("UNPLAYABLE received. Refreshing base.js/sts and retrying...");
-            m_cachedScriptContent.clear();
-            m_signatureTimestamp = 0;
-            getVideoInfo(vid);   // уйдёт по ветке WatchPageFetch
-            reply->deleteLater();
-            return;
-        }
-
         details["video_id"] = videoDetails.value("videoId").toString();
+        if (details["video_id"].toString().isEmpty()) details["video_id"] = m_lastRequestedVideoId;
         details["title"] = videoDetails.value("title").toString();
         details["author"] = videoDetails.value("author").toString();
         details["views"] = videoDetails.value("viewCount").toString();
-
-        logDebug(QString("Parsed Metadata -> ID: %1 | Title: %2")
-                 .arg(details["video_id"].toString())
-                 .arg(details["title"].toString()));
 
         QString directUrl = "";
         QVariantMap streamingData = root.value("streamingData").toMap();
@@ -8213,7 +8671,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         for (int i = 0; i < formats.size(); ++i) {
             QVariantMap fmt = formats[i].toMap();
             int itag = fmt.value("itag").toInt();
-            if (itag == 18) { // Ищем 360p
+            if (itag == 18) { // Ищем стандартный поток 360p
                 directUrl = fmt.value("url").toString();
                 break;
             }
@@ -8227,37 +8685,19 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         }
 
         details["video_url"] = directUrl;
-        m_pendingVideoDetails = details; // локальный бэкап
 
-        // Попытка дешифрации n-параметра через уже имеющийся локальный кэш base.js
-        bool decryptedOk = false;
-        if (!m_cachedScriptContent.isEmpty()) {
-            QString decryptedUrl = decryptNParameter(directUrl);
-            if (decryptedUrl != directUrl) {
-                logDebug("Decryption success using cached base.js.");
-                m_pendingVideoDetails["video_url"] = decryptedUrl;
-                decryptedOk = true;
-            }
-        }
+        // ПРОВЕРКА ПОТОКА ЧЕРЕЗ HEAD-ЗАПРОС
+        logDebug("[HEAD Check] Sending HEAD request to verify direct Google Video URL...");
+        QNetworkRequest headRequest((QUrl(directUrl)));
+        headRequest.setRawHeader("User-Agent", TV_USER_AGENT);
+        headRequest.setRawHeader("Referer", "https://www.youtube.com/");
 
-        if (decryptedOk) {
-            // Кэш сработал — запускаем видео мгновенно
-            m_stsRetriedFor.clear();
-            emit videoInfoReady(m_pendingVideoDetails);
-        } else {
-            // Кэша нет или он устарел: скачиваем watch-страницу для поиска актуального base.js
-            logDebug("Local cache is empty or outdated. Fetching watch page to locate base.js...");
-            QUrl watchUrl("https://www.youtube.com/watch?v=" + details["video_id"].toString());
-            QNetworkRequest req(watchUrl);
-            req.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36");
-            QNetworkReply *watchReply = m_networkManager->get(req);
-            watchReply->setProperty("RequestType", "WatchPageFetch");
-
-            // КРИТИЧЕСКИ ВАЖНО: Привязываем детали видео к конкретному сетевому запросу
-            watchReply->setProperty("PendingVideoDetails", details);
-        }
+        QNetworkReply *headReply = m_networkManager->head(headRequest);
+        headReply->setProperty("RequestType", "VideoUrlHeadCheck");
+        headReply->setProperty("PendingVideoDetails", details);
     }
-    else if (requestType == "WatchPageFetch") {
+
+    /*  else if (requestType == "WatchPageFetch") {
         logDebug("Watch page downloaded. Parsing HTML to locate player script...");
         QString html = QString::fromUtf8(responseData);
 
@@ -8360,7 +8800,25 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
                 emit videoInfoReady(pendingDetails);
             }
         }
+    }*/
+
+    else if (requestType == "VideoUrlHeadCheck") {
+        int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        QVariantMap pendingDetails = reply->property("PendingVideoDetails").toMap();
+        QString videoId = pendingDetails.value("video_id").toString();
+
+        logDebug(QString("[HEAD Check] Video %1 returned HTTP code: %2").arg(videoId).arg(httpCode));
+
+        // Если сервер вернул 403 Forbidden, 429 Too Many Requests или произошел сетевой сбой
+        if (httpCode == 403 || httpCode == 401 || httpCode == 429 || reply->error() != QNetworkReply::NoError) {
+            logDebug("[HEAD Check] URL is blocked or throttled (HTTP 403/429)! Triggering fallback.");
+            emit requestFailed("VideoInfo", "BotBlocked");
+        } else {
+            logDebug("[HEAD Check] URL is valid. Emitting videoInfoReady.");
+            emit videoInfoReady(pendingDetails);
+        }
     }
+
     else if (requestType == "Shorts") {
         QVariantList outShorts;
         QString seqToken = "";
@@ -8544,6 +9002,119 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
         }
     }
+
+
+    else if (requestType == "MyPlaylists" || requestType == "ChannelPlaylists") {
+        QVariantList outPlaylists;
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "playlistRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridPlaylistRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "tileRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "lockupViewModel"));
+
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
+            QString playlistId;
+            if (renderer.contains("playlistId")) {
+                playlistId = renderer.value("playlistId").toString();
+            } else if (renderer.contains("contentId")) {
+                playlistId = renderer.value("contentId").toString();
+            }
+
+            if (playlistId.isEmpty()) continue;
+
+            // Исключаем другие типы карточек
+            if (renderer.contains("contentType")) {
+                QString cType = renderer.value("contentType").toString();
+                if (cType.contains("VIDEO") || cType.contains("CHANNEL")) {
+                    continue;
+                }
+            }
+
+            item["playlist_id"] = playlistId;
+            item["title"] = extractTextFromField(renderer, "title");
+            if (item["title"].toString().isEmpty()) {
+                item["title"] = extractTextFromField(renderer, "headline");
+            }
+            if (item["title"].toString().isEmpty()) {
+                item["title"] = "Playlist";
+            }
+
+            QString thumb = extractThumbnailUrl(renderer, "thumbnail");
+            if (thumb.isEmpty() && renderer.contains("header")) {
+                QVariantMap header = renderer.value("header").toMap();
+                if (header.contains("tileHeaderRenderer")) {
+                    thumb = extractThumbnailUrl(header.value("tileHeaderRenderer").toMap(), "thumbnail");
+                }
+            }
+            item["thumbnail"] = thumb;
+
+            QString count = extractTextFromField(renderer, "videoCountText");
+            if (count.isEmpty()) {
+                count = renderer.value("videoCount").toString();
+                if (!count.isEmpty()) count += " videos";
+            }
+            item["video_count_text"] = count;
+
+            outPlaylists.append(item);
+        }
+        emit playlistsReady(outPlaylists);
+    }
+    else if (requestType == "PlaylistDetails") {
+        QVariantMap result;
+        QVariantList outVideos;
+        QStringList seenIds;
+
+        QList<QVariantMap> renderers = enumerateObjectsWithKey(parsedJson, "videoRenderer");
+        renderers.append(enumerateObjectsWithKey(parsedJson, "gridVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "compactVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "playlistVideoRenderer"));
+        renderers.append(enumerateObjectsWithKey(parsedJson, "playlistPanelVideoRenderer"));
+
+        foreach (QVariantMap renderer, renderers) {
+            QVariantMap item;
+            item["video_id"] = renderer.value("videoId").toString();
+            if (item["video_id"].toString().isEmpty()) continue;
+
+            item["title"] = extractTextFromField(renderer, "title");
+            item["author"] = extractTextFromField(renderer, "shortBylineText");
+            if (item["author"].toString().isEmpty()) {
+                item["author"] = extractTextFromField(renderer, "longBylineText");
+            }
+            item["duration"] = extractTextFromField(renderer, "lengthText");
+            if (item["duration"].toString().isEmpty()) {
+                QList<QVariantMap> overlays = enumerateObjectsWithKey(renderer, "thumbnailOverlayTimeStatusRenderer");
+                if (!overlays.isEmpty()) {
+                    item["duration"] = extractTextFromField(overlays.first(), "text");
+                }
+            }
+            item["thumbnail"] = "https://i.ytimg.com/vi/" + item["video_id"].toString() + "/mqdefault.jpg";
+
+            QString videoId = item["video_id"].toString();
+            if (seenIds.contains(videoId)) continue;
+            seenIds.append(videoId);
+
+            outVideos.prepend(item);
+        }
+
+        result["videos"] = outVideos;
+
+        QString plTitle = "Playlist";
+        QList<QVariantMap> sidebar = enumerateObjectsWithKey(parsedJson, "playlistSidebarPrimaryInfoRenderer");
+        if (!sidebar.isEmpty()) {
+            plTitle = extractTextFromField(sidebar.first(), "title");
+            result["description"] = extractTextFromField(sidebar.first(), "description");
+        } else {
+            QList<QVariantMap> header = enumerateObjectsWithKey(parsedJson, "playlistHeaderRenderer");
+            if (!header.isEmpty()) {
+                plTitle = extractTextFromField(header.first(), "title");
+                result["description"] = extractTextFromField(header.first(), "description");
+            }
+        }
+        result["title"] = plTitle;
+
+        emit playlistDetailsReady(result);
+    }
+
     else if (requestType == "ServerList") {
         QStringList servers;
         QString content = QString::fromUtf8(responseData);
@@ -8977,6 +9548,42 @@ QString ApiManager::decryptNParameter(const QString &url)
     logDebug("-------------------------------------------------------------------------");
     return resultUrl;
 }
+
+void ApiManager::getMyPlaylists() {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
+    payload["browseId"] = "FEplaylist_aggregation";
+    postInnertube("browse", payload, "MyPlaylists", true);
+}
+
+void ApiManager::getPlaylistDetails(const QString &playlistId, const QString &pageToken) {
+    QVariantMap payload;
+    payload["context"] = buildContext("TVHTML5", TV_CLIENT_VERSION);
+
+    QString browseId = playlistId;
+    // Добавляем "VL" только если ID не начинается с "VL" и не является джемом "RD"
+    if (!browseId.startsWith("VL") && !browseId.startsWith("RD")) {
+        browseId = "VL" + browseId;
+    }
+    payload["browseId"] = browseId;
+    if (!pageToken.isEmpty()) {
+        payload["continuation"] = pageToken;
+    }
+    postInnertube("browse", payload, "PlaylistDetails", false);
+}
+
+void ApiManager::getChannelPlaylists(const QString &channelId) {
+    QVariantMap payload;
+    payload["context"] = buildContext("WEB", "2.20250101");
+    payload["browseId"] = channelId;
+    // Параметр разметки вкладки плейлистов канала
+    payload["params"] = "EglwbGF5bGlzdHPyBgQKAjoA";
+    postInnertube("browse", payload, "ChannelPlaylists", false);
+}
+
+void ApiManager::processEvents() {
+    qApp->processEvents(); // Немедленно сбрасывает все накопившиеся PaintEvent на экран
+}
 </file>
 
 <file path="main.cpp">
@@ -9066,9 +9673,9 @@ int main(int argc, char *argv[])
     view.setStyleSheet("background: black;");
 
     view.setAttribute(Qt::WA_OpaquePaintEvent);
-    view.setAttribute(Qt::WA_NoSystemBackground);
+    //view.setAttribute(Qt::WA_NoSystemBackground);
     view.viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
-    view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    //view.viewport()->setAttribute(Qt::WA_NoSystemBackground);
 
     QDeclarativeContext *context = view.rootContext();
     context->setContextProperty("CompositorFix", nudger);
@@ -9093,7 +9700,7 @@ int main(int argc, char *argv[])
 </file>
 
 <file path="qml/pages/VideoPage.qml">
-import QtQuick 1.0
+import QtQuick 1.1
 import QtMultimediaKit 1.1
 import "../components"
 
@@ -9102,6 +9709,12 @@ Rectangle {
     color: "black"
 
     property string currentVideoId: ""
+
+    property string currentPlaylistId: ""
+    property variant playlistVideos: []
+    property int currentPlaylistIndex: -1
+    property string playlistTitle: ""
+
     property variant videoDetails: null
     property bool isPlaying: false
     property variant relatedVideos:[]
@@ -9118,13 +9731,98 @@ Rectangle {
     property real sliderDragRatio: 0.0
     property int recoveryAttempts: 0
     property bool isVideoEnded: false
+    property bool hasAttemptedPipedFallback: false
+    property string lastPlaySourceType: "youtube"
 
     property int uiPosition: 0
+
+    focus: true
+
+    Component.onCompleted: {
+        videoPage.forceActiveFocus();
+    }
+
+    Keys.onPressed: {
+        if (event.key === Qt.Key_Space) {
+            if (videoLoader.item) {
+                if (isPlaying) videoLoader.item.pause();
+                else videoLoader.item.play();
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Right) {
+            // Перемотка вперед на 10 секунд
+            if (videoLoader.item) {
+                var targetPosForward = videoLoader.item.position + 10000;
+                videoLoader.item.performSafeSeek(targetPosForward);
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Left) {
+            // Перемотка назад на 10 секунд
+            if (videoLoader.item) {
+                var targetPosBackward = videoLoader.item.position - 10000;
+                videoLoader.item.performSafeSeek(targetPosBackward);
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Up) {
+            // Увеличить громкость
+            var volUp = Math.min(100, VolumeKeys.volume + 10);
+            VolumeKeys.volume = volUp;
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_Down) {
+            // Уменьшить громкость
+            var volDown = Math.max(0, VolumeKeys.volume - 10);
+            VolumeKeys.volume = volDown;
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_N) {
+            // Кнопка N (Next) - следующее видео
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playNextVideo();
+            }
+            event.accepted = true;
+        }
+        else if (event.key === Qt.Key_P) {
+            // Кнопка P (Previous) - предыдущее видео
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playPreviousVideo();
+            }
+            event.accepted = true;
+        }
+    }
 
     Binding {
         target: CompositorFix
         property: "active"
         value: videoPage.isPlaying
+    }
+
+    Timer {
+        id: pipedFallbackTimer
+        interval: 4000 // 4 секунды на загрузку Piped, далее автоматический откат на YouTube
+        repeat: false
+        onTriggered: {
+            console.log("[Piped] Превышено время ожидания. Автоматический откат на YouTube...");
+            playInnerTubeStreamDirectly();
+        }
+    }
+
+    function playInnerTubeStreamDirectly() {
+        if (!videoDetails) return;
+
+        if (Config.enableProxy) {
+            var base64Url = Qt.btoa(videoDetails.video_url);
+            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        } else {
+            videoPage.currentVideoUrl = videoDetails.video_url;
+        }
+
+        videoPage.recoveryAttempts = 0;
+        videoLoader.sourceComponent = undefined;
+        recreateTimer.start();
     }
 
     Timer {
@@ -9182,10 +9880,18 @@ Rectangle {
 
     Connections {
         target: ApiManager
+        onRequestFailed: {
+            if (endpoint === "VideoInfo") {
+                console.log("[Player] C++ сообщил об ошибке доступа (403/бот-блок). Срочный запуск Piped...");
+                handlePlaybackFailure();
+            }
+        }
         onVideoInfoReady: {
-            var temp = {}
+            var temp = {};
             if (videoDetails) {
-                for (var k in videoDetails) temp[k] = videoDetails[k];
+                for (var k in videoDetails) {
+                    temp[k] = videoDetails[k];
+                }
             }
             for (var key in videoDetailsMap) {
                 temp[key] = videoDetailsMap[key];
@@ -9207,31 +9913,63 @@ Rectangle {
                                         "thumbnail": "https://i.ytimg.com/vi/" + videoDetails.video_id + "/mqdefault.jpg"
         });
 
-            if (Config.enableProxy) {
-                var base64Url = Qt.btoa(videoDetails.video_url);
-                videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
-            } else {
-                videoPage.currentVideoUrl = videoDetails.video_url;
+            // ИСПРАВЛЕНИЕ: Запускаем фоновые запросы качеств и комментариев только ОДИН раз
+            // (при первом получении данных от YouTube). Если метаданные пришли от Piped,
+            // этот шаг пропускается во избежание вечного зацикливания сети.
+            if (videoDetailsMap.is_piped_meta === undefined) {
+                ApiManager.fetchAlternativeQualities(videoDetails.video_id);
+                ApiManager.getComments(videoDetails.video_id, "");
             }
 
-            ApiManager.fetchAlternativeQualities(videoDetails.video_id);
-            ApiManager.getComments(videoDetails.video_id, "");
-
-            videoPage.recoveryAttempts = 0;
-            videoLoader.sourceComponent = undefined;
-            recreateTimer.start();
+            // Запускаем проигрывание
+            if (lastPlaySourceType === "piped") {
+                console.log("[Player] Ожидание потоков Piped...");
+                pipedFallbackTimer.start();
+            } else {
+                console.log("[Player] Запуск прямого воспроизведения YouTube...");
+                playInnerTubeStreamDirectly();
+            }
         }
 
         onAlternativeQualitiesReady: {
             if (videoDetails && videoId === videoDetails.video_id) {
                 var temp = {};
-                for (var k in videoDetails) temp[k] = videoDetails[k];
+                for (var k in videoDetails) {
+                    temp[k] = videoDetails[k];
+                }
                 var q = temp["qualities"] || [];
                 for (var i = 0; i < qualities.length; i++) {
                     q.push(qualities[i]);
                 }
                 temp["qualities"] = q;
                 videoDetails = temp;
+
+                // Если активен Piped по умолчанию и плеер ждет ответа от него
+                if (lastPlaySourceType === "piped") {
+                    if (pipedFallbackTimer.running) {
+                        pipedFallbackTimer.stop(); // Потоки получены, отменяем откат на YouTube
+                    }
+
+                    // Ищем первый доступный аудио-видео поток Piped со звуком
+                    var pipedStreamUrl = "";
+                    for (var j = 0; j < q.length; j++) {
+                        if (q[j].label.indexOf("Piped") !== -1 && q[j].hasAudio) {
+                            pipedStreamUrl = q[j].url;
+                            break;
+                        }
+                    }
+
+                    if (pipedStreamUrl !== "") {
+                        console.log("[Player] Piped-поток успешно найден. Запуск...");
+                        videoPage.currentVideoUrl = pipedStreamUrl;
+                        videoPage.recoveryAttempts = 0;
+                        videoLoader.sourceComponent = undefined;
+                        recreateTimer.start();
+                    } else {
+                        console.log("[Player] Piped не вернул рабочих потоков. Запуск отката...");
+                        handlePlaybackFailure();
+                    }
+                }
             }
         }
 
@@ -9260,23 +9998,48 @@ Rectangle {
             relatedVideos = videos;
             mainList.contentY = 0;
         }
+
+        onPlaylistDetailsReady: {
+            if (!videoPage.visible) return;
+
+            playlistVideos = playlistDetails.videos || [];
+            playlistTitle = playlistDetails.title || "Playlist";
+
+            if (playlistVideos.length > 0) {
+                // Если мы открыли плейлист "вслепую" (без стартового videoId)
+                if (currentVideoId === "") {
+                    currentPlaylistIndex = 0;
+                    playPlaylistItem(0);
+                } else {
+                    // Ищем индекс текущего видео внутри плейлиста
+                    var idx = -1;
+                    for (var i = 0; i < playlistVideos.length; i++) {
+                        if (playlistVideos[i].video_id === currentVideoId) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                    currentPlaylistIndex = idx;
+                }
+            }
+        }
     }
 
     function changeQuality(newUrl) {
         var wrappedUrl;
 
-                // Проверяем, является ли ссылка оригинальным потоком Google Video
-                var isGoogleVideo = newUrl.indexOf("googlevideo.com") !== -1;
+        // Проверяем, является ли ссылка оригинальным потоком Google Video
+        var isGoogleVideo = newUrl.indexOf("googlevideo.com") !== -1;
 
-                // Оборачиваем только оригинальные ссылки Google Video и только если прокси включен
-                if (Config.enableProxy && isGoogleVideo) {
-                    var base64Url = Qt.btoa(newUrl);
-                    wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
-                } else {
-                    wrappedUrl = newUrl; // Ссылки от Piped/NotPipe отдаются как есть
-                }
+        // Оборачиваем только оригинальные ссылки Google Video и только если прокси включен
+        if (Config.enableProxy && isGoogleVideo) {
+            var base64Url = Qt.btoa(newUrl);
+            wrappedUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        } else {
+            wrappedUrl = newUrl; // Ссылки от Piped/NotPipe отдаются как есть
+        }
 
-                if (!videoDetails || currentVideoUrl === wrappedUrl) return;
+        if (!videoDetails || currentVideoUrl === wrappedUrl) return;
 
         var pos = 0;
         if (videoLoader.item) {
@@ -9291,19 +10054,130 @@ Rectangle {
         recreateTimer.start();
     }
 
-    function loadVideo(videoId) {
-        currentVideoId = videoId;
-        videoDetails = null;
-        relatedVideos =[];
-        commentsModel = [];
-        firstComment = null;
-        videoPage.currentVideoUrl = "";
-        videoLoader.sourceComponent = undefined;
-        isPlaying = false;
-        isSeeking = false;
-        ApiManager.getVideoInfo(videoId);
-        ApiManager.getRelatedVideos(videoId, 0);
-    }
+    function handlePlaybackFailure() {
+            if (hasAttemptedPipedFallback) {
+                console.log("[Fallback] Обе попытки (YouTube и Piped) провалились. Остановка.");
+                return;
+            }
+
+            hasAttemptedPipedFallback = true;
+
+            if (lastPlaySourceType === "youtube") {
+                lastPlaySourceType = "piped";
+                console.log("[Fallback] YouTube заблокирован. Срочный запуск Piped для: " + currentVideoId);
+
+                var pipedStreamUrl = "";
+                if (videoDetails && videoDetails["qualities"]) {
+                    var q = videoDetails["qualities"];
+                    for (var i = 0; i < q.length; i++) {
+                        if (q[i].label.indexOf("Piped") !== -1 && q[i].hasAudio) {
+                            pipedStreamUrl = q[i].url;
+                            break;
+                        }
+                    }
+                }
+
+                if (pipedStreamUrl !== "") {
+                    videoPage.currentVideoUrl = pipedStreamUrl;
+                    videoPage.recoveryAttempts = 0;
+                    videoLoader.sourceComponent = undefined;
+                    recreateTimer.start();
+                } else {
+                    // ИСПРАВЛЕНИЕ: Принудительно пинаем C++ сделать запрос к Piped,
+                    // так как YouTube упал раньше, чем QML успел отправить этот запрос!
+                    ApiManager.fetchAlternativeQualities(currentVideoId);
+                    pipedFallbackTimer.start();
+                }
+            }
+            else if (lastPlaySourceType === "piped") {
+                lastPlaySourceType = "youtube";
+                console.log("[Fallback] Ошибка Piped. Возврат на YouTube...");
+                playInnerTubeStreamDirectly();
+            }
+        }
+
+    // ==========================================
+        // УНИФИЦИРОВАННЫЙ СБРОС СОСТОЯНИЯ ТРЕКА
+        // ==========================================
+        function resetTrackState() {
+            hasAttemptedPipedFallback = false;
+            lastPlaySourceType = Config.usePiped ? "piped" : "youtube";
+
+            videoDetails = null;
+            relatedVideos = [];
+            commentsModel = [];
+            firstComment = null;
+            videoPage.currentVideoUrl = "";
+            videoLoader.sourceComponent = undefined;
+            isPlaying = false;
+            isSeeking = false;
+
+            pipedFallbackTimer.stop(); // Останавливаем любые запущенные таймеры ожидания
+            videoPage.forceActiveFocus(); // Возвращаем фокус ввода клавиатуры
+        }
+
+        // ==========================================
+        // МЕТОДЫ ЗАГРУЗКИ И ПЕРЕКЛЮЧЕНИЯ ПОТОКОВ
+        // ==========================================
+        function loadVideo(videoId, playlistId) {
+            currentVideoId = videoId || "";
+            currentPlaylistId = playlistId || "";
+
+            // Сбрасываем флаги контроля зацикливания перед каждым новым видео!
+            resetTrackState();
+
+            if (currentPlaylistId !== "") {
+                // Если это автогенерируемый джем (RD...) — запрашиваем его через getRelatedVideos (next)
+                if (currentPlaylistId.indexOf("RD") === 0) {
+                    playlistVideos = [];
+                    currentPlaylistIndex = -1;
+
+                    if (currentVideoId !== "") {
+                        ApiManager.getVideoInfo(currentVideoId);
+                    }
+                    ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+                } else {
+                    // Для обычных плейлистов (PL...) используем стандартный browse
+                    ApiManager.getPlaylistDetails(currentPlaylistId);
+                    if (currentVideoId !== "") {
+                        ApiManager.getVideoInfo(currentVideoId);
+                        ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+                    }
+                }
+            } else {
+                playlistVideos = [];
+                currentPlaylistIndex = -1;
+                playlistTitle = "";
+                ApiManager.getVideoInfo(currentVideoId);
+                ApiManager.getRelatedVideos(currentVideoId, "");
+            }
+        }
+
+    function playPlaylistItem(index) {
+            if (index < 0 || index >= playlistVideos.length) return;
+
+            currentPlaylistIndex = index;
+            var targetVideo = playlistVideos[index];
+
+            // Сбрасываем флаги контроля зацикливания перед переключением трека внутри плейлиста!
+            resetTrackState();
+            currentVideoId = targetVideo.video_id;
+
+            ApiManager.getVideoInfo(targetVideo.video_id);
+            ApiManager.getRelatedVideos(targetVideo.video_id, currentPlaylistId);
+        }
+
+    function playNextVideo() {
+            if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+                playPlaylistItem(currentPlaylistIndex + 1);
+            }
+        }
+
+        function playPreviousVideo() {
+            if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
+                playPlaylistItem(currentPlaylistIndex - 1);
+            }
+        }
 
     Component {
         id: videoComponent
@@ -9339,24 +10213,44 @@ Rectangle {
                         play();
                     }
                 }
-                if (status === Video.InvalidMedia || status === Video.NoMedia || status === Video.EndOfMedia) {
+
+                // ОБНОВЛЕННЫЙ БЛОК:
+                if (status === Video.EndOfMedia) {
+                    if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                        playNextVideo();
+                    } else {
+                        videoPage.isSeeking = false;
+                        videoPage.isPlaying = false;
+                    }
+                }
+                else if (status === Video.InvalidMedia || status === Video.NoMedia) {
                     if (videoPage.recoveryPosition === -1) {
                         videoPage.isSeeking = false;
                         videoPage.isPlaying = false;
+                        handlePlaybackFailure(); // При сбое формата сразу пробуем откат
                     }
                 }
             }
 
             onError: {
+                console.log("[Video] Ошибка воспроизведения: " + errorString);
+
+                // 1. СОХРАНЯЕМ СИСТЕМНОЕ ВОССТАНОВЛЕНИЕ ИЗ ФОНА SYMBIAN:
+                // Если это ошибка -36 (потеря контекста экрана/памяти при сворачивании),
+                // то восстанавливаем плеер на той же секунде (до 3 попыток).
                 if (errorString.indexOf("-36") !== -1 && videoPage.recoveryAttempts < 3) {
+                    console.log("[Video] Обнаружен уход в фон (-36). Перезапуск сессии...");
                     videoPage.recoveryAttempts++;
                     videoPage.recoveryPosition = (lastIntendedPosition !== -1) ? lastIntendedPosition : position;
                     videoLoader.sourceComponent = undefined;
                     recreateTimer.start();
-                } else {
-                    videoPage.isSeeking = false;
-                    videoPage.isPlaying = false;
-                    videoPage.recoveryPosition = -1;
+                }
+                // 2. УМНЫЙ ОТКАТ ДЛЯ ВСЕХ ОСТАЛЬНЫХ ОШИБОК:
+                // Если это сетевая ошибка, битый URL или блокировка со стороны YouTube,
+                // переключаемся на альтернативный источник (Piped или обратно на YouTube).
+                else {
+                    console.log("[Video] Критическая ошибка потока. Запуск переключения источника...");
+                    handlePlaybackFailure();
                 }
             }
 
@@ -9448,17 +10342,59 @@ Rectangle {
 
             Rectangle { anchors.fill: parent; color: "#66000000" }
 
-            SafeImage {
-                anchors.centerIn: parent; width: 64; height: 64
-                source: videoPage.isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
+            // Контейнер элементов управления воспроизведением
+            Row {
+                anchors.centerIn: parent
+                spacing: 32
                 visible: videoPage.pendingSeekSeconds === 0 && !videoPage.isSeeking && (videoLoader.item !== null ? videoLoader.item.status !== Video.Loading : true)
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (!videoLoader.item) return;
-                        if (videoPage.isPlaying) videoLoader.item.pause(); else videoLoader.item.play();
-                        controlsTimer.restart();
+                // Кнопка НАЗАД по плейлисту
+                Image {
+                    source: "../Assets/player/back.png"
+                    width: 40; height: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: currentPlaylistIndex > 0 ? 0.8 : 0.3
+                    visible: currentPlaylistId !== ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            controlsTimer.restart();
+                            playPreviousVideo();
+                        }
+                    }
+                }
+
+                // Центральная кнопка PLAY / PAUSE
+                SafeImage {
+                    width: 64; height: 64
+                    source: videoPage.isPlaying ? "../Assets/player/pause.png" : "../Assets/player/play.png"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (!videoLoader.item) return;
+                            if (videoPage.isPlaying) videoLoader.item.pause(); else videoLoader.item.play();
+                            controlsTimer.restart();
+                        }
+                    }
+                }
+
+                // Кнопка ВПЕРЕД по плейлисту
+                Image {
+                    source: "../Assets/player/skip.png"
+                    width: 40; height: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: currentPlaylistIndex < playlistVideos.length - 1 ? 0.8 : 0.3
+                    visible: currentPlaylistId !== ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            controlsTimer.restart();
+                            playNextVideo();
+                        }
                     }
                 }
             }
@@ -9746,6 +10682,8 @@ Rectangle {
                 }
             }
 
+
+
             // Comments preview
             Item {
                 width: parent.width; height: 110
@@ -9801,7 +10739,7 @@ Rectangle {
         delegate: VideoCard {
             modelData: model.modelData
             onClicked: {
-                root.navigateToVideo(videoId)
+                root.navigateToVideo(videoId, playlistId)
             }
         }
     }
@@ -9998,262 +10936,317 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: VolumeKeys
+
+        onPlayPressed: {
+            if (videoLoader.item) videoLoader.item.play();
+        }
+        onPausePressed: {
+            if (videoLoader.item) videoLoader.item.pause();
+        }
+        onStopPressed: {
+            if (videoLoader.item) videoLoader.item.stop();
+        }
+        onNextPressed: {
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playNextVideo();
+            }
+        }
+        onPreviousPressed: {
+            if (currentPlaylistId !== "" && playlistVideos.length > 0) {
+                playPreviousVideo();
+            }
+        }
+    }
+
+
+    // ==========================================
+    // ПАРЯЩИЙ "ОСТРОВОК" ПЛЕЙЛИСТА (СВЕРНУТЫЙ ВИД)
+    // ==========================================
+    Rectangle {
+        id: playlistFloatingIsland
+        height: 62
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 12
+        radius: 14
+        color: "#F2161616" // Слегка прозрачный темно-серый фон
+        border.color: "#2C2C2C"
+        border.width: 1
+        z: 45 // Поверх основного контента страницы
+
+        // Видим только если запущен плейлист И свернуты панели джема/комментариев
+        visible: currentPlaylistId !== "" && playlistVideos.length > 0 && playlistSheet.state !== "visible" && commentsSheet.state !== "visible" && !root.isFullscreen
+
+        Row {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 14
+
+            // Иконка беспроводного вещания / джема
+            Text {
+                text: "((•))"
+                color: "#3EA6FF"
+                font.pixelSize: 18
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            // Текстовая информация (Что играет дальше)
+            Column {
+                width: parent.width - 86
+                spacing: 2
+                anchors.verticalCenter: parent.verticalCenter
+
+                Text {
+                    text: {
+                        if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+                            return qsTr("Далее: ") + playlistVideos[currentPlaylistIndex + 1].title;
+                        }
+                        return qsTr("Конец плейлиста");
+                    }
+                    color: "white"
+                    font.pixelSize: 13
+                    font.bold: true
+                    elide: Text.ElideRight
+                    width: parent.width
+                }
+
+                Text {
+                    text: "Джем • " + playlistTitle
+                    color: "#AAAAAA"
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                    width: parent.width
+                }
+            }
+
+            // Кнопка развертывания
+            Text {
+                text: "▲"
+                color: "white"
+                font.pixelSize: 13
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                playlistSheet.state = "visible";
+            }
+        }
+    }
+
+    // ==========================================
+    // ВЫДВИЖНАЯ ПАНЕЛЬ ПЛЕЙЛИСТА (РАЗВЕРНУТЫЙ ВИД)
+    // ==========================================
+    Rectangle {
+        id: playlistSheet
+        anchors.fill: parent
+        color: "#B3000000" // Затемнение фона
+        visible: state === "visible"
+        state: "hidden"
+        z: 60 // Выше парящего островка
+
+        states: [
+            State {
+                name: "visible"
+                PropertyChanges { target: playlistPanel; y: root.height - playlistPanel.height }
+            },
+            State {
+                name: "hidden"
+                PropertyChanges { target: playlistPanel; y: root.height }
+            }
+        ]
+        transitions: Transition {
+            NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutQuad }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: playlistSheet.state = "hidden"
+        }
+
+        Rectangle {
+            id: playlistPanel
+            width: parent.width
+            height: root.isFullscreen ? parent.height : (parent.height - (root.isLandscape ? parent.height * 0.6 : parent.width * 0.5625))
+            anchors.bottom: parent.bottom
+            color: "#161616"
+            radius: 16
+
+            MouseArea { anchors.fill: parent } // Блокировка кликов сквозь панель
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                // Шапка панели
+                Row {
+                    width: parent.width
+                    spacing: 12
+
+                    Text {
+                        text: "((•))"
+                        color: "#3EA6FF"
+                        font.pixelSize: 20
+                        font.bold: true
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Column {
+                        width: parent.width - 64
+                        spacing: 2
+                        Text {
+                            text: playlistTitle
+                            color: "white"
+                            font.pixelSize: 16
+                            font.bold: true
+                            elide: Text.ElideRight
+                            width: parent.width
+                        }
+                        Text {
+                            text: qsTr("Плейлист • Создан специально для вас")
+                            color: "gray"
+                            font.pixelSize: 12
+                        }
+                    }
+
+                    // Кнопка закрытия панели
+                    Text {
+                        text: "✕"
+                        color: "white"
+                        font.pixelSize: 20
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: playlistSheet.state = "hidden"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#2C2C2C"
+                }
+
+                // Вертикальный список воспроизведения
+                ListView {
+                    id: playlistVerticalList
+                    width: parent.width
+                    height: parent.height - 70
+                    model: playlistVideos
+                    clip: true
+                    spacing: 10
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Rectangle {
+                        width: playlistVerticalList.width
+                        height: 76
+                        color: currentPlaylistIndex === index ? "#262626" : "transparent"
+                        radius: 8
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 12
+
+                            // Драг-хэндл маркер
+                            Text {
+                                text: "＝"
+                                color: "#444444"
+                                font.pixelSize: 15
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            // Превью трека
+                            Rectangle {
+                                width: 110
+                                height: 62
+                                color: "black"
+                                radius: 6
+                                clip: true
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Image {
+                                    anchors.fill: parent
+                                    source: modelData.thumbnail || ""
+                                    fillMode: Image.PreserveAspectCrop
+                                }
+
+                                Rectangle {
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 4
+                                    color: "#CC000000"
+                                    radius: 3
+                                    width: tText.width + 8
+                                    height: tText.height + 4
+                                    visible: modelData.duration !== ""
+
+                                    Text {
+                                        id: tText
+                                        anchors.centerIn: parent
+                                        text: modelData.duration || ""
+                                        color: "white"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            // Метаданные трека
+                            Column {
+                                width: parent.width - 164
+                                spacing: 4
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    text: modelData.title || ""
+                                    color: currentPlaylistIndex === index ? "#3EA6FF" : "white"
+                                    font.pixelSize: 13
+                                    font.bold: currentPlaylistIndex === index
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.WordWrap
+                                    width: parent.width
+                                }
+
+                                Text {
+                                    text: modelData.author || ""
+                                    color: "gray"
+                                    font.pixelSize: 11
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                playPlaylistItem(index);
+                                playlistSheet.state = "hidden";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
-</file>
-
-<file path="Makefile">
-#############################################################################
-# Makefile for building: SymTube
-# Generated by qmake (2.01a) (Qt 4.7.3) on: ?? 7. ??? 15:43:07 2026
-# Project:  SymTube.pro
-# Template: app
-# Command: c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc -o bld.inf SymTube.pro
-#############################################################################
-
-MAKEFILE          = Makefile
-QMAKE             = c:\qtsdk\symbian\sdks\symbian3qt473\bin\qmake.exe
-DEL_FILE          = del 2> NUL
-DEL_DIR           = rmdir
-CHK_DIR_EXISTS    = if not exist
-MKDIR             = mkdir
-MOVE              = move
-DEBUG_PLATFORMS   = winscw gcce armv5 armv6
-RELEASE_PLATFORMS = gcce armv5 armv6
-MAKE              = make
-SBS               = sbs
-
-DEFINES	 = -DSYMBIAN -DUNICODE -DQT_KEYPAD_NAVIGATION -DQT_SOFTKEYS_ENABLED -DQT_USE_MATH_H_FLOATS -DQT_NO_DEBUG -DQT_DECLARATIVE_LIB -DQT_SCRIPT_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
-INCPATH	 =  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtCore"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtNetwork"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtGui"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtOpenGL"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtScript"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtDeclarative"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/include/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/mkspecs/common/symbian"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/sys"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/qmlapplicationviewer"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/loc/sc"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/platform/mw/loc/sc"  -I"C:/QtMobility"  -I"C:/QtMultimediaKit"  -I"C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/include/stdapis/stlportv5"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/moc"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived"  -I"C:/Users/User/Documents/GitHub/SymTube-Revived/ui" 
-first: default
-
-all: debug release
-
-default: debug-winscw
-qmake:
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
-
-bld.inf: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
-
-c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc: 
-	$(QMAKE) "C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro"  -spec c:\QtSDK\Symbian\SDKs\Symbian3Qt473\mkspecs\symbian-sbsv2 CONFIG+=release -after  OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc OBJECTS_DIR=obj MOC_DIR=moc UI_DIR=ui RCC_DIR=rcc
-
-debug: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
-clean-debug: bld.inf
-	$(SBS) reallyclean --toolcheck=off -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
-freeze-debug: bld.inf
-	$(SBS) freeze -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1
-release: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
-clean-release: bld.inf
-	$(SBS) reallyclean --toolcheck=off -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
-freeze-release: bld.inf
-	$(SBS) freeze -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
-
-debug-winscw: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c winscw_udeb.mwccinc
-clean-debug-winscw: bld.inf
-	$(SBS) reallyclean -c winscw_udeb.mwccinc
-freeze-debug-winscw: bld.inf
-	$(SBS) freeze -c winscw_udeb.mwccinc
-debug-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v5.udeb.gcce4_4_1
-clean-debug-gcce: bld.inf
-	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
-freeze-debug-gcce: bld.inf
-	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-debug-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c armv5_udeb
-clean-debug-armv5: bld.inf
-	$(SBS) reallyclean -c armv5_udeb
-freeze-debug-armv5: bld.inf
-	$(SBS) freeze -c armv5_udeb
-debug-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c armv6_udeb
-clean-debug-armv6: bld.inf
-	$(SBS) reallyclean -c armv6_udeb
-freeze-debug-armv6: bld.inf
-	$(SBS) freeze -c armv6_udeb
-release-gcce: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v5.urel.gcce4_4_1
-clean-release-gcce: bld.inf
-	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
-freeze-release-gcce: bld.inf
-	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-release-armv5: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c armv5_urel
-clean-release-armv5: bld.inf
-	$(SBS) reallyclean -c armv5_urel
-freeze-release-armv5: bld.inf
-	$(SBS) freeze -c armv5_urel
-release-armv6: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c armv6_urel
-clean-release-armv6: bld.inf
-	$(SBS) reallyclean -c armv6_urel
-freeze-release-armv6: bld.inf
-	$(SBS) freeze -c armv6_urel
-debug-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v5.udeb.gcce4_4_1
-clean-debug-armv5-gcce4.4.1: bld.inf
-	$(SBS) reallyclean -c arm.v5.udeb.gcce4_4_1
-freeze-debug-armv5-gcce4.4.1: bld.inf
-	$(SBS) freeze -c arm.v5.udeb.gcce4_4_1
-release-armv5-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v5.urel.gcce4_4_1
-clean-release-armv5-gcce4.4.1: bld.inf
-	$(SBS) reallyclean -c arm.v5.urel.gcce4_4_1
-freeze-release-armv5-gcce4.4.1: bld.inf
-	$(SBS) freeze -c arm.v5.urel.gcce4_4_1
-debug-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v6.udeb.gcce4_4_1
-clean-debug-armv6-gcce4.4.1: bld.inf
-	$(SBS) reallyclean -c arm.v6.udeb.gcce4_4_1
-freeze-debug-armv6-gcce4.4.1: bld.inf
-	$(SBS) freeze -c arm.v6.udeb.gcce4_4_1
-release-armv6-gcce4.4.1: c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc bld.inf
-	$(SBS) -c arm.v6.urel.gcce4_4_1
-clean-release-armv6-gcce4.4.1: bld.inf
-	$(SBS) reallyclean -c arm.v6.urel.gcce4_4_1
-freeze-release-armv6-gcce4.4.1: bld.inf
-	$(SBS) freeze -c arm.v6.urel.gcce4_4_1
-
-export: bld.inf
-	$(SBS) export -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1 -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
-
-cleanexport: bld.inf
-	$(SBS) cleanexport -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1 -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
-
-freeze: freeze-release
-
-check: first
-
-run:
-	call C:/QtSDK/Symbian/SDKs/Symbian3Qt473/epoc32/release/winscw/udeb/SymTube.exe $(QT_RUN_OPTIONS)
-
-runonphone: sis
-	runonphone $(QT_RUN_ON_PHONE_OPTIONS) --sis SymTube.sis SymTube.exe $(QT_RUN_OPTIONS)
-
-SymTube_template.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
-	$(MAKE) -f $(MAKEFILE) qmake
-
-SymTube_installer.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
-	$(MAKE) -f $(MAKEFILE) qmake
-
-SymTube_stub.pkg: C:/Users/User/Documents/GitHub/SymTube-Revived/SymTube.pro
-	$(MAKE) -f $(MAKEFILE) qmake
-
-sis: SymTube_template.pkg
-	$(if $(wildcard .make.cache), $(MAKE) -f $(MAKEFILE) ok_sis MAKEFILES=.make.cache , $(if $(QT_SIS_TARGET), $(MAKE) -f $(MAKEFILE) ok_sis , $(MAKE) -f $(MAKEFILE) fail_sis_nocache ) )
-
-ok_sis:
-	createpackage -g $(QT_SIS_OPTIONS) SymTube_template.pkg $(QT_SIS_TARGET) $(QT_SIS_CERTIFICATE) $(QT_SIS_KEY) $(QT_SIS_PASSPHRASE)
-
-unsigned_sis: SymTube_template.pkg
-	$(if $(wildcard .make.cache), $(MAKE) -f $(MAKEFILE) ok_unsigned_sis MAKEFILES=.make.cache , $(if $(QT_SIS_TARGET), $(MAKE) -f $(MAKEFILE) ok_unsigned_sis , $(MAKE) -f $(MAKEFILE) fail_sis_nocache ) )
-
-ok_unsigned_sis:
-	createpackage -g $(QT_SIS_OPTIONS) -o SymTube_template.pkg $(QT_SIS_TARGET)
-
-SymTube.sis:
-	$(MAKE) -f $(MAKEFILE) sis
-
-installer_sis: SymTube_installer.pkg sis
-	$(MAKE) -f $(MAKEFILE) ok_installer_sis
-
-ok_installer_sis: SymTube_installer.pkg
-	createpackage $(QT_SIS_OPTIONS) SymTube_installer.pkg - $(QT_SIS_CERTIFICATE) $(QT_SIS_KEY) $(QT_SIS_PASSPHRASE)
-
-unsigned_installer_sis: SymTube_installer.pkg unsigned_sis
-	$(MAKE) -f $(MAKEFILE) ok_unsigned_installer_sis
-
-ok_unsigned_installer_sis: SymTube_installer.pkg
-	createpackage $(QT_SIS_OPTIONS) -o SymTube_installer.pkg
-
-fail_sis_nocache:
-	$(error Project has to be built or QT_SIS_TARGET environment variable has to be set before calling 'SIS' target)
-
-stub_sis: SymTube_stub.pkg
-	$(if $(wildcard .make.cache), $(MAKE) -f $(MAKEFILE) ok_stub_sis MAKEFILES=.make.cache , $(if $(QT_SIS_TARGET), $(MAKE) -f $(MAKEFILE) ok_stub_sis , $(MAKE) -f $(MAKEFILE) fail_sis_nocache ) )
-
-ok_stub_sis:
-	createpackage -s $(QT_SIS_OPTIONS) SymTube_stub.pkg $(QT_SIS_TARGET) $(QT_SIS_CERTIFICATE) $(QT_SIS_KEY) $(QT_SIS_PASSPHRASE)
-
-deploy: sis
-	call SymTube.sis
-
-mocclean: compiler_moc_header_clean compiler_moc_source_clean
-
-mocables: compiler_moc_header_make_all compiler_moc_source_make_all
-
-compiler_moc_header_make_all: moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_historymanager.cpp moc\moc_volumekeysobserver.cpp moc\moc_qsymbianapplication.cpp moc\moc_translationmanager.cpp moc\moc_localhttpproxy.cpp moc\moc_compositornudger.cpp moc\moc_qmlapplicationviewer.cpp
-compiler_moc_header_clean:
-	-$(DEL_FILE) moc\moc_config.cpp moc\moc_apimanager.cpp moc\moc_historymanager.cpp moc\moc_volumekeysobserver.cpp moc\moc_qsymbianapplication.cpp moc\moc_translationmanager.cpp moc\moc_localhttpproxy.cpp moc\moc_compositornudger.cpp moc\moc_qmlapplicationviewer.cpp
-moc\moc_config.cpp: config.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\config.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_config.cpp
-
-moc\moc_apimanager.cpp: qrimageprovider.h \
-		apimanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\apimanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_apimanager.cpp
-
-moc\moc_historymanager.cpp: historymanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\historymanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_historymanager.cpp
-
-moc\moc_volumekeysobserver.cpp: volumekeysobserver.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\volumekeysobserver.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_volumekeysobserver.cpp
-
-moc\moc_qsymbianapplication.cpp: qsymbianapplication.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qsymbianapplication.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qsymbianapplication.cpp
-
-moc\moc_translationmanager.cpp: translationmanager.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\translationmanager.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_translationmanager.cpp
-
-moc\moc_localhttpproxy.cpp: localhttpproxy.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\localhttpproxy.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_localhttpproxy.cpp
-
-moc\moc_compositornudger.cpp: compositornudger.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\compositornudger.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_compositornudger.cpp
-
-moc\moc_qmlapplicationviewer.cpp: qmlapplicationviewer\qmlapplicationviewer.h
-	C:\QtSDK\Symbian\SDKs\Symbian3Qt473\bin\moc.exe $(DEFINES) $(INCPATH) -DSYMBIAN c:\Users\User\Documents\GitHub\SymTube-Revived\qmlapplicationviewer\qmlapplicationviewer.h -o c:\Users\User\Documents\GitHub\SymTube-Revived\moc\moc_qmlapplicationviewer.cpp
-
-compiler_rcc_make_all:
-compiler_rcc_clean:
-compiler_image_collection_make_all: ui\qmake_image_collection.cpp
-compiler_image_collection_clean:
-	-$(DEL_FILE) ui\qmake_image_collection.cpp
-compiler_moc_source_make_all:
-compiler_moc_source_clean:
-compiler_uic_make_all:
-compiler_uic_clean:
-compiler_yacc_decl_make_all:
-compiler_yacc_decl_clean:
-compiler_yacc_impl_make_all:
-compiler_yacc_impl_clean:
-compiler_lex_make_all:
-compiler_lex_clean:
-compiler_clean: compiler_moc_header_clean 
-
-dodistclean:
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_template.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_stub.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_installer.pkg"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\Makefile"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_exe.mmp"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube_reg.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.rss"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\SymTube.loc"
-	-@ if EXIST "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf" $(DEL_FILE)  "c:\Users\User\Documents\GitHub\SymTube-Revived\bld.inf"
-
-distclean: clean dodistclean
-
-clean: bld.inf
-	-$(SBS) reallyclean --toolcheck=off -c winscw_udeb.mwccinc -c arm.v5.udeb.gcce4_4_1 -c arm.v6.udeb.gcce4_4_1 -c arm.v5.urel.gcce4_4_1 -c arm.v6.urel.gcce4_4_1
 </file>
 
 <file path="SymTube_exe.mmp">
 // ==============================================================================
-// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
+// Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-08T21:10:30
 // This file is generated by qmake and should not be modified by the
 // user.
 //  Name        : SymTube_exe.mmp
@@ -10396,7 +11389,7 @@ STDCPP
 
 <file path="SymTube_reg.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-08T21:10:30
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10417,7 +11410,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.loc">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-08T21:10:30
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================
@@ -10433,7 +11426,7 @@ RESOURCE APP_REGISTRATION_INFO
 
 <file path="SymTube.rss">
 // ============================================================================
-// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-07T15:43:07
+// * Generated by qmake (2.01a) (Qt 4.7.3) on: 2026-07-08T21:10:30
 // * This file is generated by qmake and should not be modified by the
 // * user.
 // ============================================================================

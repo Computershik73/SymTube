@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QMutex>
 #include <QTimer>
+#include "apimanager.h"
 
 // Глобальный мьютекс для сериализации сетевых запросов.
 // Спасает от падений OpenSSL при попытке одновременного скачивания по HTTPS.
@@ -25,7 +26,7 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
 {
     QString decodedId = QUrl::fromPercentEncoding(id.toUtf8());
 
-    // 1. БЕЗОПАСНО проверяем кэш
+    // 1. Проверяем локальный кэш картинок
     m_mutex.lock();
     if (QImage *cachedImg = m_cache.object(decodedId)) {
         QImage result = *cachedImg;
@@ -37,46 +38,30 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
 
     QImage originalImage;
 
-    // 2. Скачивание изображения (в фоновом потоке от QML)
+    // 2. Скачивание изображения (БЕЗОПАСНЫЙ СИНХРОННЫЙ ВЫЗОВ ГЛАВНОГО ПОТОКА)
     if (decodedId.startsWith("http://") || decodedId.startsWith("https://")) {
+        QByteArray imgData;
+        ApiManager *api = ApiManager::instance();
 
-        s_networkMutex.lock();
+        if (api) {
+            // Вызываем метод скачивания на ГЛАВНОМ GUI-потоке,
+            // фоновый поток рендеринга QML безопасно блокируется и ждет результат.
+            QMetaObject::invokeMethod(api, "downloadImageSync",
+                                      Qt::BlockingQueuedConnection,
+                                      Q_RETURN_ARG(QByteArray, imgData),
+                                      Q_ARG(QString, decodedId));
+        }
 
-            QNetworkAccessManager manager;
-            manager.setParent(0);
-            QUrl requestUrl = QUrl::fromEncoded(decodedId.toUtf8());
-            QNetworkReply *reply = manager.get(QNetworkRequest(requestUrl));
-            reply->ignoreSslErrors();
-
-            // Предохранитель: прерываем ожидание, если картинка не скачалась за 5 секунд
-            QEventLoop loop;
-            QTimer timeoutTimer;
-            timeoutTimer.setSingleShot(true);
-            QObject::connect(&timeoutTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
-            QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-            timeoutTimer.start(5000);
-
-            loop.exec();
-
-            if (reply->isRunning()) {
-                reply->abort();
-            } else if (reply->error() == QNetworkReply::NoError) {
-                originalImage.loadFromData(reply->readAll());
-            }
-
-            reply->disconnect();
-            delete reply;
-
-            s_networkMutex.unlock();
-
-
+        if (!imgData.isEmpty()) {
+            originalImage.loadFromData(imgData);
+        }
     } else if (decodedId.startsWith("qrc:/")) {
         originalImage.load(":" + decodedId.mid(4));
     } else {
         originalImage.load(decodedId);
     }
 
-    // Заглушка: если картинка не загрузилась (нет сети), возвращаем прозрачный фон
+    // Заглушка при отсутствии сети
     if (originalImage.isNull()) {
         int w = requestedSize.isValid() ? requestedSize.width() : 64;
         int h = requestedSize.isValid() ? requestedSize.height() : 64;
@@ -85,17 +70,16 @@ QImage RoundedImageProvider::requestImage(const QString &id, QSize *size, const 
         return empty;
     }
 
-    // 3. Скругляем (сглаживание Antialiasing применяется внутри roundImage)
+    // 3. Скругляем оригинальное изображение
     QImage rounded = roundImage(originalImage);
 
-    // Масштабируем до требуемого размера (запрошенного QML)
     if (requestedSize.isValid()) {
         rounded = rounded.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
 
     if (size) *size = rounded.size();
 
-    // 4. БЕЗОПАСНО сохраняем готовую круглую картинку в кэш
+    // 4. Сохраняем в кэш
     m_mutex.lock();
     m_cache.insert(decodedId, new QImage(rounded), rounded.byteCount());
     m_mutex.unlock();
