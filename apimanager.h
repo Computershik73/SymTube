@@ -10,6 +10,35 @@
 #include <QDateTime>
 #include <QStringList>
 #include "qrimageprovider.h"
+#include <QPointer>
+#include <QTimer>
+
+// Хелпер таймаута: в Qt 4.7 QNetworkReply::abort() не является слотом,
+// поэтому connect(timer, timeout, reply, abort()) не работает.
+class ReplyTimeoutHelper : public QObject
+{
+    Q_OBJECT
+public:
+    ReplyTimeoutHelper(QNetworkReply *reply, int ms)
+        : QObject(reply), m_reply(reply)
+    {
+        QTimer *t = new QTimer(this);
+        t->setSingleShot(true);
+        connect(t, SIGNAL(timeout()), this, SLOT(onTimeout()));
+        connect(reply, SIGNAL(finished()), t, SLOT(stop()));
+        t->start(ms);
+    }
+
+private slots:
+    void onTimeout() {
+        if (m_reply && m_reply->isRunning()) {
+            m_reply->abort();  // вызовет finished() с ошибкой OperationCanceledError
+        }
+    }
+
+private:
+    QPointer<QNetworkReply> m_reply;
+};
 
 class Config;
 class ApiManager;
@@ -64,6 +93,8 @@ public:
 
     Q_INVOKABLE void processEvents();
 
+    void armTimeout(QNetworkReply *reply, int ms = 15000);
+
 signals:
     void homeVideosReady(QVariantList videos, QString token);
     void searchResultsReady(QVariantList videos);
@@ -98,7 +129,7 @@ private:
 
     QStringList m_pipedInstances;
     QStringList m_yt2009Instances;
-    void requestPipedStreams(const QString &videoId);
+    void requestPipedStreams(const QString &videoId, int attempt = 0);
 
     // Управление токенами OAuth
     QString getAccessToken();

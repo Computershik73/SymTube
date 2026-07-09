@@ -31,6 +31,7 @@ Rectangle {
     property bool isVideoEnded: false
     property bool hasAttemptedPipedFallback: false
     property string lastPlaySourceType: "youtube"
+    property variant pendingQualities: null
 
     property int uiPosition: 0
 
@@ -38,6 +39,16 @@ Rectangle {
 
     Component.onCompleted: {
         videoPage.forceActiveFocus();
+    }
+
+    Timer {
+        id: stallWatchdog
+        interval: 12000; repeat: false
+        onTriggered: {
+            console.log("[Watchdog] Поток завис, переключаю источник");
+            videoPage.isSeeking = false;
+            handlePlaybackFailure();
+        }
     }
 
     Keys.onPressed: {
@@ -111,11 +122,18 @@ Rectangle {
     function playInnerTubeStreamDirectly() {
         if (!videoDetails) return;
 
-        if (Config.enableProxy) {
-            var base64Url = Qt.btoa(videoDetails.video_url);
-            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + base64Url;
+        if (!videoDetails.video_url) {
+            console.log("[Player] Нет прямого YouTube-URL (бот-блок). Прямое воспроизведение невозможно.");
+            return;
+        }
+
+
+        var rawUrl = videoDetails.video_url;
+        var isGoogleVideo = rawUrl.indexOf("googlevideo.com") !== -1;
+        if (Config.enableProxy && isGoogleVideo) {
+            videoPage.currentVideoUrl = "http://127.0.0.1:8081/?url=" + Qt.btoa(rawUrl);
         } else {
-            videoPage.currentVideoUrl = videoDetails.video_url;
+            videoPage.currentVideoUrl = rawUrl;
         }
 
         videoPage.recoveryAttempts = 0;
@@ -185,6 +203,14 @@ Rectangle {
             }
         }
         onVideoInfoReady: {
+            // Отбрасываем опоздавшие ответы от предыдущего трека
+            if (videoDetailsMap.video_id !== undefined && videoDetailsMap.video_id !== "" &&
+                    currentVideoId !== "" && videoDetailsMap.video_id !== currentVideoId) {
+                console.log("[Player] Отброшен устаревший videoInfo для " + videoDetailsMap.video_id);
+                return;
+            }
+
+
             var temp = {};
             if (videoDetails) {
                 for (var k in videoDetails) {
@@ -195,12 +221,14 @@ Rectangle {
                 temp[key] = videoDetailsMap[key];
             }
 
-            var initialQualities = [{
-                                    label: "360p (InnerTube)",
-                                    url: temp.video_url,
-                                    hasAudio: true
-        }];
-            temp["qualities"] = initialQualities;
+            if (videoDetailsMap.meta_only === undefined) {
+                var initialQualities = [{
+                                        label: "360p (InnerTube)",
+                                        url: temp.video_url,
+                                        hasAudio: true
+            }];
+                temp["qualities"] = initialQualities;
+            }
 
             videoDetails = temp;
 
@@ -214,61 +242,47 @@ Rectangle {
             // ИСПРАВЛЕНИЕ: Запускаем фоновые запросы качеств и комментариев только ОДИН раз
             // (при первом получении данных от YouTube). Если метаданные пришли от Piped,
             // этот шаг пропускается во избежание вечного зацикливания сети.
-            if (videoDetailsMap.is_piped_meta === undefined) {
+            if (videoDetailsMap.is_piped_meta === undefined && videoDetailsMap.meta_only === undefined) {
                 ApiManager.fetchAlternativeQualities(videoDetails.video_id);
                 ApiManager.getComments(videoDetails.video_id, "");
             }
 
-            // Запускаем проигрывание
-            if (lastPlaySourceType === "piped") {
-                console.log("[Player] Ожидание потоков Piped...");
-                pipedFallbackTimer.start();
-            } else {
-                console.log("[Player] Запуск прямого воспроизведения YouTube...");
-                playInnerTubeStreamDirectly();
+            // При meta_only воспроизведение НЕ запускаем: следом придёт requestFailed,
+            // и handlePlaybackFailure сам запустит Piped-фолбэк
+            if (videoDetailsMap.meta_only === undefined) {
+                // Запускаем проигрывание
+                if (lastPlaySourceType === "piped") {
+                    console.log("[Player] Ожидание потоков Piped...");
+                    pipedFallbackTimer.start();
+                } else {
+                    console.log("[Player] Запуск прямого воспроизведения YouTube...");
+                    playInnerTubeStreamDirectly();
+                }
+            }
+
+            // Вливаем качества, пришедшие раньше метаданных (гонка при бот-блоке).
+            // Важно: именно ПОСЛЕ блока запуска — applyQualities остановит
+            // pipedFallbackTimer и сразу запустит Piped-поток, если он есть.
+            if (pendingQualities !== null) {
+                var pq = pendingQualities;
+                pendingQualities = null;
+                applyQualities(pq);
             }
         }
 
         onAlternativeQualitiesReady: {
-            if (videoDetails && videoId === videoDetails.video_id) {
-                var temp = {};
-                for (var k in videoDetails) {
-                    temp[k] = videoDetails[k];
+            if (qualities === undefined || qualities === null) {
+                    console.log("[Player] alternativeQualitiesReady пришёл без списка качеств, игнорирую");
+                    return;
                 }
-                var q = temp["qualities"] || [];
-                for (var i = 0; i < qualities.length; i++) {
-                    q.push(qualities[i]);
+            // videoDetails ещё не создан (бот-блок: качества пришли раньше меты) — буферизуем
+            if (!videoDetails || videoId !== videoDetails.video_id) {
+                if (videoId === currentVideoId) {
+                    pendingQualities = qualities;
                 }
-                temp["qualities"] = q;
-                videoDetails = temp;
-
-                // Если активен Piped по умолчанию и плеер ждет ответа от него
-                if (lastPlaySourceType === "piped") {
-                    if (pipedFallbackTimer.running) {
-                        pipedFallbackTimer.stop(); // Потоки получены, отменяем откат на YouTube
-                    }
-
-                    // Ищем первый доступный аудио-видео поток Piped со звуком
-                    var pipedStreamUrl = "";
-                    for (var j = 0; j < q.length; j++) {
-                        if (q[j].label.indexOf("Piped") !== -1 && q[j].hasAudio) {
-                            pipedStreamUrl = q[j].url;
-                            break;
-                        }
-                    }
-
-                    if (pipedStreamUrl !== "") {
-                        console.log("[Player] Piped-поток успешно найден. Запуск...");
-                        videoPage.currentVideoUrl = pipedStreamUrl;
-                        videoPage.recoveryAttempts = 0;
-                        videoLoader.sourceComponent = undefined;
-                        recreateTimer.start();
-                    } else {
-                        console.log("[Player] Piped не вернул рабочих потоков. Запуск отката...");
-                        handlePlaybackFailure();
-                    }
-                }
+                return;
             }
+            applyQualities(qualities);
         }
 
         onCommentsReady: {
@@ -300,16 +314,34 @@ Rectangle {
         onPlaylistDetailsReady: {
             if (!videoPage.visible) return;
 
-            playlistVideos = playlistDetails.videos || [];
-            playlistTitle = playlistDetails.title || "Playlist";
+            var incoming = playlistDetails.videos || [];
 
             if (playlistVideos.length > 0) {
-                // Если мы открыли плейлист "вслепую" (без стартового videoId)
+                // Джем уже загружен: YouTube пересортировывает микс вокруг нового
+                // якорного видео — порядок НЕ трогаем, только доливаем новые треки
+                var existing = {};
+                for (var e = 0; e < playlistVideos.length; e++) {
+                    existing[playlistVideos[e].video_id] = true;
+                }
+                var merged = playlistVideos;
+                var added = false;
+                for (var n = 0; n < incoming.length; n++) {
+                    if (!existing[incoming[n].video_id]) {
+                        merged.push(incoming[n]);
+                        added = true;
+                    }
+                }
+                if (added) playlistVideos = merged; // переприсваивание дёргает биндинги
+            } else {
+                playlistVideos = incoming;
+                playlistTitle = playlistDetails.title || "Playlist";
+            }
+
+            if (playlistVideos.length > 0) {
                 if (currentVideoId === "") {
                     currentPlaylistIndex = 0;
                     playPlaylistItem(0);
                 } else {
-                    // Ищем индекс текущего видео внутри плейлиста
                     var idx = -1;
                     for (var i = 0; i < playlistVideos.length; i++) {
                         if (playlistVideos[i].video_id === currentVideoId) {
@@ -319,6 +351,48 @@ Rectangle {
                     }
                     currentPlaylistIndex = idx;
                 }
+            }
+        }
+    }
+
+    // Вливает список качеств в videoDetails и, если ждём Piped, запускает его поток
+    function applyQualities(qualities) {
+        if (!videoDetails || qualities === undefined || qualities === null) return;
+
+        var temp = {};
+        for (var k in videoDetails) {
+            temp[k] = videoDetails[k];
+        }
+        var q = temp["qualities"] || [];
+        for (var i = 0; i < qualities.length; i++) {
+            q.push(qualities[i]);
+        }
+        temp["qualities"] = q;
+        videoDetails = temp;
+
+        // Если активен Piped и плеер ждёт ответа от него
+        if (lastPlaySourceType === "piped") {
+            if (pipedFallbackTimer.running) {
+                pipedFallbackTimer.stop();
+            }
+
+            var pipedStreamUrl = "";
+            for (var j = 0; j < q.length; j++) {
+                if (q[j].label.indexOf("Piped") !== -1 && q[j].hasAudio) {
+                    pipedStreamUrl = q[j].url;
+                    break;
+                }
+            }
+
+            if (pipedStreamUrl !== "") {
+                console.log("[Player] Piped-поток успешно найден. Запуск...");
+                videoPage.currentVideoUrl = pipedStreamUrl;
+                videoPage.recoveryAttempts = 0;
+                videoLoader.sourceComponent = undefined;
+                recreateTimer.start();
+            } else {
+                console.log("[Player] Piped не вернул рабочих потоков. Запуск отката...");
+                handlePlaybackFailure();
             }
         }
     }
@@ -353,129 +427,133 @@ Rectangle {
     }
 
     function handlePlaybackFailure() {
-            if (hasAttemptedPipedFallback) {
-                console.log("[Fallback] Обе попытки (YouTube и Piped) провалились. Остановка.");
-                return;
-            }
+        if (hasAttemptedPipedFallback) {
+            console.log("[Fallback] Обе попытки (YouTube и Piped) провалились. Остановка.");
+            videoPage.currentVideoUrl = "";
+            videoLoader.sourceComponent = undefined; // убираем вечный спиннер
+            videoPage.isSeeking = false;
+            return;
+        }
 
-            hasAttemptedPipedFallback = true;
+        hasAttemptedPipedFallback = true;
 
-            if (lastPlaySourceType === "youtube") {
-                lastPlaySourceType = "piped";
-                console.log("[Fallback] YouTube заблокирован. Срочный запуск Piped для: " + currentVideoId);
+        if (lastPlaySourceType === "youtube") {
+            lastPlaySourceType = "piped";
+            console.log("[Fallback] YouTube заблокирован. Срочный запуск Piped для: " + currentVideoId);
 
-                var pipedStreamUrl = "";
-                if (videoDetails && videoDetails["qualities"]) {
-                    var q = videoDetails["qualities"];
-                    for (var i = 0; i < q.length; i++) {
-                        if (q[i].label.indexOf("Piped") !== -1 && q[i].hasAudio) {
-                            pipedStreamUrl = q[i].url;
-                            break;
-                        }
+            var pipedStreamUrl = "";
+            if (videoDetails && videoDetails["qualities"]) {
+                var q = videoDetails["qualities"];
+                for (var i = 0; i < q.length; i++) {
+                    if (q[i].label.indexOf("Piped") !== -1 && q[i].hasAudio) {
+                        pipedStreamUrl = q[i].url;
+                        break;
                     }
                 }
-
-                if (pipedStreamUrl !== "") {
-                    videoPage.currentVideoUrl = pipedStreamUrl;
-                    videoPage.recoveryAttempts = 0;
-                    videoLoader.sourceComponent = undefined;
-                    recreateTimer.start();
-                } else {
-                    // ИСПРАВЛЕНИЕ: Принудительно пинаем C++ сделать запрос к Piped,
-                    // так как YouTube упал раньше, чем QML успел отправить этот запрос!
-                    ApiManager.fetchAlternativeQualities(currentVideoId);
-                    pipedFallbackTimer.start();
-                }
             }
-            else if (lastPlaySourceType === "piped") {
-                lastPlaySourceType = "youtube";
-                console.log("[Fallback] Ошибка Piped. Возврат на YouTube...");
-                playInnerTubeStreamDirectly();
+
+            if (pipedStreamUrl !== "") {
+                videoPage.currentVideoUrl = pipedStreamUrl;
+                videoPage.recoveryAttempts = 0;
+                videoLoader.sourceComponent = undefined;
+                recreateTimer.start();
+            } else {
+                // ИСПРАВЛЕНИЕ: Принудительно пинаем C++ сделать запрос к Piped,
+                // так как YouTube упал раньше, чем QML успел отправить этот запрос!
+                ApiManager.fetchAlternativeQualities(currentVideoId);
+                pipedFallbackTimer.start();
             }
         }
+        else if (lastPlaySourceType === "piped") {
+            lastPlaySourceType = "youtube";
+            console.log("[Fallback] Ошибка Piped. Возврат на YouTube...");
+            playInnerTubeStreamDirectly();
+        }
+    }
 
     // ==========================================
-        // УНИФИЦИРОВАННЫЙ СБРОС СОСТОЯНИЯ ТРЕКА
-        // ==========================================
-        function resetTrackState() {
-            hasAttemptedPipedFallback = false;
-            lastPlaySourceType = Config.usePiped ? "piped" : "youtube";
+    // УНИФИЦИРОВАННЫЙ СБРОС СОСТОЯНИЯ ТРЕКА
+    // ==========================================
+    function resetTrackState() {
+        hasAttemptedPipedFallback = false;
+        lastPlaySourceType = Config.usePiped ? "piped" : "youtube";
+        pendingQualities = null;
+        videoDetails = null;
+        relatedVideos = [];
+        commentsModel = [];
+        firstComment = null;
+        videoPage.currentVideoUrl = "";
+        videoLoader.sourceComponent = undefined;
+        isPlaying = false;
+        isSeeking = false;
 
-            videoDetails = null;
-            relatedVideos = [];
-            commentsModel = [];
-            firstComment = null;
-            videoPage.currentVideoUrl = "";
-            videoLoader.sourceComponent = undefined;
-            isPlaying = false;
-            isSeeking = false;
+        pipedFallbackTimer.stop(); // Останавливаем любые запущенные таймеры ожидания
+        stallWatchdog.stop();
+        videoPage.forceActiveFocus(); // Возвращаем фокус ввода клавиатуры
+    }
 
-            pipedFallbackTimer.stop(); // Останавливаем любые запущенные таймеры ожидания
-            videoPage.forceActiveFocus(); // Возвращаем фокус ввода клавиатуры
-        }
+    // ==========================================
+    // МЕТОДЫ ЗАГРУЗКИ И ПЕРЕКЛЮЧЕНИЯ ПОТОКОВ
+    // ==========================================
+    function loadVideo(videoId, playlistId) {
+        currentVideoId = videoId || "";
+        currentPlaylistId = playlistId || "";
 
-        // ==========================================
-        // МЕТОДЫ ЗАГРУЗКИ И ПЕРЕКЛЮЧЕНИЯ ПОТОКОВ
-        // ==========================================
-        function loadVideo(videoId, playlistId) {
-            currentVideoId = videoId || "";
-            currentPlaylistId = playlistId || "";
+        // Сбрасываем флаги контроля зацикливания перед каждым новым видео!
+        resetTrackState();
 
-            // Сбрасываем флаги контроля зацикливания перед каждым новым видео!
-            resetTrackState();
-
-            if (currentPlaylistId !== "") {
-                // Если это автогенерируемый джем (RD...) — запрашиваем его через getRelatedVideos (next)
-                if (currentPlaylistId.indexOf("RD") === 0) {
-                    playlistVideos = [];
-                    currentPlaylistIndex = -1;
-
-                    if (currentVideoId !== "") {
-                        ApiManager.getVideoInfo(currentVideoId);
-                    }
-                    ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
-                } else {
-                    // Для обычных плейлистов (PL...) используем стандартный browse
-                    ApiManager.getPlaylistDetails(currentPlaylistId);
-                    if (currentVideoId !== "") {
-                        ApiManager.getVideoInfo(currentVideoId);
-                        ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
-                    }
-                }
-            } else {
+        if (currentPlaylistId !== "") {
+            // Если это автогенерируемый джем (RD...) — запрашиваем его через getRelatedVideos (next)
+            if (currentPlaylistId.indexOf("RD") === 0) {
                 playlistVideos = [];
                 currentPlaylistIndex = -1;
-                playlistTitle = "";
-                ApiManager.getVideoInfo(currentVideoId);
-                ApiManager.getRelatedVideos(currentVideoId, "");
+
+                if (currentVideoId !== "") {
+                    ApiManager.getVideoInfo(currentVideoId);
+                }
+                ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+            } else {
+                // Для обычных плейлистов (PL...) используем стандартный browse
+                ApiManager.getPlaylistDetails(currentPlaylistId);
+                if (currentVideoId !== "") {
+                    ApiManager.getVideoInfo(currentVideoId);
+                    ApiManager.getRelatedVideos(currentVideoId, currentPlaylistId);
+                }
             }
+        } else {
+            playlistVideos = [];
+            currentPlaylistIndex = -1;
+            playlistTitle = "";
+            ApiManager.getVideoInfo(currentVideoId);
+            ApiManager.getRelatedVideos(currentVideoId, "");
         }
+    }
 
     function playPlaylistItem(index) {
-            if (index < 0 || index >= playlistVideos.length) return;
+        if (index < 0 || index >= playlistVideos.length) return;
 
-            currentPlaylistIndex = index;
-            var targetVideo = playlistVideos[index];
+        currentPlaylistIndex = index;
+        var targetVideo = playlistVideos[index];
 
-            // Сбрасываем флаги контроля зацикливания перед переключением трека внутри плейлиста!
-            resetTrackState();
-            currentVideoId = targetVideo.video_id;
+        // Сбрасываем флаги контроля зацикливания перед переключением трека внутри плейлиста!
+        resetTrackState();
+        currentVideoId = targetVideo.video_id;
 
-            ApiManager.getVideoInfo(targetVideo.video_id);
-            ApiManager.getRelatedVideos(targetVideo.video_id, currentPlaylistId);
-        }
+        ApiManager.getVideoInfo(targetVideo.video_id);
+        ApiManager.getRelatedVideos(targetVideo.video_id, currentPlaylistId);
+    }
 
     function playNextVideo() {
-            if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
-                playPlaylistItem(currentPlaylistIndex + 1);
-            }
+        if (playlistVideos.length > 0 && currentPlaylistIndex < playlistVideos.length - 1) {
+            playPlaylistItem(currentPlaylistIndex + 1);
         }
+    }
 
-        function playPreviousVideo() {
-            if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
-                playPlaylistItem(currentPlaylistIndex - 1);
-            }
+    function playPreviousVideo() {
+        if (playlistVideos.length > 0 && currentPlaylistIndex > 0) {
+            playPlaylistItem(currentPlaylistIndex - 1);
         }
+    }
 
     Component {
         id: videoComponent
@@ -493,12 +571,19 @@ Rectangle {
                 z: -1
             }
 
-            onStarted: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
-            onResumed: { videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
-            onPaused: { videoPage.isPlaying = false; controlsTimer.stop(); controlsOverlay.visible = true; }
-            onStopped: { videoPage.isPlaying = false; videoPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+            onStarted: { stallWatchdog.stop(); videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
+            onResumed: { stallWatchdog.stop(); videoPage.isSeeking = false; videoPage.isPlaying = true; controlsTimer.restart(); videoPage.recoveryAttempts = 0; }
+            onPaused: { stallWatchdog.stop(); videoPage.isPlaying = false; controlsTimer.stop(); controlsOverlay.visible = true; }
+            onStopped: { stallWatchdog.stop(); videoPage.isPlaying = false; videoPage.isSeeking = false; controlsTimer.stop(); controlsOverlay.visible = true; }
 
             onStatusChanged: {
+                // Сторож: если поток грузится/буферизуется дольше 12 сек — считаем его мёртвым
+                if (status === Video.Loading || status === Video.Buffering || status === Video.Stalled) {
+                    stallWatchdog.restart();
+                } else if (status === Video.Loaded) {
+                    stallWatchdog.stop();
+                }
+
                 if (status === Video.Loaded) {
                     if (typeof VolumeKeys !== "undefined") {
                         VolumeKeys.volume = Config.persistentVolume * 100;
@@ -559,6 +644,7 @@ Rectangle {
 
                 lastIntendedPosition = newPos;
                 videoPage.isSeeking = true;
+                stallWatchdog.restart();
                 var wasPlaying = videoPage.isPlaying;
 
                 if (wasPlaying) pause();

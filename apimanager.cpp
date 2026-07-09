@@ -240,6 +240,7 @@ void ApiManager::postInnertube(const QString &endpoint, const QVariantMap &paylo
     QByteArray data = QtJson::serialize(payload, success);
     QNetworkReply *reply = m_networkManager->post(request, data);
     reply->setProperty("RequestType", requestType);
+    armTimeout(reply, 8000);
 }
 
 void ApiManager::fetchAlternativeQualities(const QString &videoId) {
@@ -248,22 +249,30 @@ void ApiManager::fetchAlternativeQualities(const QString &videoId) {
         QNetworkReply *reply = m_networkManager->get(req);
         reply->setProperty("RequestType", "NotPipeJson");
         reply->setProperty("VideoId", videoId);
+        armTimeout(reply, 6000);
     } else {
         requestPipedStreams(videoId);
     }
 }
 
-void ApiManager::requestPipedStreams(const QString &videoId) {
-    if (m_pipedInstances.isEmpty()) return;
+void ApiManager::requestPipedStreams(const QString &videoId, int attempt) {
+    if (m_pipedInstances.isEmpty()) {
+        emit alternativeQualitiesReady(videoId, QVariantList());
+        return;
+    }
     QString instance = m_pipedInstances.first();
     m_pipedInstances.removeFirst();
     m_pipedInstances.append(instance);
+
+    logDebug(QString("[Piped] Attempt %1, instance: %2").arg(attempt).arg(instance));
 
     QUrl url(instance + "/streams/" + videoId);
     QNetworkRequest req(url);
     QNetworkReply *reply = m_networkManager->get(req);
     reply->setProperty("RequestType", "PipedStreams");
     reply->setProperty("VideoId", videoId);
+    reply->setProperty("Attempt", attempt);
+    armTimeout(reply, 4000);
 }
 
 void ApiManager::getComments(const QString &videoId, const QString &continuationToken) {
@@ -522,11 +531,12 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
 
     if (requestType == "PlaylistDetails" || requestType == "RelatedVideos" || requestType == "VideoInfo" || requestType == "HomeVideos") {
         logDebug(QString("=== [VIDEO PAGE LOG: %1] ===").arg(requestType));
-        logDebug(QString::fromUtf8(responseData));
+        //logDebug(QString::fromUtf8(responseData));
+        logDebug(QString::fromUtf8("Опущен для краткости"));
         logDebug(QString("=== [END LOG: %1] ===").arg(requestType));
     }
 
-    if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson") {
+    if (reply->error() != QNetworkReply::NoError && requestType != "OAuthTokenPoll" && requestType != "PipedStreams" && requestType != "NotPipeJson" && requestType != "VideoUrlHeadCheck") {
         logDebug(QString("[Network Error] Request '%1' failed with error: %2 (HTTP Code: %3)")
                  .arg(requestType)
                  .arg(reply->errorString())
@@ -605,13 +615,19 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
             }
         }
 
-        // Отдаем качества в плеер
-        emit alternativeQualitiesReady(videoId, qualities);
+        int attempt = reply->property("Attempt").toInt();
+        bool streamsFailed = (reply->error() != QNetworkReply::NoError) || qualities.isEmpty();
+        if (streamsFailed && attempt < 2 && m_pipedInstances.size() > 1) {
+            logDebug(QString("[Piped] Instance failed (attempt %1). Rotating to next...").arg(attempt));
+            requestPipedStreams(videoId, attempt + 1);
+            reply->deleteLater();
+            return;
+        }
 
-        // Если YouTube был заблокирован, мы отдаем метаданные из Piped в QML
         if (hasMeta) {
             emit videoInfoReady(videoDetailsMap);
         }
+        emit alternativeQualitiesReady(videoId, qualities);
     }
     else if (requestType == "CommentsTokenFetch") {
         QString token;
@@ -1050,6 +1066,7 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         QNetworkReply *headReply = m_networkManager->head(headRequest);
         headReply->setProperty("RequestType", "VideoUrlHeadCheck");
         headReply->setProperty("PendingVideoDetails", details);
+        armTimeout(headReply, 4000);
     }
 
     /*  else if (requestType == "WatchPageFetch") {
@@ -1167,6 +1184,15 @@ void ApiManager::onReplyFinished(QNetworkReply *reply)
         // Если сервер вернул 403 Forbidden, 429 Too Many Requests или произошел сетевой сбой
         if (httpCode == 403 || httpCode == 401 || httpCode == 429 || reply->error() != QNetworkReply::NoError) {
             logDebug("[HEAD Check] URL is blocked or throttled (HTTP 403/429)! Triggering fallback.");
+
+            // Метаданные (title/author/views) уже распарсены — отдаём их в UI,
+            // чтобы заголовок появился сразу, пока идёт fallback на Piped.
+            // video_url удаляем: он мёртвый, играть его нельзя.
+            QVariantMap metaOnly = pendingDetails;
+            metaOnly.remove("video_url");
+            metaOnly["meta_only"] = true; // флаг для QML: не запускать воспроизведение
+            emit videoInfoReady(metaOnly);
+
             emit requestFailed("VideoInfo", "BotBlocked");
         } else {
             logDebug("[HEAD Check] URL is valid. Emitting videoInfoReady.");
@@ -1938,4 +1964,9 @@ void ApiManager::getChannelPlaylists(const QString &channelId) {
 
 void ApiManager::processEvents() {
     qApp->processEvents(); // Немедленно сбрасывает все накопившиеся PaintEvent на экран
+}
+
+void ApiManager::armTimeout(QNetworkReply *reply, int ms)
+{
+    new ReplyTimeoutHelper(reply, ms); // ребёнок reply, умрёт вместе с ним
 }
